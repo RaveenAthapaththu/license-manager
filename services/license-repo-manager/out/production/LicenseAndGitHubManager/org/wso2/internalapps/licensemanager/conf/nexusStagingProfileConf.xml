@@ -1,0 +1,33 @@
+<profileRequest>
+    <data>
+
+
+        <name></name>
+        <repositoryTemplateId>default_hosted_release</repositoryTemplateId>
+        <repositoryType>maven2</repositoryType>
+        <repositoryTargetId></repositoryTargetId>
+        <inProgress>false</inProgress>
+        <order>0</order>
+        <deployURI>http://localhost:8081/nexus/service/local/staging/deploy/maven2</deployURI>
+        <targetGroups>
+            <string>public</string>
+        </targetGroups>
+        <finishNotifyRoles/>
+        <promotionNotifyRoles/>
+        <dropNotifyRoles/>
+        <closeRuleSets/>
+        <promoteRuleSets/>
+        <promotionTargetRepository>releases</promotionTargetRepository>
+        <mode>DEPLOY</mode>
+        <finishNotifyCreator>true</finishNotifyCreator>
+        <promotionNotifyCreator>true</promotionNotifyCreator>
+        <dropNotifyCreator>true</dropNotifyCreator>
+        <autoStagingDisabled>false</autoStagingDisabled>
+        <repositoriesSearchable>true</repositoriesSearchable>
+        <properties class="linked-hash-map"/>
+        <finishNotifyEmails>builder@wso2.com</finishNotifyEmails>
+        <promotionNotifyEmails>builder@wso2.com</promotionNotifyEmails>
+        <dropNotifyEmails>builder@wso2.com</dropNotifyEmails>
+
+    </data>
+</profileRequest>

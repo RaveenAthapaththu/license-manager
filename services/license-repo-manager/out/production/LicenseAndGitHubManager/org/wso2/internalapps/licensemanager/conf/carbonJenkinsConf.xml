@@ -1,0 +1,18 @@
+<project>
+    <properties>
+        <com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty plugin="gitlab-plugin@1.4.8">
+            <gitLabConnection/>
+        </com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty>
+        <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.25">
+            <autoRebuild>false</autoRebuild>
+            <rebuildDisabled>false</rebuildDisabled>
+        </com.sonyericsson.rebuild.RebuildSettings>
+        <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@2.0.1">
+            <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+            <throttleEnabled>false</throttleEnabled>
+            <throttleOption>project</throttleOption>
+            <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+            <paramsToUseForLimit/>
+        </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    </properties>
+</project>

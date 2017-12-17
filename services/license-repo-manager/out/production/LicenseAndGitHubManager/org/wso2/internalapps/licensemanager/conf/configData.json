@@ -1,0 +1,11 @@
+{
+  "jenkinsToken" : "QnVkZGhpV2F0aHNhbGE6YjZlZjBjNGU0MDkzYzM3NmNkMjZkMWQ1NDYxOGIwM2Q=",
+  "jenkinsApiUrl" : "http://localhost:8080/",
+  "nexusToken" : "YWRtaW46YWRtaW4xMjM=",
+  "nexusApiUrl" : "http://localhost:8081/",
+  "databaseUrl" : "jdbc:mysql://localhost:3306/licensemanager?useSSL=false",
+  "databaseUserName" : "root",
+  "databasePassword" : "Incorrect",
+  "gitHubApiUrl" : "https://api.github.com/",
+  "gitHubToken":""
+}

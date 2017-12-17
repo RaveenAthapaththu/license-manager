@@ -1,0 +1,792 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="677b3c8e-86ff-4e9f-831d-084e44eac70a" name="Default" comment="">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/conf/carbonJenkinsConf.xml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/conf/configData.bal" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/conf/otherJenkinsConf.xml" afterPath="" />
+    </list>
+    <ignored path="$PROJECT_DIR$/out/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CompilerWorkspaceConfiguration">
+    <option name="CLEAR_OUTPUT_DIRECTORY" value="false" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="MainService.bal" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/MainService.bal">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1548">
+              <caret line="502" column="90" lean-forward="false" selection-start-line="502" selection-start-column="90" selection-end-line="502" selection-end-column="90" />
+              <folding>
+                <element signature="e#529#2235#0" expanded="false" />
+                <element signature="e#2241#3074#0" expanded="false" />
+                <element signature="e#3080#3931#0" expanded="false" />
+                <element signature="e#3937#4922#0" expanded="false" />
+                <element signature="e#4928#5497#0" expanded="false" />
+                <element signature="e#5503#6147#0" expanded="false" />
+                <element signature="e#6153#6908#0" expanded="false" />
+                <element signature="e#6914#7980#0" expanded="false" />
+                <element signature="e#7986#8790#0" expanded="false" />
+                <element signature="e#8796#9578#0" expanded="false" />
+                <element signature="e#9584#10061#0" expanded="false" />
+                <element signature="e#10068#12509#0" expanded="false" />
+                <element signature="e#12515#13815#0" expanded="false" />
+                <element signature="e#13821#15092#0" expanded="false" />
+                <element signature="e#15098#17431#0" expanded="false" />
+                <element signature="e#17437#17973#0" expanded="false" />
+                <element signature="e#17979#18568#0" expanded="false" />
+                <element signature="e#18574#19148#0" expanded="false" />
+                <element signature="e#19154#19793#0" expanded="false" />
+                <element signature="e#19799#20363#0" expanded="false" />
+                <element signature="e#20369#20896#0" expanded="false" />
+                <element signature="e#20902#21444#0" expanded="false" />
+                <element signature="e#21450#21982#0" expanded="false" />
+                <element signature="e#21988#22506#0" expanded="false" />
+                <element signature="e#22512#23045#0" expanded="false" />
+                <element signature="e#23051#23587#0" expanded="false" />
+                <element signature="e#23593#24261#0" expanded="false" />
+                <element signature="e#24863#25525#0" expanded="false" />
+                <element signature="e#25531#25976#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="configData.json" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/conf/configData.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="162">
+              <caret line="9" column="57" lean-forward="false" selection-start-line="9" selection-start-column="57" selection-end-line="9" selection-end-column="57" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="strings.bal" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/strings.bal">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="8" lean-forward="false" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="45" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="db.bal" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/database/db.bal">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-216">
+              <caret line="0" column="8" lean-forward="false" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="45" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="configData.bal" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/conf/configData.bal">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="198">
+              <caret line="11" column="75" lean-forward="false" selection-start-line="11" selection-start-column="16" selection-end-line="11" selection-end-column="75" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="nexusServices.bal" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/nexusServices.bal">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="8" lean-forward="false" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="45" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="jenkinServices.bal" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/jenkinServices.bal">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="8" lean-forward="false" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="45" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="gitHubService.bal" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/gitHubService.bal">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="3510">
+              <caret line="195" column="77" lean-forward="false" selection-start-line="195" selection-start-column="77" selection-end-line="195" selection-end-column="77" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Ballerina Main" />
+        <option value="Ballerina Service" />
+        <option value="Ballerina File" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>nexusUrl</find>
+      <find>correctString</find>
+      <find>&quot;https://api.github.com/&quot;</find>
+      <find>system:getEnv(&quot;GitHubToken&quot;);</find>
+      <find>conf:gitHubToken</find>
+      <find>conf:gitHubApiUrl</find>
+      <find>const</find>
+      <find>conf:jenkinsApiUrl</find>
+      <find>conf:nexusApiUrl</find>
+      <find>conf:nexusToken</find>
+      <find>conf:jenkinsToken</find>
+      <find>accessToken</find>
+      <find>decodedJson[&quot;exp&quot;]</find>
+      <find>setR</find>
+      <find>reply response;</find>
+      <find>selectMainUsers</find>
+      <find>jenkins</find>
+      <find>string</find>
+      <find>=</find>
+      <find>;</find>
+      <find>system:getEnv(&quot;NexusToken&quot;)</find>
+      <find>system:getEnv(&quot;JenkinsToken&quot;)</find>
+      <find>createJ</find>
+      <find>system:getEnv(&quot;GitHubToken&quot;)</find>
+      <find>./conf/</find>
+      <find>system</find>
+      <find>http:ClientConnector httpConnector = create http:ClientConnector(gitHubApiUrl);</find>
+      <find>httpConnector</find>
+      <find>select</find>
+      <find>updateBpmn</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="GradleLocalSettings">
+    <option name="externalProjectsViewState">
+      <projects_view />
+    </option>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/requestMailContent.json" />
+        <option value="$PROJECT_DIR$/src/requestMailContent.txt" />
+        <option value="$PROJECT_DIR$/services/mainData.bal" />
+        <option value="$PROJECT_DIR$/src/gitHubService.bal" />
+        <option value="$PROJECT_DIR$/src/databaseService.bal" />
+        <option value="$PROJECT_DIR$/src/mailService.bal" />
+        <option value="$PROJECT_DIR$/services/databaseService.bal" />
+        <option value="$PROJECT_DIR$/services/mailService.bal" />
+        <option value="$PROJECT_DIR$/database/LM_ORGANIZATION.bal" />
+        <option value="$PROJECT_DIR$/database/LM_REPOtYPE.bal" />
+        <option value="$PROJECT_DIR$/database/LM_TYPE.bal" />
+        <option value="$PROJECT_DIR$/database/LM_REPOSITORYTYPE.bal" />
+        <option value="$PROJECT_DIR$/database/LM_REPOTYPE.bal" />
+        <option value="$PROJECT_DIR$/database/LM_LICENSE.bal" />
+        <option value="$PROJECT_DIR$/database/LM_ORG.bal" />
+        <option value="$PROJECT_DIR$/database/connection.bal" />
+        <option value="$PROJECT_DIR$/database/LM_REPOSITORY.bal" />
+        <option value="$PROJECT_DIR$/conf/normalJenkinsConf.xml" />
+        <option value="$PROJECT_DIR$/conf/carbonJenkinsConf.xml" />
+        <option value="$PROJECT_DIR$/services/strings.bal" />
+        <option value="$PROJECT_DIR$/conf/nexusStagingProfileConf.xml" />
+        <option value="$PROJECT_DIR$/services/nexusServices.bal" />
+        <option value="$PROJECT_DIR$/services/jenkinServices.bal" />
+        <option value="$PROJECT_DIR$/conf/configData.bal" />
+        <option value="$PROJECT_DIR$/services/authenticateService.bal" />
+        <option value="$PROJECT_DIR$/services/gitHubService.bal" />
+        <option value="$PROJECT_DIR$/conf/configData.json" />
+        <option value="$PROJECT_DIR$/src/MainService.bal" />
+        <option value="$PROJECT_DIR$/database/db.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/license_and_github_manager/MainService.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/license_and_github_manager/services/authenticateService.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/license_and_github_manager/services/gitHubService.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/license_and_github_manager/services/jenkinServices.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/license_and_github_manager/services/strings.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/license_and_github_manager/services/nexusServices.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/authenticateService.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/database/db.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/jenkinServices.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/strings.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/nexusServices.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/gitHubService.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/conf/configData.json" />
+        <option value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/MainService.bal" />
+        <option value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/conf/configData.bal" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="42" />
+    <option name="y" value="-11" />
+    <option name="width" value="1559" />
+    <option name="height" value="912" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+      <manualOrder />
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="AndroidView" />
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="LicenseAndGitHubManager" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LicenseAndGitHubManager" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LicenseAndGitHubManager" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LicenseAndGitHubManager" type="462c0819:PsiDirectoryNode" />
+              <item name="licensemanager" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LicenseAndGitHubManager" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LicenseAndGitHubManager" type="462c0819:PsiDirectoryNode" />
+              <item name="licensemanager" type="462c0819:PsiDirectoryNode" />
+              <item name="conf" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LicenseAndGitHubManager" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LicenseAndGitHubManager" type="462c0819:PsiDirectoryNode" />
+              <item name="licensemanager" type="462c0819:PsiDirectoryNode" />
+              <item name="database" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scratches" />
+      <pane id="PackagesPane" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="last_opened_file_path" value="$USER_HOME$/Downloads/connectors-master" />
+    <property name="Empty file" value="Ballerina File" />
+    <property name="project.structure.last.edited" value="SDKs" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="configurable.group.build" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/org/wso2/license_and_github_manager" />
+      <recent name="$PROJECT_DIR$/conf" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/conf" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Ballerina.Main">
+    <configuration name="Main" type="BallerinaApplicationRunConfiguration" factoryName="Ballerina">
+      <output_file path="$PROJECT_DIR$" />
+      <module name="LicenseAndGitHubManager" />
+      <working_directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager/MainService.bal" />
+      <myRunKind value="SERVICE" />
+      <kind value="SERVICE" />
+      <package value="$PROJECT_DIR$/org/wso2/internalapps/licensemanager" />
+    </configuration>
+    <configuration default="true" type="Applet" factoryName="Applet">
+      <option name="HTML_USED" value="false" />
+      <option name="WIDTH" value="400" />
+      <option name="HEIGHT" value="300" />
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <module />
+    </configuration>
+    <configuration default="true" type="Application" factoryName="Application">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="VM_PARAMETERS" />
+      <option name="PROGRAM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <option name="ENABLE_SWING_INSPECTOR" value="false" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <module name="" />
+      <envs />
+    </configuration>
+    <configuration default="true" type="JUnit" factoryName="JUnit">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <module name="" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <option name="PACKAGE_NAME" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="METHOD_NAME" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="singleModule" />
+      </option>
+      <envs />
+      <patterns />
+    </configuration>
+    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
+      <module name="" />
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
+      <option name="PROGRAM_PARAMETERS" />
+      <predefined_log_file id="idea.log" enabled="true" />
+    </configuration>
+    <configuration default="true" type="Remote" factoryName="Remote">
+      <option name="USE_SOCKET_TRANSPORT" value="true" />
+      <option name="SERVER_MODE" value="false" />
+      <option name="SHMEM_ADDRESS" value="javadebug" />
+      <option name="HOST" value="localhost" />
+      <option name="PORT" value="5005" />
+    </configuration>
+    <configuration default="true" type="TestNG" factoryName="TestNG">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <module name="" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <option name="SUITE_NAME" />
+      <option name="PACKAGE_NAME" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="METHOD_NAME" />
+      <option name="GROUP_NAME" />
+      <option name="TEST_OBJECT" value="CLASS" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+      <option name="OUTPUT_DIRECTORY" />
+      <option name="ANNOTATION_TYPE" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="singleModule" />
+      </option>
+      <option name="USE_DEFAULT_REPORTERS" value="false" />
+      <option name="PROPERTIES_FILE" />
+      <envs />
+      <properties />
+      <listeners />
+    </configuration>
+  </component>
+  <component name="SbtLocalSettings">
+    <option name="externalProjectsViewState">
+      <projects_view />
+    </option>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false">
+    <option name="remove_strategy" value="false" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="677b3c8e-86ff-4e9f-831d-084e44eac70a" name="Default" comment="" />
+      <created>1504585801235</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1504585801235</updated>
+    </task>
+    <task id="LOCAL-00001" summary="Sample">
+      <created>1508486119534</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1508486119534</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="42" y="-11" width="1559" height="912" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32903227" sideWeight="0.4897419" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Image Layers" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30967742" sideWeight="0.17207147" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30967742" sideWeight="0.82792854" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32516128" sideWeight="0.49238914" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.6283871" sideWeight="0.8927862" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30906683" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32903227" sideWeight="0.49768364" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.58193547" sideWeight="0.77829254" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="true" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+    </layout>
+    <layout-to-restore>
+      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32903227" sideWeight="0.13964263" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.5832258" sideWeight="0.77829254" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32903227" sideWeight="0.4950364" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Image Layers" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2683871" sideWeight="0.8603574" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32774192" sideWeight="0.49238914" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32947233" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2614163" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32903227" sideWeight="0.49768364" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="true" content_ui="tabs" />
+    </layout-to-restore>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Sample" />
+    <option name="LAST_COMMIT_MESSAGE" value="Sample" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="BallerinaLineBreakpoint">
+          <url>file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/MainService.bal</url>
+          <line>21</line>
+          <properties />
+          <option name="timeStamp" value="39" />
+        </line-breakpoint>
+      </breakpoints>
+      <breakpoints-dialog>
+        <breakpoints-dialog />
+      </breakpoints-dialog>
+      <option name="time" value="40" />
+    </breakpoint-manager>
+    <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/databaseService.bal" />
+    <entry file="file://$PROJECT_DIR$/src/mailService.bal" />
+    <entry file="file://$PROJECT_DIR$/src/gitHubService.bal" />
+    <entry file="file://$PROJECT_DIR$/src/databaseService.bal" />
+    <entry file="file://$PROJECT_DIR$/src/gitHubService.bal" />
+    <entry file="file://$PROJECT_DIR$/src/databaseService.bal" />
+    <entry file="file://$PROJECT_DIR$/src/gitHubService.bal" />
+    <entry file="file://$PROJECT_DIR$/src/databaseService.bal" />
+    <entry file="file://$PROJECT_DIR$/../../../Software/Ballerina/ballerina-tools-0.91/src/ballerina/data/sql/parameter.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../Software/Ballerina/ballerina-tools-0.91/src/ballerina/data/sql/natives.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-680">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/requestMailContent.txt" />
+    <entry file="file://$PROJECT_DIR$/src/gitHubService.bal" />
+    <entry file="file://$PROJECT_DIR$/src/databaseService.bal" />
+    <entry file="file://$PROJECT_DIR$/src/mailService.bal" />
+    <entry file="file://$PROJECT_DIR$/database/LM_REPOSITORY.bal" />
+    <entry file="file://$PROJECT_DIR$/database/LM_ORG.bal" />
+    <entry file="file://$PROJECT_DIR$/database/LM_LICENSE.bal" />
+    <entry file="file://$PROJECT_DIR$/database/LM_REPOTYPE.bal" />
+    <entry file="file://$PROJECT_DIR$/database/connection.bal" />
+    <entry file="file://$PROJECT_DIR$/conf/issue_template.md" />
+    <entry file="file://$PROJECT_DIR$/services/mailService.bal" />
+    <entry file="file://$PROJECT_DIR$/services/databaseService.bal" />
+    <entry file="file://$PROJECT_DIR$/conf/pull_request_template.md" />
+    <entry file="file://$PROJECT_DIR$/services/mainData.bal" />
+    <entry file="file://$PROJECT_DIR$/services/strings.bal" />
+    <entry file="file://$PROJECT_DIR$/conf/otherJenkinsConf.xml" />
+    <entry file="file://$PROJECT_DIR$/out/production/LicenseAndGitHubManager/conf/carbonJenkinsConf.xml" />
+    <entry file="file://$PROJECT_DIR$/out/production/LicenseAndGitHubManager/conf/configData.bal" />
+    <entry file="file://$PROJECT_DIR$/conf/nexusStagingProfileConf.xml" />
+    <entry file="file://$PROJECT_DIR$/conf/productJenkinsConf.xml" />
+    <entry file="file://$PROJECT_DIR$/../../../Software/Ballerina/ballerina-tools-0.91/src/ballerina/net/http/session.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="161">
+          <caret line="11" column="32" lean-forward="true" selection-start-line="11" selection-start-column="32" selection-end-line="11" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/conf/carbonJenkinsConf.xml" />
+    <entry file="file://$PROJECT_DIR$/services/jenkinServices.bal" />
+    <entry file="file://$PROJECT_DIR$/services/nexusServices.bal" />
+    <entry file="file://$PROJECT_DIR$/services/authenticateService.bal" />
+    <entry file="file://$PROJECT_DIR$/services/gitHubService.bal" />
+    <entry file="file://$PROJECT_DIR$/conf/configData.bal" />
+    <entry file="file://$PROJECT_DIR$/conf/configData.json" />
+    <entry file="file://$PROJECT_DIR$/src/MainService.bal" />
+    <entry file="file://$PROJECT_DIR$/database/db.bal" />
+    <entry file="file://$PROJECT_DIR$/LicenseAndGitHubManager.iml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/licensemanager.balx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/authenticateService.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="8" lean-forward="false" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/strings.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="8" lean-forward="false" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="45" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/gitHubService.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3510">
+          <caret line="195" column="77" lean-forward="false" selection-start-line="195" selection-start-column="77" selection-end-line="195" selection-end-column="77" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/nexusServices.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="8" lean-forward="false" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="45" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/services/jenkinServices.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="8" lean-forward="false" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="45" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/MainService.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1548">
+          <caret line="502" column="90" lean-forward="false" selection-start-line="502" selection-start-column="90" selection-end-line="502" selection-end-column="90" />
+          <folding>
+            <element signature="e#529#2235#0" expanded="false" />
+            <element signature="e#2241#3074#0" expanded="false" />
+            <element signature="e#3080#3931#0" expanded="false" />
+            <element signature="e#3937#4922#0" expanded="false" />
+            <element signature="e#4928#5497#0" expanded="false" />
+            <element signature="e#5503#6147#0" expanded="false" />
+            <element signature="e#6153#6908#0" expanded="false" />
+            <element signature="e#6914#7980#0" expanded="false" />
+            <element signature="e#7986#8790#0" expanded="false" />
+            <element signature="e#8796#9578#0" expanded="false" />
+            <element signature="e#9584#10061#0" expanded="false" />
+            <element signature="e#10068#12509#0" expanded="false" />
+            <element signature="e#12515#13815#0" expanded="false" />
+            <element signature="e#13821#15092#0" expanded="false" />
+            <element signature="e#15098#17431#0" expanded="false" />
+            <element signature="e#17437#17973#0" expanded="false" />
+            <element signature="e#17979#18568#0" expanded="false" />
+            <element signature="e#18574#19148#0" expanded="false" />
+            <element signature="e#19154#19793#0" expanded="false" />
+            <element signature="e#19799#20363#0" expanded="false" />
+            <element signature="e#20369#20896#0" expanded="false" />
+            <element signature="e#20902#21444#0" expanded="false" />
+            <element signature="e#21450#21982#0" expanded="false" />
+            <element signature="e#21988#22506#0" expanded="false" />
+            <element signature="e#22512#23045#0" expanded="false" />
+            <element signature="e#23051#23587#0" expanded="false" />
+            <element signature="e#23593#24261#0" expanded="false" />
+            <element signature="e#24863#25525#0" expanded="false" />
+            <element signature="e#25531#25976#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/conf/configData.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="162">
+          <caret line="9" column="57" lean-forward="false" selection-start-line="9" selection-start-column="57" selection-end-line="9" selection-end-column="57" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/database/db.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-216">
+          <caret line="0" column="8" lean-forward="false" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="45" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/wso2/internalapps/licensemanager/conf/configData.bal">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="11" column="75" lean-forward="false" selection-start-line="11" selection-start-column="16" selection-end-line="11" selection-end-column="75" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <settings>
+          <artifact-editor />
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="FacetStructureConfigurable.UI">
+        <settings>
+          <last-edited>No facets are configured</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <last-edited>Ballerina 0.93</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ModuleStructureConfigurable.UI">
+        <settings>
+          <last-edited>LicenseAndGitHubManager</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+                <option value="0.6" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>

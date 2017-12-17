@@ -1,0 +1,173 @@
+/**
+ * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ 
+$paragraph-font-color: #5729f5;
+.paragraph-font {
+  color: $paragraph-font-color;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+
+.App-header {
+  background-color: #222;
+  height: 150px;
+  padding: 20px;
+  color: white;
+}
+
+.App-intro {
+  font-size: large;
+}
+
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/*navbar and header*/
+.navbar{
+  margin-bottom: 0px !important;
+  width: 100% !important;
+  background-color: #222222 !important;
+}
+
+.col-md-12, .col-md-2,.col-md-10{
+  
+  padding-right:  0px !important;
+}
+
+.col-md-10{
+  width: 85.5%;
+}
+
+#header{
+  background-color: #222222 !important;
+  height: 50px !important;
+}
+
+.icon-menu-wraper {
+  margin: -8px 0 -8px 0; /* the real magic */
+  padding: 0 !important; /* removes left and right padding */
+  cursor: initial !important;
+}
+@media only screen and (min-width: 1400px) {
+
+    #leftNav{
+      background-color: #222222 !important;
+      color: #fff !important;
+      width: 222px !important;
+      height: 92vh !important;
+      padding-top: 0px !important; 
+   }
+
+   #pendingRequestsImage{
+     height: 300px !important;
+     width: 2500px !important;
+   }
+
+   #pendingRequestsPanelBody{
+     padding: 0px !important;
+     height: 300px !important;
+   }
+
+   #leftNavBarLink{
+     color:#fff !important;
+   }
+
+   .form-horizontal{
+     margin-left: 0px !important;
+     margin-right: 0px !important;
+     width:80vw;
+   }
+}
+/*navbar and header ends*/
+/*form elements*/
+.required{
+  color: red;
+}
+/*form elements end*/
+
+#mainIcons{
+  align-items: center !important;
+}
+
+.validate{
+  color: red !important;
+  
+}
+
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid blue;
+  border-bottom: 16px solid blue;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+}
+
+#logo{
+  height: 45px;
+  width: 150px;
+  background-color: #222222;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-left: 0px;
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
