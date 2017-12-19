@@ -5,13 +5,13 @@ import Header from '../components/layouts/Header';
 /**
 * @class Main
 * @extends {Component}
-* @description Get user details
+* @description Index component
 */
 class Main extends Component {
     /**
     * @class Main
     * @extends {Component}
-    * @description Sample React component
+    * @description render method
     */
     render() {
         return (

@@ -29,6 +29,7 @@ import AcceptLibrary from './scenes/library/AcceptLibrary';
 import RejectLibrary from './scenes/library/RejectLibrary';
 import WaitingLibrary from './scenes/library/WaitingLibrary';
 import PendingLibrary from './scenes/library/PendingLibrary';
+import RequestLicense from './scenes/license/RequestLicense';
 import PendingRequests from './scenes/common/PendingRequests';
 import WaitingRequests from './scenes/common/WaitingRequests';
 import ErrorPage from './scenes/common/ErrorPage';
@@ -36,7 +37,7 @@ import ErrorPage from './scenes/common/ErrorPage';
 /**
  * @class App
  * @extends {Component}
- * @description Sample React component
+ * @description Main App component
  */
 class App extends Component {
     /**
@@ -60,6 +61,7 @@ class App extends Component {
                     <Route path={'requestLibrary'} component={RequestLibrary} />
                     <Route path={'acceptLibrary'} component={AcceptLibrary} />
                     <Route path={'rejectLibrary'} component={RejectLibrary} />
+                    <Route path={'requestLicense'} component={RequestLicense} />
                 </Route>
                 <Route path={'/'} component={Main} />
                 <Route path={'/errorPage'} component={ErrorPage} />

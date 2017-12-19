@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
 
 /**
-* @class ErrorPage
+* @class Alert
 * @extends {Component}
-* @description Get user details
+* @description Alert message component
 */
 class Alert extends Component {
     /**
-    * @class Root
+    * @class Alert
     * @extends {Component}
-    * @description Sample React component
+    * @description Alert message component render method
     */
     render() {
         const props = this.props;

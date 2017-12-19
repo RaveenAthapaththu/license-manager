@@ -6,16 +6,16 @@ import FlatButton from 'material-ui/FlatButton';
 import LibraryRequest from '../../services/database/LibraryRequest';
 
 /**
-* @class WaitingRequests
+* @class WaitingLibrary
 * @extends {Component}
-* @description Get user details
+* @description Show waiting libraries for acceptance
 */
 class WaitingLibrary extends Component {
     /**
-    * @class WaitingRequests
+    * @class WaitingLibrary
     * @extends {Component}
     * @param {any} props props for constructor
-    * @description Sample React component
+    * @description constructor
     */
     constructor() {
         super();
@@ -24,9 +24,9 @@ class WaitingLibrary extends Component {
         };
     }
     /**
-    * @class WaitingRequests
+    * @class WaitingLibrary
     * @extends {Component}
-    * @description Sample React component
+    * @description componentWillMount
     */
     componentWillMount() {
         LibraryRequest.selectLibraryWaitingRequests().then((response) => {
@@ -38,9 +38,9 @@ class WaitingLibrary extends Component {
         });
     }
     /**
-    * @class WaitingRequests
+    * @class WaitingLibrary
     * @extends {Component}
-    * @description Sample React component
+    * @description render method
     */
     render() {
         const cards = [];

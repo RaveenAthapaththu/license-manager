@@ -27,22 +27,19 @@ import LibraryRequest from '../../services/database/LibraryRequest';
 import StringValidations from '../../services/validations/StringValidations';
 import LibraryProcess from '../../services/bpmn/LibraryProcess';
 import Alert from '../common/Alert';
+import styles from '../../styles';
 
-const buttonStyle = {
-    width: 200,
-    height: 50,
-};
 /**
  * @class RequestRepository
  * @extends {Component}
- * @description Sample React component
+ * @description Accept library request
  */
 class AcceptLibrary extends Component {
     /**
     * @class RequestRepository
     * @extends {Component}
     * @param {any} props props for constructor
-    * @description Sample React component
+    * @description constructor
     */
     constructor(props) {
         super(props);
@@ -76,7 +73,7 @@ class AcceptLibrary extends Component {
     /**
     * @class RequestRepository
     * @extends {Component}
-    * @description Sample React component
+    * @description componentWillMount
     */
     componentWillMount() {
         /* eslint-disable max-len */
@@ -291,7 +288,7 @@ class AcceptLibrary extends Component {
     /**
     * @class RequestRepository
     * @extends {Component}
-    * @description Sample React component
+    * @description render method
     */
     render() {
         /* eslint-disable */
@@ -535,10 +532,10 @@ class AcceptLibrary extends Component {
                     <div className="form-group">
                         {/* eslint-disable max-len */}
                         <div className="col-lg-10 col-lg-offset-2">
-                            <RaisedButton type="submit" label="Accept" style={buttonStyle} labelColor='#ffffff' backgroundColor='#2196F3' disabled={this.state.buttonState} />
+                            <RaisedButton type="submit" label="Accept" style={styles.buttonStyle} labelColor='#ffffff' backgroundColor='#2196F3' disabled={this.state.buttonState} />
                             &nbsp;&nbsp;&nbsp;
                             <Link to={'/app/rejectLibrary?libRequestId=' + this.state.libraryId}>
-                                <RaisedButton type="button" label="Reject" style={buttonStyle} labelColor='#ffffff' backgroundColor='#BF360C' />
+                                <RaisedButton type="button" label="Reject" style={styles.buttonStyle} labelColor='#ffffff' backgroundColor='#BF360C' />
                             </Link>
                         </div>
                     </div>

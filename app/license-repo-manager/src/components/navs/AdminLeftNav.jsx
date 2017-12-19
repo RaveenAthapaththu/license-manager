@@ -7,64 +7,32 @@ import ContentCopy from 'material-ui/svg-icons/content/content-copy';
 import Add from 'material-ui/svg-icons/content/add';
 import ArrowDropRight from 'material-ui/svg-icons/navigation-arrow-drop-right';
 import { Link } from 'react-router';
+import styles from '../../styles';
 
-const style = {
-    paper: {
-        display: 'inline-block',
-        float: 'left',
-        width: '100%',
-        fontSize: '10px',
-        fontFamily: 'Helvetica',
-        backgroundColor: '#222222',
-        overflowY: 'hidden !important',
-        marginTop: 0,
-        margin: '0px 0px 0px 0px',
-    },
-    rightIcon: {
-        textAlign: 'center',
-        lineHeight: '70px',
-    },
-    menuItem: {
-        margin: '-8px 0 -8px 0',
-        padding: '0 !important',
-        cursor: 'initial !important',
-    },
-    menu: {
-        paddingTop: 0,
-        padding: '0px 0px',
-        margin: '0px 0px 0px 0px',
-    },
-    subMenuItem: {
-        padding: 0,
-        overflowY: 'hidden',
-    },
-};
 /**
-* @class UsRooter
+* @class AdminLeftNav
 * @extends {Component}
-* @description Get user details
+* @description Admin left nav
 */
 class AdminLeftNav extends Component {
     /**
     * @class Root
     * @extends {Component}
-    * @description Sample React component
+    * @description Admin left nav render method
     */
     render() {
         return (
             <div>
-                <Paper style={style.paper}>
-                    <Menu menuItemStyle={style.menu}>
+                <Paper style={styles.style.paper}>
+                    <Menu>
                         <MenuItem
                             className="icon-menu-wrapper"
                             primaryText="Repository"
                             leftIcon={<LibraryBooks />}
                             rightIcon={<ArrowDropRight />}
-                            autoWidth='false'
                             menuItems={[
                                 <Link to="/app/requestRepository" >
                                     <MenuItem
-                                        style={style.subMenuItem}
                                         primaryText="Request"
                                         leftIcon={<Add />}
                                     />

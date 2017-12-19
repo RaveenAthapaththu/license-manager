@@ -5,16 +5,16 @@ import LibraryRequest from '../../services/database/LibraryRequest';
 import ValidateUser from '../../services/authentication/ValidateUser';
 
 /**
-* @class WaitingRequests
+* @class PendingLibrary
 * @extends {Component}
-* @description Get user details
+* @description Pending libraries
 */
 class PendingLibrary extends Component {
     /**
-    * @class WaitingRequests
+    * @class PendingLibrary
     * @extends {Component}
     * @param {any} props props for constructor
-    * @description Sample React component
+    * @description constructor
     */
     constructor() {
         super();
@@ -25,9 +25,9 @@ class PendingLibrary extends Component {
         this.setPendingLibrary = this.setPendingLibrary.bind(this);
     }
     /**
-    * @class WaitingRequests
+    * @class PendingLibrary
     * @extends {Component}
-    * @description Sample React component
+    * @description componentWillMount
     */
     componentWillMount() {
         ValidateUser.getUserDetails().then((response) => {
@@ -53,9 +53,9 @@ class PendingLibrary extends Component {
         });
     }
     /**
-    * @class WaitingRequests
+    * @class PendingLibrary
     * @extends {Component}
-    * @description Sample React component
+    * @description render method
     */
     render() {
         const cards = [];

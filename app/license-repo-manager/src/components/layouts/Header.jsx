@@ -3,9 +3,9 @@ import ValidateUser from '../../services/authentication/ValidateUser';
 import logo from '../../assets/images/logo-inverse.svg';
 
 /**
-* @class AppHeader
+* @class Header
 * @extends {Component}
-* @description Get user details
+* @description Initial header
 */
 class Header extends Component {
     /**
@@ -18,9 +18,9 @@ class Header extends Component {
         };
     }
     /**
-    * @class AppHeader
+    * @class Header
     * @extends {Component}
-    * @description Sample React component
+    * @description Initial header
     */
     componentWillMount() {
         ValidateUser.isValidUser().then((response) => {
@@ -32,9 +32,9 @@ class Header extends Component {
         });
     }
     /**
-    * @class AppHeader
+    * @class Header
     * @extends {Component}
-    * @description Sample React component
+    * @description Initial header
     */
     render() {
         return (

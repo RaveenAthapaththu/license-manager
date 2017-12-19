@@ -12,16 +12,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BuddhiWathsala/InternWork"
+    "url": "git+https://github.com/wso2-internal-apps/library-license-repo-manager/"
   },
-  "author": "",
+  "author": "BuddhiWathsala",
   "bugs": {
-    "url": "https://github.com/BuddhiWathsala/InternWork/issues"
+    "url": "https://github.com/wso2-internal-apps/library-license-repo-manager/issues"
   },
-  "homepage": "https://github.com/BuddhiWathsala/InternWork#readme",
+  "homepage": "https://github.com/wso2-internal-apps/library-license-repo-manager/#readme",
   "dependencies": {
     "axios": "^0.17.0",
-    "history": "^4.7.2",
     "material-design-icons": "^3.0.1",
     "material-ui": "^0.19.4",
     "react": "^15.6.1",

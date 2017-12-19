@@ -14,9 +14,9 @@ import ValidateUser from '../../services/authentication/ValidateUser';
 import logo from '../../assets/images/logo-inverse.svg';
 
 /**
-* @class AppHeader
+* @class AdminHeader
 * @extends {Component}
-* @description Get user details
+* @description Admin Header Component
 */
 class AdminHeader extends Component {
     /**
@@ -36,9 +36,9 @@ class AdminHeader extends Component {
         this.setPendingLibrary = this.setPendingLibrary.bind(this);
     }
     /**
-    * @class AppHeader
+    * @class AdminHeader
     * @extends {Component}
-    * @description Sample React component
+    * @description Admin Header Component componentWillMount
     */
     componentWillMount() {
         ValidateUser.isValidUser().then((response) => {
@@ -100,9 +100,9 @@ class AdminHeader extends Component {
         window.close('', '_self');
     }
     /**
-    * @class AppHeader
+    * @class AdminHeader
     * @extends {Component}
-    * @description Sample React component
+    * @description render method
     */
     render() {
         const props = this.props;

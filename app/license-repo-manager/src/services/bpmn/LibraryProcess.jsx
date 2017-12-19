@@ -4,9 +4,9 @@ import MainData from '../MainData';
 import Token from '../authentication/Token';
 
 /**
-* @class GitHubRepositoryTask
+* @class LibraryProcess
 * @extends {Component}
-* @description GitHubRepositoryTask
+* @description LibraryProcess
 */
 class LibraryProcess extends Component {
     /**

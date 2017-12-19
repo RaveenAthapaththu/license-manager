@@ -30,22 +30,19 @@ import Common from '../../services/github/Common';
 import GitHubRepositoryCreation from '../../services/bpmn/GitHubRepositoryCreation';
 import StringValidations from '../../services/validations/StringValidations';
 import ValidateUser from '../../services/authentication/ValidateUser';
+import styles from '../../styles';
 
-const buttonStyle = {
-    width: 200,
-    height: 50,
-};
 /**
 * @class AcceptRepository
 * @extends {Component}
-* @description Sample React component
+* @description Accept repository request
 */
 class AcceptRepository extends Component {
     /**
     * @class AcceptRepository
     * @extends {Component}
     * @param {any} props props for constructor
-    * @description Sample React component
+    * @description constructor
     */
     constructor(props) {
         super(props);
@@ -88,7 +85,7 @@ class AcceptRepository extends Component {
     /**
     * @class RequestRepository
     * @extends {Component}
-    * @description Sample React component
+    * @description componentDidMount
     */
     componentDidMount() {
         Organization.getAllOrganizations().then((response) => {
@@ -396,7 +393,7 @@ class AcceptRepository extends Component {
     /**
     * @class RequestRepository
     * @extends {Component}
-    * @description Sample React component
+    * @description render method
     */
     render() {
         /* eslint-disable */
@@ -598,10 +595,10 @@ class AcceptRepository extends Component {
 
                     <div className="form-group">
                         <div className="col-lg-10 col-lg-offset-2">
-                            <RaisedButton type="submit" label="Accept" style={buttonStyle} labelColor='#ffffff' backgroundColor='#2196F3' disabled={this.state.buttonState} />
+                            <RaisedButton type="submit" label="Accept" style={styles.buttonStyle} labelColor='#ffffff' backgroundColor='#2196F3' disabled={this.state.buttonState} />
                             &nbsp;&nbsp;&nbsp;
                             <Link to={'/app/rejectRepository?repositoryId=' + this.state.repositoryId}>
-                                <RaisedButton type="button" label="Reject" style={buttonStyle} labelColor='#ffffff' backgroundColor='#BF360C' />
+                                <RaisedButton type="button" label="Reject" style={styles.buttonStyle} labelColor='#ffffff' backgroundColor='#BF360C' />
                             </Link>
                         </div>
                     </div>

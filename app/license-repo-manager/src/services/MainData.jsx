@@ -4,13 +4,13 @@ import confData from '../../conf/conf.json';
 /**
  * @class MainData
  * @extends {Component}
- * @description Sample React component
+ * @description Main config data exchanging component
  */
 class MainData extends Component {
     /**
     * @class MainData
     * @extends {Component}
-    * @description Sample React component
+    * @description constructor
     */
     constructor() {
         super();

@@ -3,9 +3,9 @@ import axios from 'axios';
 import MainData from '../MainData';
 
 /**
-* @class Library
+* @class LibraryType
 * @extends {Component}
-* @description Get license details
+* @description Library type data
 */
 class LibraryType extends Component {
     /**

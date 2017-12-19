@@ -7,14 +7,14 @@ import ValidateUser from '../../services/authentication/ValidateUser';
 /**
 * @class PendingRequests
 * @extends {Component}
-* @description Get JWT
+* @description Show pending requests
 */
 class PendingRequests extends Component {
     /**
     * @class PendingRequests
     * @extends {Component}
     * @param {any} props props for constructor
-    * @description Sample React component
+    * @description Show pending requests constructor
     */
     constructor() {
         super();
@@ -27,7 +27,7 @@ class PendingRequests extends Component {
     /**
     * @class PendingRequests
     * @extends {Component}
-    * @description Sample React component
+    * @description Show pending requests componentDidMount
     */
     componentDidMount() {
         ValidateUser.getUserDetails().then((response) => {
@@ -55,7 +55,7 @@ class PendingRequests extends Component {
     /**
     * @class PendingRequests
     * @extends {Component}
-    * @description Sample React component
+    * @description Show pending requests render method
     */
     render() {
         const cards = [];

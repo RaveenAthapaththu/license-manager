@@ -14,7 +14,7 @@ import logo from '../../assets/images/logo-inverse.svg';
 /**
 * @class AppHeader
 * @extends {Component}
-* @description Get user details
+* @description Normal user header
 */
 class AppHeader extends Component {
     /**
@@ -34,7 +34,7 @@ class AppHeader extends Component {
     /**
     * @class AppHeader
     * @extends {Component}
-    * @description Sample React component
+    * @description Normal user header
     */
     componentWillMount() {
         ValidateUser.isValidUser().then((response) => {
@@ -82,7 +82,7 @@ class AppHeader extends Component {
     /**
     * @class AppHeader
     * @extends {Component}
-    * @description Sample React component
+    * @description Normal user header
     */
     render() {
         const props = this.props;

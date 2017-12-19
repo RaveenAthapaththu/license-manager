@@ -8,14 +8,14 @@ import Repository from '../../services/database/Repository';
 /**
 * @class WaitingRequests
 * @extends {Component}
-* @description Get user details
+* @description Waiting requests
 */
 class WaitingRequests extends Component {
     /**
     * @class WaitingRequests
     * @extends {Component}
     * @param {any} props props for constructor
-    * @description Sample React component
+    * @description constructor
     */
     constructor() {
         super();
@@ -26,7 +26,7 @@ class WaitingRequests extends Component {
     /**
     * @class WaitingRequests
     * @extends {Component}
-    * @description Sample React component
+    * @description componentWillMount
     */
     componentWillMount() {
         Repository.selectWaitingRequests().then((response) => {
@@ -40,7 +40,7 @@ class WaitingRequests extends Component {
     /**
     * @class WaitingRequests
     * @extends {Component}
-    * @description Sample React component
+    * @description render method
     */
     render() {
         const cards = [];

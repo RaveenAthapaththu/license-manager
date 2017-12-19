@@ -5,7 +5,7 @@ import MainData from '../MainData';
 /**
 * @class Team
 * @extends {Component}
-* @description Sample React component
+* @description Get team details from GitHub API
 */
 class Team extends Component {
     /**

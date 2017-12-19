@@ -29,22 +29,19 @@ import LibraryType from '../../services/database/LibraryType';
 import LibraryCategory from '../../services/database/LibraryCategory';
 import StringValidations from '../../services/validations/StringValidations';
 import LibraryProcess from '../../services/bpmn/LibraryProcess';
+import styles from '../../styles';
 
-const buttonStyle = {
-    width: 200,
-    height: 50,
-};
 /**
- * @class RequestRepository
+ * @class RequestLibrary
  * @extends {Component}
- * @description Sample React component
+ * @description Request library
  */
 class RequestLibrary extends Component {
     /**
-    * @class RequestRepository
+    * @class RequestLibrary
     * @extends {Component}
     * @param {any} props props for constructor
-    * @description Sample React component
+    * @description constructor
     */
     constructor(props) {
         super(props);
@@ -77,7 +74,7 @@ class RequestLibrary extends Component {
     /**
     * @class RequestRepository
     * @extends {Component}
-    * @description Sample React component
+    * @description componentWillMount
     */
     componentWillMount() {
         ValidateUser.getUserDetails().then((response) => {
@@ -343,7 +340,7 @@ class RequestLibrary extends Component {
     /**
     * @class RequestRepository
     * @extends {Component}
-    * @description Sample React component
+    * @description render method
     */
     render() {
         /* eslint-disable */
@@ -597,9 +594,9 @@ class RequestLibrary extends Component {
                     <div className="form-group">
                         {/* eslint-disable max-len */}
                         <div className="col-lg-10 col-lg-offset-2">
-                            <RaisedButton type="submit" label="Request" style={buttonStyle} labelColor='#ffffff' backgroundColor='#2196F3' disabled={this.state.buttonState} />
+                            <RaisedButton type="submit" label="Request" style={styles.buttonStyle} labelColor='#ffffff' backgroundColor='#2196F3' disabled={this.state.buttonState} />
                             &nbsp;&nbsp;
-                            <RaisedButton type="button" label="Cancel" style={buttonStyle} labelColor='#ffffff' backgroundColor='#BDBDBD' onClick={this.reloadPage} />
+                            <RaisedButton type="button" label="Cancel" style={styles.buttonStyle} labelColor='#ffffff' backgroundColor='#BDBDBD' onClick={this.reloadPage} />
                         </div>
                     </div>
                 </fieldset>

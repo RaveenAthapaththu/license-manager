@@ -10,9 +10,9 @@ import AdminLeftNav from '../components/navs/AdminLeftNav';
 import ValidateUser from '../services/authentication/ValidateUser';
 
 /**
-* @class UsRooter
+* @class Root
 * @extends {Component}
-* @description Get user details
+* @description Root component
 */
 class Root extends Component {
     /**
@@ -35,7 +35,7 @@ class Root extends Component {
     /**
     * @class Root
     * @extends {Component}
-    * @description Sample React component
+    * @description componentWillMount
     */
     componentWillMount() {
         const adminPages = ['/app/acceptRepository', '/app/waitingRequests'];
@@ -82,7 +82,7 @@ class Root extends Component {
     /**
     * @class Root
     * @extends {Component}
-    * @description Sample React component
+    * @description render
     */
     render() {
         const props = this.props;

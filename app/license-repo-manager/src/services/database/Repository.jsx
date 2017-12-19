@@ -5,7 +5,7 @@ import MainData from '../MainData';
 /**
 * @class Repository
 * @extends {Component}
-* @description Sample React component
+* @description Handle Repository table operations
 */
 class Repository extends Component {
     /**

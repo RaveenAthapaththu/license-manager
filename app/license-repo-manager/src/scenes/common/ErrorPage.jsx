@@ -3,13 +3,13 @@ import React, { Component } from 'react';
 /**
 * @class ErrorPage
 * @extends {Component}
-* @description Get user details
+* @description Error component
 */
 class ErrorPage extends Component {
     /**
-    * @class Root
+    * @class ErrorPage
     * @extends {Component}
-    * @description Sample React component
+    * @description Error component
     */
     render() {
         return (
