@@ -44,6 +44,20 @@ class Main extends Component {
                             </Link>
                         </div>
                     </div>
+                    <br />
+                    <div className="row">
+                        <div className="col-md-1" />
+                        <div className="col-md-5">
+                            <Link to="/app/requestLicense" className="btn btn-success btn-lg btn-block">
+                                <span>
+                                    <i className="fa fa-id-card fa-1x" />
+                                </span>
+                                &nbsp;&nbsp;&nbsp;
+                                <b>Generate License</b>
+                            </Link>
+                        </div>
+                        <div className="col-md-3" />
+                    </div>
                 </div>
             </div>
         );

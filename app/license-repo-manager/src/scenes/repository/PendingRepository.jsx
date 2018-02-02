@@ -1,69 +1,79 @@
 import React, { Component } from 'react';
-import { Link } from 'react-router';
-import { Card, CardActions, CardHeader, CardText } from 'material-ui/Card';
+import { Card, CardHeader, CardText } from 'material-ui/Card';
 import { Table, TableBody, TableRow, TableRowColumn } from 'material-ui/Table';
-import FlatButton from 'material-ui/FlatButton';
 import Repository from '../../services/database/Repository';
+import ValidateUser from '../../services/authentication/ValidateUser';
 
 /**
-* @class WaitingRequests
+* @class PendingRepository
 * @extends {Component}
-* @description Waiting requests
+* @description Show pending requests
 */
-class WaitingRequests extends Component {
+class PendingRepository extends Component {
     /**
-    * @class WaitingRequests
+    * @class PendingRequests
     * @extends {Component}
     * @param {any} props props for constructor
-    * @description constructor
+    * @description Show pending requests constructor
     */
     constructor() {
         super();
         this.state = {
-            waitingRequests: [],
+            pendingRequests: [],
+            userDetails: [],
         };
+        this.setPendingRequests = this.setPendingRequests.bind(this);
     }
     /**
-    * @class WaitingRequests
+    * @class PendingRepository
     * @extends {Component}
-    * @description componentWillMount
+    * @description Show pending requests componentDidMount
     */
-    componentWillMount() {
-        Repository.selectWaitingRequests().then((response) => {
+    componentDidMount() {
+        ValidateUser.getUserDetails().then((response) => {
             this.setState(() => {
                 return {
-                    waitingRequests: response,
+                    userDetails: response,
+                };
+            });
+            this.setPendingRequests(this.state.userDetails.userEmail);
+        });
+    }
+    /**
+    * validation function for input repository name
+    * @param {String} requestBy requestBye
+    */
+    setPendingRequests(requestBy) {
+        Repository.selectDataFromRequestBy(requestBy).then((response) => {
+            this.setState(() => {
+                return {
+                    pendingRequests: response,
                 };
             });
         });
     }
     /**
-    * @class WaitingRequests
+    * @class PendingRepository
     * @extends {Component}
-    * @description render method
+    * @description Show pending requests render method
     */
     render() {
         const cards = [];
-        if (this.state.waitingRequests.length !== 0) {
-            const arrayLength = this.state.waitingRequests.length;
-            const request = this.state.waitingRequests;
+        if (this.state.pendingRequests.length !== 0) {
+            const arrayLength = this.state.pendingRequests.length;
+            const request = this.state.pendingRequests;
             let i = 0;
             /* eslint-disable */
             for (i = 0; i < arrayLength - 1; i += 2) {
                 cards.push(
                     <div className="row" key={i}>
-                        <Link to={'/app/acceptRepository?repositoryId=' + request[i].REPOSITORY_ID}>
                             <div className="col-md-6">
                                 <Card>
                                     <CardHeader
                                         title={'Name - ' + request[i].REPOSITORY_NAME}
-                                        subtitle={'Requested by - ' + request[i].REPOSITORY_REQUEST_BY}
                                         actAsExpander={true}
                                         showExpandableButton={true}
                                     />
-                                    <CardActions>
-                                        <FlatButton label="More" />
-                                    </CardActions>
                                     <CardText expandable={true}>
                                         <Table>
                                             <TableBody displayRowCheckbox={false}>
@@ -121,23 +131,17 @@ class WaitingRequests extends Component {
                                 </Card>
                                 <br />
                             </div>
-                        </Link>
-                        <Link to={'/app/acceptRepository?repositoryId=' + request[i + 1].REPOSITORY_ID}>
                             <div className="col-md-6">
                                 <Card>
                                     <CardHeader
                                         title={'Name - ' + request[i + 1].REPOSITORY_NAME}
-                                        subtitle={'Requested by - ' + request[i + 1].REPOSITORY_REQUEST_BY}
                                         actAsExpander={true}
                                         showExpandableButton={true}
                                     />
-                                    <CardActions>
-                                        <FlatButton label="More" />
-                                    </CardActions>
                                     <CardText expandable={true}>
                                         <Table>
                                             <TableBody displayRowCheckbox={false}>
-                                                <TableRow>
+                                                <TableRow >
                                                     <TableRowColumn>
                                                         Repository Type
                                                     </TableRowColumn>
@@ -191,83 +195,76 @@ class WaitingRequests extends Component {
                                 </Card>
                                 <br />
                             </div>
-                        </Link>
                     </div>
                 );
             }
             if (arrayLength % 2 !== 0) {
                 cards.push(
                     <div className="row" key={i}>
-                        <Link to={'/app/acceptRepository?repositoryId=' + request[arrayLength - 1].REPOSITORY_ID}>
-                            <div className="col-md-6">
-                                <Card>
-                                    <CardHeader
-                                        title={'Name - ' + request[arrayLength - 1].REPOSITORY_NAME}
-                                        subtitle={'Requested by - ' + request[arrayLength - 1].REPOSITORY_REQUEST_BY}
-                                        actAsExpander={true}
-                                        showExpandableButton={true}
-                                    />
-                                    <CardActions>
-                                        <FlatButton label="More" />
-                                    </CardActions>
-                                    <CardText expandable={true}>
-                                        <Table>
-                                            <TableBody displayRowCheckbox={false}>
-                                                <TableRow>
-                                                    <TableRowColumn>
-                                                        Repository Type
-                                                    </TableRowColumn>
-                                                    <TableRowColumn>
-                                                        {request[arrayLength - 1].REPOSITORYTYPE_NAME}
-                                                    </TableRowColumn>
-                                                </TableRow>
-                                                <TableRow>
-                                                    <TableRowColumn>
-                                                        Organization
-                                                    </TableRowColumn>
-                                                    <TableRowColumn>
-                                                        {request[arrayLength - 1].ORGANIZATION_NAME}
-                                                    </TableRowColumn>
-                                                </TableRow>
-                                                <TableRow>
-                                                    <TableRowColumn>
-                                                        Language
-                                                    </TableRowColumn>
-                                                    <TableRowColumn>
-                                                        {request[arrayLength - 1].REPOSITORY_LANGUAGE}
-                                                    </TableRowColumn>
-                                                </TableRow>
-                                                <TableRow>
-                                                    <TableRowColumn>
-                                                        License
-                                                    </TableRowColumn>
-                                                    <TableRowColumn>
-                                                        {request[arrayLength - 1].LICENSE_NAME}
-                                                    </TableRowColumn>
-                                                </TableRow>
-                                                <TableRow>
-                                                    <TableRowColumn>
-                                                        Buildable
-                                                    </TableRowColumn>
-                                                    <TableRowColumn>
-                                                        {(request[arrayLength - 1].REPOSITORY_BUILDABLE) ? 'Yes' : 'No'}
-                                                    </TableRowColumn>
-                                                </TableRow>
-                                                <TableRow>
-                                                    <TableRowColumn>
-                                                        Nexus
-                                                    </TableRowColumn>
-                                                    <TableRowColumn>
-                                                        {(request[arrayLength - 1].REPOSITORY_NEXUS) ? 'Yes' : 'No'}
-                                                    </TableRowColumn>
-                                                </TableRow>
-                                            </TableBody>
-                                        </Table>
-                                    </CardText>
-                                </Card>
-                                <br />
-                            </div>
-                        </Link>
+                        <div className="col-md-6">
+                            <Card>
+                                <CardHeader
+                                    title={'Name - ' + request[arrayLength - 1].REPOSITORY_NAME}
+                                    actAsExpander={true}
+                                    showExpandableButton={true}
+                                />
+                                <CardText expandable={true}>
+                                    <Table>
+                                        <TableBody displayRowCheckbox={false}>
+                                            <TableRow>
+                                                <TableRowColumn>
+                                                    Repository Type
+                                                </TableRowColumn>
+                                                <TableRowColumn>
+                                                    {request[arrayLength - 1].REPOSITORYTYPE_NAME}
+                                                </TableRowColumn>
+                                            </TableRow>
+                                            <TableRow>
+                                                <TableRowColumn>
+                                                    Organization
+                                                </TableRowColumn>
+                                                <TableRowColumn>
+                                                    {request[arrayLength - 1].ORGANIZATION_NAME}
+                                                </TableRowColumn>
+                                            </TableRow>
+                                            <TableRow>
+                                                <TableRowColumn>
+                                                    Language
+                                                </TableRowColumn>
+                                                <TableRowColumn>
+                                                    {request[arrayLength - 1].REPOSITORY_LANGUAGE}
+                                                </TableRowColumn>
+                                            </TableRow>
+                                            <TableRow>
+                                                <TableRowColumn>
+                                                    License
+                                                </TableRowColumn>
+                                                <TableRowColumn>
+                                                    {request[arrayLength - 1].LICENSE_NAME}
+                                                </TableRowColumn>
+                                            </TableRow>
+                                            <TableRow>
+                                                <TableRowColumn>
+                                                    Buildable
+                                                </TableRowColumn>
+                                                <TableRowColumn>
+                                                    {(request[arrayLength - 1].REPOSITORY_BUILDABLE) ? 'Yes' : 'No'}
+                                                </TableRowColumn>
+                                            </TableRow>
+                                            <TableRow>
+                                                <TableRowColumn>
+                                                    Nexus
+                                                </TableRowColumn>
+                                                <TableRowColumn>
+                                                    {(request[arrayLength - 1].REPOSITORY_NEXUS) ? 'Yes' : 'No'}
+                                                </TableRowColumn>
+                                            </TableRow>
+                                        </TableBody>
+                                    </Table>
+                                </CardText>
+                            </Card>
+                            <br />
+                        </div>
                     </div>
                 );
             }
@@ -275,7 +272,7 @@ class WaitingRequests extends Component {
         }
         return (
             <div className="container-fluid">
-                <h2 className="text-center">Requested Repositories For The Approval</h2>
+                <h2 className="text-center">Requested Repository Requests</h2>
                 <br />
                 {cards}
             </div>
@@ -283,4 +280,4 @@ class WaitingRequests extends Component {
     }
 }
 
-export default WaitingRequests;
+export default PendingRepository;

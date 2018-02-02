@@ -7,7 +7,7 @@ import FlatButton from 'material-ui/FlatButton';
 import Repository from '../../services/database/Repository';
 import GitHubRepositoryCreation from '../../services/bpmn/GitHubRepositoryCreation';
 import ValidateUser from '../../services/authentication/ValidateUser';
-import styles from '../../styles';
+import styles from '../../mystyles';
 
 /**
 * @class RejectRepository

@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router';
-import AccessTime from 'material-ui/svg-icons/device/access-time';
-import Alarm from 'material-ui/svg-icons/action/alarm';
+import Notifications from 'material-ui/svg-icons/social/notifications';
 import Person from 'material-ui/svg-icons/social/person';
 import IconButton from 'material-ui/IconButton';
 import IconMenu from 'material-ui/IconMenu';
@@ -99,15 +98,15 @@ class AppHeader extends Component {
                         <ul className="nav navbar-nav navbar-right">
                             <li>
                                 <Link style={{ paddingTop: 5, paddingBottom: 0 }} to={'/app/pendingLibrary'} id="pendingRequests">
-                                    {(this.state.pendingLibrary === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="Requested Library Requests"><AccessTime style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
+                                    {(this.state.pendingLibrary === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="Requested Library Requests"><Notifications style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
                                     <span className="badge">
                                         {(this.state.pendingLibrary === 0) ? null : this.state.pendingLibrary }
                                     </span>
                                 </Link>
                             </li>
                             <li>
-                                <Link style={{ paddingTop: 5, paddingBottom: 0 }} to={'/app/pendingRequests'} id="pendingRequests">
-                                    {(this.state.pendingRequests === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="Requested Repository Requests"><Alarm style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
+                                <Link style={{ paddingTop: 5, paddingBottom: 0 }} to={'/app/pendingRepository'} id="pendingRequests">
+                                    {(this.state.pendingRequests === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="Requested Repository Requests"><Notifications style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
                                     <span className="badge">
                                         {(this.state.pendingRequests === 0) ? null : this.state.pendingRequests }
                                     </span>

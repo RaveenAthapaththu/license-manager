@@ -4,13 +4,14 @@ import LibraryBooks from 'material-ui/svg-icons/av/library-books';
 import IconButton from 'material-ui/IconButton';
 import IconMenu from 'material-ui/IconMenu';
 import MenuItem from 'material-ui/MenuItem';
-import AccessTime from 'material-ui/svg-icons/device/access-time';
 import Person from 'material-ui/svg-icons/social/person';
-import Alarm from 'material-ui/svg-icons/action/alarm';
+import Notifications from 'material-ui/svg-icons/social/notifications';
 import ContentCopy from 'material-ui/svg-icons/content/content-copy';
+import Description from 'material-ui/svg-icons/action/description';
 import Repository from '../../services/database/Repository';
 import LibraryRequest from '../../services/database/LibraryRequest';
 import ValidateUser from '../../services/authentication/ValidateUser';
+import DataManager from '../../services/msf4j/DataManager';
 import logo from '../../assets/images/logo-inverse.svg';
 
 /**
@@ -28,6 +29,7 @@ class AdminHeader extends Component {
         this.state = {
             waitingRequests: 0,
             waitingLibraryRequests: 0,
+            waitingLicenseRequests: 0,
             pendingRequests: 0,
             pendingLibrary: 0,
             userDetails: props.userDetails,//eslint-disable-line
@@ -65,6 +67,15 @@ class AdminHeader extends Component {
                     waitingLibraryRequests: response.length,
                 };
             });
+        });
+        DataManager.selectWaitingLicenseRequests().then((response) => {
+            this.setState(() => {
+                return {
+                    waitingLicenseRequests: response.data.responseData.length,
+                };
+            });
+        }).catch((error) => {
+            throw new Error(error);
         });
     }
     /**
@@ -119,15 +130,15 @@ class AdminHeader extends Component {
                         <ul className="nav navbar-nav navbar-right">
                             <li>
                                 <Link style={{ paddingTop: 5, paddingBottom: 0 }} to={'/app/pendingLibrary'} id="pendingRequests">
-                                    {(this.state.pendingLibrary === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="Requested Library Requests"><AccessTime style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
+                                    {(this.state.pendingLibrary === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="Requested Library Requests"><Notifications style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
                                     <span className="badge">
                                         {(this.state.pendingLibrary === 0) ? null : this.state.pendingLibrary }
                                     </span>
                                 </Link>
                             </li>
                             <li>
-                                <Link style={{ paddingTop: 5, paddingBottom: 0 }} to={'/app/pendingRequests'} id="pendingRequests">
-                                    {(this.state.pendingRequests === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="Requested Repository Requests"><Alarm style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
+                                <Link style={{ paddingTop: 5, paddingBottom: 0 }} to={'/app/pendingRepository'} id="pendingRequests">
+                                    {(this.state.pendingRequests === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="Requested Repository Requests"><Notifications style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
                                     <span className="badge">
                                         {(this.state.pendingRequests === 0) ? null : this.state.pendingRequests }
                                     </span>
@@ -142,10 +153,18 @@ class AdminHeader extends Component {
                                 </Link>
                             </li>
                             <li>
-                                <Link style={{ paddingTop: 5, paddingBottom: 0 }} to={'/app/waitingRequests'} id="pendingRequests">
+                                <Link style={{ paddingTop: 5, paddingBottom: 0 }} to={'/app/waitingRepository'} id="pendingRequests">
                                     {(this.state.waitingRequests === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="Repository Requests"><LibraryBooks style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
                                     <span className="badge">
                                         {(this.state.waitingRequests === 0) ? null : this.state.waitingRequests }
+                                    </span>
+                                </Link>
+                            </li>
+                            <li>
+                                <Link style={{ paddingTop: 5, paddingBottom: 0 }} to={'/app/waitingLicense'} id="pendingRequests">
+                                    {(this.state.waitingLicenseRequests === 0) ? null : <IconButton style={{ paddingTop: 0, paddingBottom: 0 }} tooltip="License Requests"><Description style={{ paddingTop: 0, paddingBottom: 0 }} /></IconButton>}
+                                    <span className="badge">
+                                        {(this.state.waitingLicenseRequests === 0) ? null : this.state.waitingLicenseRequests }
                                     </span>
                                 </Link>
                             </li>
@@ -155,7 +174,7 @@ class AdminHeader extends Component {
                                     anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
                                     targetOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                                 >
-                                    <MenuItem primaryText={props.userDetails.userEmail} disabled="true" style={{ color: '#ffffff' }} />
+                                    <MenuItem primaryText={props.userDetails.userEmail} style={{ color: '#ffffff' }} />
                                     <MenuItem primaryText="Sign out" onClick={this.logout} />
                                 </IconMenu>
                             </li>

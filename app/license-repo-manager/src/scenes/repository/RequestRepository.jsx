@@ -28,11 +28,12 @@ import Organization from '../../services/database/Organization';
 import User from '../../services/database/User';
 import RepositoryType from '../../services/database/RepositoryType';
 import License from '../../services/database/License';
+import ProductAreas from '../../services/database/ProductAreas';
 import Team from '../../services/github/Team';
 import Common from '../../services/github/Common';
 import StringValidations from '../../services/validations/StringValidations';
 import GitHubRepositoryCreation from '../../services/bpmn/GitHubRepositoryCreation';
-import styles from '../../styles';
+import styles from '../../mystyles';
 
 
 /**
@@ -61,16 +62,20 @@ class RequestRepository extends Component {
             displayFieldset: 'none',
             displayLoader: 'none',
             displayProgress: 'block',
+            displayProductArea: 'none',
             groupIdInputRequired: false,
             groupIdInputSpan: ' ',
+            productAreaSelectSpan: ' ',
             userDetails: [],
             open: false,
             openError: false,
             openSuccess: false,
+            productAreas: [],
         };
         this.validateInputRepositoryName = this.validateInputRepositoryName.bind(this);
         this.submitRequest = this.submitRequest.bind(this);
         this.makeGroupIdRequired = this.makeGroupIdRequired.bind(this);
+        this.makeProductAreaRequired = this.makeProductAreaRequired.bind(this);
         this.goBackToRequest = this.goBackToRequest.bind(this);
         this.setTeams = this.setTeams.bind(this);
         this.handleOpen = this.handleOpen.bind(this);
@@ -79,6 +84,7 @@ class RequestRepository extends Component {
         this.handleCloseError = this.handleCloseError.bind(this);
         this.handleOpenSuccess = this.handleOpenSuccess.bind(this);
         this.handleCloseSuccess = this.handleCloseSuccess.bind(this);
+        this.reloadPage = this.reloadPage.bind(this);
     }
     /**
     * @class RequestRepository
@@ -112,6 +118,14 @@ class RequestRepository extends Component {
             this.setState(() => {
                 return {
                     displayLoader: 'none',
+                };
+            });
+        });
+
+        ProductAreas.selectAll().then((response) => {
+            this.setState(() => {
+                return {
+                    productAreas: response,
                 };
             });
         });
@@ -240,6 +254,27 @@ class RequestRepository extends Component {
         }
     }
     /**
+    * make group id required
+    */
+    makeProductAreaRequired() {
+        const checkedValue = this.inputBuildable.checked;
+        if (checkedValue === true) {
+            this.setState(() => {
+                return {
+                    displayProductArea: 'block',
+                    productAreaSelectSpan: <span className="required">*</span>,
+                };
+            });
+        } else {
+            this.setState(() => {
+                return {
+                    displayProductArea: 'none',
+                    productAreaSelectSpan: ' ',
+                };
+            });
+        }
+    }
+    /**
     * @param {any} e event
     * go back to request
     */
@@ -271,6 +306,7 @@ class RequestRepository extends Component {
         e.preventDefault();
         e.stopPropagation();
         e.nativeEvent.stopImmediatePropagation();
+        let productArea = null;
         const repositoryTypeOptions = this.selectRepositoryType.options;
         const organizationOptions = this.selectOrganization.options;
         const teamOptions = this.selectTeam.options;
@@ -294,6 +330,14 @@ class RequestRepository extends Component {
         const description = StringValidations.escapeCharacters(this.textDescription.value.toString());
         const requestedBy = StringValidations.escapeCharacters(this.state.userDetails.userEmail);
 
+        if (buildable === true) {
+            if (this.state.productAreas.length === 0) {
+                productArea = '';
+            } else {
+                const productAreaOptions = this.selectProducArea.options;
+                productArea = productAreaOptions[productAreaOptions.selectedIndex].text;
+            }
+        }
         const data = [
             repositoryName,
             language,
@@ -307,6 +351,7 @@ class RequestRepository extends Component {
             organization,
             repositoryType,
             requestedBy,
+            productArea,
         ];
         const mailData = [
             repositoryName,
@@ -321,6 +366,7 @@ class RequestRepository extends Component {
             organizationText,
             repositoryTypeText,
             requestedBy,
+            productArea,
         ];
         this.handleClose();
         this.setState(() => {
@@ -502,7 +548,11 @@ class RequestRepository extends Component {
                         <div className="col-lg-10">
                             <div className="checkbox">
                                 <label htmlFor="inputBuildable">
-                                    <input type="checkbox" ref={(c) => { this.inputBuildable = c; }} /> Component Buildable
+                                    <input
+                                        type="checkbox"
+                                        ref={(c) => { this.inputBuildable = c; }}
+                                        onChange={this.makeProductAreaRequired}
+                                    /> Component Buildable
                                 </label>
                                 <br /><br />
                                 <label htmlFor="inputPrivate">
@@ -517,6 +567,22 @@ class RequestRepository extends Component {
                                     />Create Nexus Repository
                                 </label>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="form-group" style={{ display: this.state.displayProductArea }}>
+                        <label htmlFor="selectProducArea" className="col-lg-2 control-label">
+                            <span className="required">*</span>&nbsp;Product Area
+                        </label>
+                        <div className="col-lg-10">
+                            {/* eslint-disable */}
+                            <select className="form-control" ref={(c) => { this.selectProducArea = c; }} >
+                                {(this.state.productAreas !== null) ? this.state.productAreas.map((productArea)=>
+                                <option key={productArea.pqd_area_id}
+                                value={productArea.pqd_area_name}>{productArea.pqd_area_name}
+                                </option>) : <option></option> }
+                            </select>
+                            {/* eslint-enable */}
                         </div>
                     </div>
 

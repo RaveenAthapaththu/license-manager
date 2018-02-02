@@ -4,55 +4,48 @@ import Menu from 'material-ui/Menu';
 import MenuItem from 'material-ui/MenuItem';
 import LibraryBooks from 'material-ui/svg-icons/av/library-books';
 import ContentCopy from 'material-ui/svg-icons/content/content-copy';
-import Add from 'material-ui/svg-icons/content/add';
-import ArrowDropRight from 'material-ui/svg-icons/navigation-arrow-drop-right';
+import Description from 'material-ui/svg-icons/action/description';
 import { Link } from 'react-router';
-import styles from '../../styles';
+import styles from '../../mystyles';
 
 /**
 * @class LeftNav
 * @extends {Component}
-* @description Normal user left nav
+* @description Admin left nav
 */
 class LeftNav extends Component {
     /**
-    * @class LeftNav
+    * @class Root
     * @extends {Component}
-    * @description Normal user left nav
+    * @description Admin left nav render method
     */
     render() {
         return (
-            <div>
-                <Paper style={styles.style.paper}>
-                    <Menu>
+            <Paper style={styles.style.paper}>
+                <Menu style={styles.menu}>
+                    <Link to="/app/requestRepository" >
                         <MenuItem
                             className="icon-menu-wrapper"
                             primaryText="Repository"
                             leftIcon={<LibraryBooks />}
-                            rightIcon={<ArrowDropRight />}
-                            menuItems={[
-                                <Link to="/app/requestRepository" >
-                                    <MenuItem
-                                        primaryText="Request"
-                                        leftIcon={<Add />}
-                                    />
-                                </Link>,
-                            ]}
                         />
+                    </Link>
+                    <Link to="/app/requestLibrary" >
                         <MenuItem
+                            className="icon-menu-wrapper"
                             primaryText="Library"
                             leftIcon={<ContentCopy />}
-                            rightIcon={<ArrowDropRight />}
-                            menuItems={[
-                                <Link to="/app/requestLibrary" >
-                                    <MenuItem primaryText="Request" leftIcon={<Add />} />
-                                </Link>,
-                            ]}
                         />
-                    </Menu>
-                </Paper>
-
-            </div>
+                    </Link>
+                    <Link to="/app/requestLicense" >
+                        <MenuItem
+                            className="icon-menu-wrapper"
+                            primaryText="License"
+                            leftIcon={<Description />}
+                        />
+                    </Link>
+                </Menu>
+            </Paper>
         );
     }
 }

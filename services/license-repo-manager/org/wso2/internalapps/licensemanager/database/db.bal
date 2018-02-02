@@ -7,18 +7,47 @@ import ballerina.utils.logger;
 import ballerina.doc;
 import ballerina.lang.jsons;
 
-sql:ClientConnector connection = null;
+
 
 @doc:Description {value:"Set Connection"}
 function setConnection(){
+    sql:ClientConnector connection = null;
     if(connection == null){
         string dbURL = conf:getConfigData("DB_URL");
         string username = conf:getConfigData("DB_USERNAME");
         string password = conf:getConfigData("DB_PASSWORD");
-        map propertiesMap = {"jdbcUrl":dbURL, "username":username, "password":password,"maximumPoolSize":100};
+        int poolSize;
+        poolSize,_ = <int>conf:getConfigData("POOL_SIZE");
+        map propertiesMap = {"jdbcUrl":dbURL, "username":username, "password":password,"maximumPoolSize":poolSize};
         connection = create sql:ClientConnector(propertiesMap);
         return;
     }
+}
+
+
+@doc:Description {value:"Get Connection"}
+function getConnection()(sql:ClientConnector con){
+    string dbURL = conf:getConfigData("DB_URL");
+    string username = conf:getConfigData("DB_USERNAME");
+    string password = conf:getConfigData("DB_PASSWORD");
+    int poolSize;
+    poolSize,_ = <int>conf:getConfigData("POOL_SIZE");
+    map propertiesMap = {"jdbcUrl":dbURL, "username":username, "password":password,"maximumPoolSize":poolSize};
+    con = create sql:ClientConnector(propertiesMap);
+    return;
+
+}
+
+@doc:Description {value:"Get Props"}
+function getProps()(map propertiesMap){
+    string dbURL = conf:getConfigData("DB_URL");
+    string username = conf:getConfigData("DB_USERNAME");
+    string password = conf:getConfigData("DB_PASSWORD");
+    int poolSize;
+    poolSize,_ = <int>conf:getConfigData("POOL_SIZE");
+    propertiesMap = {"jdbcUrl":dbURL, "username":username, "password":password,"maximumPoolSize":poolSize};
+    return;
+
 }
 
 @doc:Description {value:"Insert data into LM_REPOSITORY table"}
@@ -35,11 +64,9 @@ function setConnection(){
 @doc:Param {value:"repoType: Repository Type(Carbon/Product etc)"}
 @doc:Param {value:"requestedBy: E-mail of the requested person"}
 @doc:Param {value:"returnValue: No. of rows affected by"}
-function repositoryInsertData(string name,string language,boolean buildable,boolean nexus,boolean private,string description,string groupId,int license,int team,int organization,int repoType,string requestBy)(int returnValue) {
+function repositoryInsertData(string name,string language,boolean buildable,boolean nexus,boolean private,string description,string groupId,int license,int team,int organization,int repoType,string requestBy, string productArea)(int returnValue) {
 
-    if(connection == null) {
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "INSERT INTO LM_REPOSITORY(
@@ -54,9 +81,10 @@ function repositoryInsertData(string name,string language,boolean buildable,bool
                                                     REPOSITORY_TEAM,
                                                     REPOSITORY_ORGANIZATION,
                                                     REPOSITORY_TYPE,
-                                                    REPOSITORY_REQUEST_BY
+                                                    REPOSITORY_REQUEST_BY,
+                                                    REPOSITORY_PRODUCT_AREA
                                                   )
-                                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+                                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
         sql:Parameter paraName = {sqlType:"varchar", value:name};
         sql:Parameter paraLanguage = {sqlType:"varchar", value:language};
         sql:Parameter paraBuildable = {sqlType:"boolean", value:buildable};
@@ -69,11 +97,15 @@ function repositoryInsertData(string name,string language,boolean buildable,bool
         sql:Parameter paraOrganization = {sqlType:"integer", value:organization};
         sql:Parameter paraRepoType = {sqlType:"integer", value:repoType};
         sql:Parameter paraRequestBy = {sqlType:"varchar", value:requestBy};
-        sql:Parameter[] parameterArray = [paraName,paraLanguage,paraBuildable,paraNexus,paraPrivate,paraDescription,paraGroupId,paraLicense,paraTeam,paraOrganization,paraRepoType,paraRequestBy];
+        sql:Parameter paraProductArea = {sqlType:"varchar", value:productArea};
+        sql:Parameter[] parameterArray = [paraName,paraLanguage,paraBuildable,paraNexus,paraPrivate,paraDescription,paraGroupId,paraLicense,paraTeam,paraOrganization,paraRepoType,paraRequestBy,paraProductArea];
         returnValue = connection.update(query,parameterArray);
+        logger:debug(returnValue);
     } catch(errors:Error err) {
         returnValue = -1;
         logger:error("DB functions : repositoryInsertData " + err.msg);
+    } finally {
+        connection.close();
     }
     return returnValue;
 }
@@ -85,9 +117,8 @@ function repositoryInsertData(string name,string language,boolean buildable,bool
 @doc:Param {value:"returnValue: No. of rows affected by"}
 function repositoryUpdateRejectDetails(string rejectBy,string rejectReason,int repositoryId)(int returnValue){
 
-    if(connection == null) {
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
+
     try {
         string query = "UPDATE LM_REPOSITORY SET REPOSITORY_ACCEPT = ? , REPOSITORY_DEACTIVATED_BY = ? , REPOSITORY_DEACTIVATED_REASON = ? WHERE REPOSITORY_ID = ?";
         sql:Parameter paraAccept = {sqlType:"boolean", value:false};
@@ -96,8 +127,11 @@ function repositoryUpdateRejectDetails(string rejectBy,string rejectReason,int r
         sql:Parameter paraRepositoryId = {sqlType:"integer", value:repositoryId};
         sql:Parameter[] parameterArray = [paraAccept,paraRejectBy,paraRejectReason,paraRepositoryId];
         returnValue = connection.update(query,parameterArray);
+        logger:debug(returnValue);
     } catch(errors:Error err) {
         logger:error("DB functions : repositoryInsertData " + err.msg);
+    } finally {
+        connection.close();
     }
 
     return returnValue;
@@ -110,10 +144,8 @@ function repositoryUpdateRejectDetails(string rejectBy,string rejectReason,int r
 @doc:Param {value:"returnValue: No. of rows affected by"}
 function repositoryUpdateTaskAndProcessIds(int taskId,int processId,string repositoryName)(int returnValue) {
 
-    if(connection == null) {
+    sql:ClientConnector connection = getConnection();
 
-        setConnection();
-    }
     try {
         string query = "UPDATE LM_REPOSITORY SET REPOSITORY_BPMN_TASK_ID = ? , REPOSITORY_BPMN_PROCESS_ID = ? WHERE REPOSITORY_NAME = ?";
         sql:Parameter paraTaskId = {sqlType:"integer", value:taskId};
@@ -121,9 +153,12 @@ function repositoryUpdateTaskAndProcessIds(int taskId,int processId,string repos
         sql:Parameter paraRepositoryName = {sqlType:"varchar", value:repositoryName};
         sql:Parameter[] parameterArray = [paraTaskId,paraProcessId,paraRepositoryName];
         returnValue = connection.update(query,parameterArray);
+        logger:debug(returnValue);
     } catch(errors:Error err) {
         returnValue = -1;
         logger:error("DB functions : repositoryInsertData " + err.msg);
+    } finally {
+        connection.close();
     }
 
     return;
@@ -145,11 +180,9 @@ function repositoryUpdateTaskAndProcessIds(int taskId,int processId,string repos
 @doc:Param {value:"acceptBy: E-mail of the accepted person"}
 @doc:Param {value:"requestedBy: E-mail of the requested person"}
 @doc:Param {value:"returnValue: No. of rows affected by"}
-function repositoryUpdateAll(string name,string language,boolean buildable,boolean nexus,boolean private,string description,string groupId,int license,int team,int organization,int repoType,boolean accept,string acceptBy,int id)(int returnValue) {
+function repositoryUpdateAll(string name,string language,boolean buildable,boolean nexus,boolean private,string description,string groupId,int license,int team,int organization,int repoType,boolean accept,string acceptBy,string productArea,int id)(int returnValue) {
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "UPDATE LM_REPOSITORY SET
@@ -165,7 +198,8 @@ function repositoryUpdateAll(string name,string language,boolean buildable,boole
                                                     REPOSITORY_ORGANIZATION = ?,
                                                     REPOSITORY_TYPE = ?,
                                                     REPOSITORY_ACCEPT = ?,
-                                                    REPOSITORY_ACCEPTED_BY = ?
+                                                    REPOSITORY_ACCEPTED_BY = ?,
+                                                    REPOSITORY_PRODUCT_AREA = ?
 
                                                     WHERE REPOSITORY_ID = ?";
         sql:Parameter paraName = {sqlType:"varchar", value:name};
@@ -181,12 +215,16 @@ function repositoryUpdateAll(string name,string language,boolean buildable,boole
         sql:Parameter paraRepoType = {sqlType:"integer", value:repoType};
         sql:Parameter paraAccept = {sqlType:"boolean", value:accept};
         sql:Parameter paraAcceptBy = {sqlType:"varchar", value:acceptBy};
+        sql:Parameter paraProductArea = {sqlType:"varchar", value:productArea};
         sql:Parameter paraRepositoryId = {sqlType:"integer", value:id};
-        sql:Parameter[] parameterArray = [paraName, paraLanguage, paraBuildable, paraNexus, paraPrivate, paraDescription, paraGroupId, paraLicense, paraTeam, paraOrganization, paraRepoType, paraAccept, paraAcceptBy, paraRepositoryId];
+        sql:Parameter[] parameterArray = [paraName, paraLanguage, paraBuildable, paraNexus, paraPrivate, paraDescription, paraGroupId, paraLicense, paraTeam, paraOrganization, paraRepoType, paraAccept, paraAcceptBy, paraProductArea, paraRepositoryId];
         returnValue = connection.update(query, parameterArray);
+        logger:debug(returnValue);
     } catch(errors:Error err) {
         returnValue = -1;
         logger:error("DB functions : repositoryUpdateAll " + err.msg);
+    } finally {
+        connection.close();
     }
     return returnValue;
 }
@@ -195,9 +233,7 @@ function repositoryUpdateAll(string name,string language,boolean buildable,boole
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function repositorySelectAll()(json resultJson) {
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT
@@ -215,9 +251,12 @@ function repositorySelectAll()(json resultJson) {
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : repositorySelectAll " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 }
@@ -227,9 +266,7 @@ function repositorySelectAll()(json resultJson) {
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function repositorySelectFromName(string name)(json resultJson) {
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try{
         string query = "SELECT
@@ -258,10 +295,12 @@ function repositorySelectFromName(string name)(json resultJson) {
         sql:Parameter[] parameterArray = [paraName];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
-
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : repositorySelectFromName " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 }
@@ -271,9 +310,7 @@ function repositorySelectFromName(string name)(json resultJson) {
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function repositorySelectFromId(int id)(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
 
@@ -295,10 +332,12 @@ function repositorySelectFromId(int id)(json resultJson){
         sql:Parameter[] parameterArray = [paraName];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
-        logger:info(resultJson);
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : repositorySelectFromId " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 }
@@ -308,9 +347,7 @@ function repositorySelectFromId(int id)(json resultJson){
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function repositorySelectFromRequestByAndWaiting(string requestBy)(json resultJson) {
 
-    if(connection == null) {
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT
@@ -329,9 +366,12 @@ function repositorySelectFromRequestByAndWaiting(string requestBy)(json resultJs
         sql:Parameter[] parameterArray = [paraName];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : repositorySelectFromRequestByAndWaiting " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 }
@@ -340,9 +380,8 @@ function repositorySelectFromRequestByAndWaiting(string requestBy)(json resultJs
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function repositorySelectWaitingRequests()(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
+
     try{
         string query = "SELECT
                             LM_REPOSITORY.*,
@@ -359,9 +398,12 @@ function repositorySelectWaitingRequests()(json resultJson){
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : repositorySelectWaitingRequests " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 }
@@ -370,18 +412,19 @@ function repositorySelectWaitingRequests()(json resultJson){
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function organizationSelectAll()(json resultJson) {
 
-    if(connection == null) {
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try{
         string query = "SELECT * FROM LM_ORGANIZATION";
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     }catch(errors:Error err){
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : organizationSelectAll " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -391,18 +434,19 @@ function organizationSelectAll()(json resultJson) {
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function licenseSelectAll()(json resultJson) {
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try{
         string query = "SELECT * FROM LM_LICENSE";
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     }catch(errors:Error err){
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : licenseSelectAll " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 }
@@ -411,18 +455,19 @@ function licenseSelectAll()(json resultJson) {
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function repositoryTypeSelectAll()(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try{
         string query = "SELECT * FROM LM_REPOSITORYTYPE";
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     }catch(errors:Error err){
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : repositoryTypeSelectAll " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 }
@@ -431,17 +476,19 @@ function repositoryTypeSelectAll()(json resultJson){
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function componentSelectAll()(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
+
     try {
         string query = "SELECT * FROM LM_COMPONENT";
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : componentSelectAll " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -451,18 +498,19 @@ function componentSelectAll()(json resultJson){
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function roleSelectRepositoryAdminUsers()(json resultJson) {
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT * FROM LM_ROLE WHERE ROLE_TYPE = 'REPOSITORY' AND ROLE_PERMISSION = 'ADMIN'";
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : roleSelectRepositoryAdminUsers " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -472,17 +520,19 @@ function roleSelectRepositoryAdminUsers()(json resultJson) {
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function roleSelectRepositoryMainUsers()(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
+
     try {
         string query = "SELECT * FROM LM_ROLE WHERE ROLE_TYPE = 'REPOSITORY'";
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : roleSelectRepositoryMainUsers " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -495,15 +545,15 @@ function roleRepositoryCheckAdminUsers(string email)(json resultJson){
 
     json responseDbJson;
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
+
     try{
         string query = "SELECT * FROM LM_ROLE WHERE ROLE_EMAIL = ? AND ROLE_TYPE = 'REPOSITORY'";
         sql:Parameter paraEmail = {sqlType:"varchar", value:email};
         sql:Parameter[] parameterArray = [paraEmail];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         responseDbJson,_ = <json>responseDataFromDb;
+        logger:debug(responseDbJson);
         int length = lengthof responseDbJson;
         if(length > 0){
             resultJson = responseDbJson;
@@ -514,6 +564,8 @@ function roleRepositoryCheckAdminUsers(string email)(json resultJson){
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : roleRepositoryCheckAdminUsers " + err.msg);
 
+    } finally {
+        connection.close();
     }
     return;
 
@@ -523,18 +575,19 @@ function roleRepositoryCheckAdminUsers(string email)(json resultJson){
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function roleSelectLibraryMainUsers()(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT * FROM LM_ROLE WHERE ROLE_TYPE = 'LIBRARY'";
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     }catch(errors:Error err){
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : roleSelectLibraryMainUsers " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 }
@@ -543,18 +596,19 @@ function roleSelectLibraryMainUsers()(json resultJson){
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function libCategorySelectAll()(json resultJson){
 
-    if(connection == null) {
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT * FROM LM_LIBCATEGORY";
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : libCategorySelectAll " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -566,9 +620,7 @@ function libCategorySelectAll()(json resultJson){
 function roleGetUserDetails(string email)(json resultJson) {
     json responseDbJson;
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try{
         string query = "SELECT
@@ -582,6 +634,7 @@ function roleGetUserDetails(string email)(json resultJson) {
         sql:Parameter[] parameterArray = [paraEmail];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         responseDbJson,_ = <json>responseDataFromDb;
+        logger:debug(responseDbJson);
         int length = lengthof responseDbJson;
         if(length > 0){
             resultJson = responseDbJson;
@@ -591,6 +644,8 @@ function roleGetUserDetails(string email)(json resultJson) {
     }catch(errors:Error err){
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : roleGetUserDetails " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -601,9 +656,7 @@ function roleGetUserDetails(string email)(json resultJson) {
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function jenkinsFolderMatchRegex(string jenkinsJobName)(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try{
         string query = "CALL JENKINS_GET_FOLDER(?)";
@@ -611,9 +664,12 @@ function jenkinsFolderMatchRegex(string jenkinsJobName)(json resultJson){
         sql:Parameter[] parameterArray = [paraJenkinsJobName];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     }catch(errors:Error err){
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : jenkinsFolderMatchRegex " + err.msg);
+    } finally {
+        connection.close();
     }
     return resultJson;
 
@@ -625,9 +681,7 @@ function jenkinsFolderMatchRegex(string jenkinsJobName)(json resultJson){
 @doc:Param {value:"returnValue: No. of rows affected by"}
 function componentInsertData(string key,string url)(int returnValue){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "INSERT INTO LM_COMPONENT(
@@ -645,9 +699,12 @@ function componentInsertData(string key,string url)(int returnValue){
         sql:Parameter paraFileName = {sqlType:"boolean", value:key};
         sql:Parameter[] parameterArray = [paraKey,paraName,paraType,paraUrl,paraFileName];
         returnValue = connection.update(query,parameterArray);
+        logger:debug(returnValue);
     }catch(errors:Error err){
         returnValue = -1;
         logger:error("DB functions : componentInsertData " + err.msg);
+    } finally {
+        connection.close();
     }
     return returnValue;
 }
@@ -658,9 +715,7 @@ function componentInsertData(string key,string url)(int returnValue){
 @doc:Param {value:"returnValue: No. of rows affected by"}
 function libraryAndRequestSelectFromNameAndVersion(string libraryName,string libraryVersion)(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "(SELECT LIB_ID,LIB_NAME,LIB_VERSION FROM LM_LIBRARY WHERE LIB_NAME=? AND LIB_VERSION=?)
@@ -671,9 +726,12 @@ function libraryAndRequestSelectFromNameAndVersion(string libraryName,string lib
         sql:Parameter[] parameterArray = [paraLibraryName,paraLibraryVersion,paraLibraryName,paraLibraryVersion];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     }catch(errors:Error err){
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : libraryAndRequestSelectFromNameAndVersion " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -683,9 +741,7 @@ function libraryAndRequestSelectFromNameAndVersion(string libraryName,string lib
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function libTypeSelectDefault()(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT
@@ -697,9 +753,12 @@ function libTypeSelectDefault()(json resultJson){
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : libTypeSelectDefault " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -710,9 +769,7 @@ function libTypeSelectDefault()(json resultJson){
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function libTypeSelectFromCategory(int categoryId)(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT
@@ -725,9 +782,12 @@ function libTypeSelectFromCategory(int categoryId)(json resultJson){
         sql:Parameter[] parameterArray = [paraCategoryId];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     }catch(errors:Error err){
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : libTypeSelectFromCategory " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -751,9 +811,7 @@ function libTypeSelectFromCategory(int categoryId)(json resultJson){
 @doc:Param {value:"returnValue: No. of rows affected by"}
 function libraryRequestInsertData(string name,int libType,int category,string groupId,string artifactId,string useVersion,string latestVersion,string fileName,string company,boolean sponsored,string purpose,string description,string alternatives,string requestBy)(int returnValue){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try{
         string query = "INSERT INTO LM_LIBREQUEST(
@@ -788,26 +846,29 @@ function libraryRequestInsertData(string name,int libType,int category,string gr
         sql:Parameter paraAlternatives = {sqlType:"varchar", value:alternatives};
         sql:Parameter paraRequestBy = {sqlType:"varchar", value:requestBy};
         sql:Parameter[] parameterArray = [
-                                             paraName,
-                                             paraType,
-                                             paraCategory,
-                                             paraGroupId,
-                                             paraArtifactId,
-                                             paraUseVersion,
-                                             paraLatestVersion,
-                                             paraFileName,
-                                             paraCompany,
-                                             paraSponsored,
-                                             paraPurpose,
-                                             paraDescription,
-                                             paraAlternatives,
-                                             paraRequestBy
+                                         paraName,
+                                         paraType,
+                                         paraCategory,
+                                         paraGroupId,
+                                         paraArtifactId,
+                                         paraUseVersion,
+                                         paraLatestVersion,
+                                         paraFileName,
+                                         paraCompany,
+                                         paraSponsored,
+                                         paraPurpose,
+                                         paraDescription,
+                                         paraAlternatives,
+                                         paraRequestBy
                                          ];
 
         returnValue = connection.update(query,parameterArray);
+        logger:debug(returnValue);
     }catch(errors:Error err){
         returnValue = -1;
         logger:error("DB functions : libraryRequestInsertData " + err.msg);
+    } finally {
+        connection.close();
     }
 
     return;
@@ -824,9 +885,8 @@ function libraryRequestInsertData(string name,int libType,int category,string gr
 @doc:Param {value:"returnValue: No. of rows affected by"}
 function libraryInsertData(string name,string libType,string useVersion,string fileName,string description,string groupId,string artifactId)(int returnValue){
 
-    if(connection == null) {
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
+
     try {
         string query = "INSERT INTO LM_LIBRARY(
                                                     LIB_NAME,
@@ -846,19 +906,22 @@ function libraryInsertData(string name,string libType,string useVersion,string f
         sql:Parameter paraGroupId = {sqlType:"varchar", value:groupId};
         sql:Parameter paraArtifactId = {sqlType:"varchar", value:artifactId};
         sql:Parameter[] parameterArray = [
-                                             paraName,
-                                             paraType,
-                                             paraUseVersion,
-                                             paraFileName,
-                                             paraDescription,
-                                             paraGroupId,
-                                             paraArtifactId
+                                         paraName,
+                                         paraType,
+                                         paraUseVersion,
+                                         paraFileName,
+                                         paraDescription,
+                                         paraGroupId,
+                                         paraArtifactId
 
                                          ];
         returnValue = connection.update(query,parameterArray);
+        logger:debug(returnValue);
     } catch(errors:Error err) {
         returnValue = -1;
         logger:error("DB functions : libraryInsertData " + err.msg);
+    } finally {
+        connection.close();
     }
 
     return returnValue;
@@ -870,9 +933,7 @@ function libraryInsertData(string name,string libType,string useVersion,string f
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function libraryRequestSelectFromNameAndVersion(string libraryName,string libraryVersion)(json resultJson){
 
-    if(connection == null) {
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT * FROM LM_LIBREQUEST WHERE LIBREQUEST_NAME = ? AND LIBREQUEST_USE_VERSION = ?";
@@ -881,9 +942,12 @@ function libraryRequestSelectFromNameAndVersion(string libraryName,string librar
         sql:Parameter[] parameterArray = [paraLibraryName,paraLibraryVersion];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : libraryRequestSelectFromNameAndVersion " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 
@@ -896,9 +960,8 @@ function libraryRequestSelectFromNameAndVersion(string libraryName,string librar
 @doc:Param {value:"returnValue: No. of rows affected by"}
 function libraryRequestUpdateTaskAndProcessIds(int taskId,int processId,string libraryName, string useVersion)(int returnValue){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
+
     try{
         string query = "UPDATE LM_LIBREQUEST SET LIBREQUEST_BPMN_TASK_ID = ? , LIBREQUEST_BPMN_PROCESS_ID = ? WHERE LIBREQUEST_NAME = ? AND LIBREQUEST_USE_VERSION = ?";
         sql:Parameter paraTaskId = {sqlType:"integer", value:taskId};
@@ -907,9 +970,12 @@ function libraryRequestUpdateTaskAndProcessIds(int taskId,int processId,string l
         sql:Parameter paraUseVersion = {sqlType:"varchar", value:useVersion};
         sql:Parameter[] parameterArray = [paraTaskId,paraProcessId,paraLibraryName,paraUseVersion];
         returnValue = connection.update(query,parameterArray);
+        logger:debug(returnValue);
     }catch(errors:Error err){
         returnValue = -1;
         logger:error("DB functions : libraryRequestUpdateTaskAndProcessIds " + err.msg);
+    } finally {
+        connection.close();
     }
     return;
 }
@@ -922,9 +988,7 @@ function libraryRequestUpdateTaskAndProcessIds(int taskId,int processId,string l
 @doc:Param {value:"returnValue: No. of rows affected by"}
 function libraryRequestUpdateAcceptOrRejectDetails(string accept,string acceptOrRejectBy,string rejectReason,int libRequestId)(int returnValue){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "UPDATE
@@ -938,10 +1002,12 @@ function libraryRequestUpdateAcceptOrRejectDetails(string accept,string acceptOr
         sql:Parameter paraRequestId = {sqlType:"integer", value:libRequestId};
         sql:Parameter[] parameterArray = [paraAccept,paraAcceptOrRejectBy,paraRejectReason,paraRequestId];
         returnValue = connection.update(query,parameterArray);
-
+        logger:debug(returnValue);
     } catch(errors:Error err) {
         returnValue = 0;
         logger:error("DB functions : libraryRequestUpdateAcceptOrRejectDetails " + err.msg);
+    } finally {
+        connection.close();
     }
 
     return returnValue;
@@ -952,9 +1018,7 @@ function libraryRequestUpdateAcceptOrRejectDetails(string accept,string acceptOr
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function libraryRequestSelectFromId(int id)(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT
@@ -969,9 +1033,12 @@ function libraryRequestSelectFromId(int id)(json resultJson){
         sql:Parameter[] parameterArray = [paraLibraryId];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : libraryRequestSelectFromId " + err.msg);
+    } finally {
+        connection.close();
     }
     return resultJson;
 
@@ -984,9 +1051,7 @@ function libraryRequestSelectWaitingRequests(json idArray)(json resultJson){
     string whereClause = "";
     int i = 0;
     int idArrayLength = lengthof idArray;
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         if(idArrayLength == 0){
@@ -1014,9 +1079,12 @@ function libraryRequestSelectWaitingRequests(json idArray)(json resultJson){
         sql:Parameter[] parameterArray = [];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : libraryRequestSelectFromId " + err.msg);
+    } finally {
+        connection.close();
     }
     return resultJson;
 
@@ -1027,9 +1095,7 @@ function libraryRequestSelectWaitingRequests(json idArray)(json resultJson){
 @doc:Param {value:"resultJson: JSON payload of selected data"}
 function libraryRequestSelectWaitingRequestsFromRequestBy(string requestedBy)(json resultJson){
 
-    if(connection == null){
-        setConnection();
-    }
+    sql:ClientConnector connection = getConnection();
 
     try {
         string query = "SELECT
@@ -1044,9 +1110,12 @@ function libraryRequestSelectWaitingRequestsFromRequestBy(string requestedBy)(js
         sql:Parameter[] parameterArray = [paraRequestedBy];
         datatable responseDataFromDb = connection.select(query ,parameterArray);
         resultJson,_ = <json>responseDataFromDb;
+        logger:debug(resultJson);
     } catch(errors:Error err) {
         resultJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error("DB functions : libraryRequestSelectFromId " + err.msg);
+    } finally {
+        connection.close();
     }
     return resultJson;
 

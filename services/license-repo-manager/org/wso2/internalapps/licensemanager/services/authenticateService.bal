@@ -70,7 +70,7 @@ function validateUser(message request)(message,string){
         time:Time currentTime = time:currentTime();
         currentTimeInt = currentTime.time / 1000;
         if((strings:hasSuffix(email,"@wso2.com")) && (currentTimeInt < (epocTime + 86400)) && verified ){
-            logger:info("Valid User");
+            isValid = true;
             userSession = http:createSessionIfAbsent(request);
             returnJson = database:roleGetUserDetails(email);
             returnJsonLength = lengthof returnJson;
@@ -98,7 +98,6 @@ function validateUser(message request)(message,string){
                 }
                 i = i + 1;
             }
-            isValid = true;
             http:setAttribute(userSession,"isValid",isValid);
             http:setAttribute(userSession,"userEmail",email);
             http:setAttribute(userSession,"loginTime",epocTime);
@@ -107,7 +106,6 @@ function validateUser(message request)(message,string){
             http:setAttribute(userSession,"isAnyAdmin",isAnyAdmin);
             http:setAttribute(userSession,"libraryUserDetails",userLibraryPermissionJsonArray);
             sessionId = http:getId(userSession);
-            logger:info(sessionId);
             responseJson = {"isValid":isValid,"isAnyAdmin":isAnyAdmin,"isRepositoryAdmin":isRepositoryAdmin,"isLibraryAdmin":isLibraryAdmin,"libraryUserDetails":userLibraryPermissionJsonArray,"userEmail":email};
         } else {
             logger:info("Invalid User");
@@ -213,8 +211,6 @@ function getSessionDetails(message request)(json sessionDetails) {
     boolean isAnyAdmin = false;
 
     try{
-        logger:info("Get User details cookie");
-        logger:info(messages:getHeader(request,"Cookie"));
         request = getRealRequest(request);
         userSession = http:getSession(request);
 
@@ -265,13 +261,11 @@ function validateUserToken(message request)(boolean returnIsValid){
         publicKey = conf:getConfigData("PUBLIC_KEY");
         verified = utils:getShaWithRsa(webToken,publicKey);
         email = jsons:toString(decodedJson["http://wso2.org/claims/emailaddress"]);
-        logger:info("Request User: " + email);
         epocTimeString = jsons:toString(decodedJson["exp"]);
         epocTime,_ = <int>epocTimeString;
         time:Time currentTime = time:currentTime();
         currentTimeInt = currentTime.time / 1000;
         if((strings:hasSuffix(email,"@wso2.com")) && (currentTimeInt < (epocTime + 86400)) && verified ){
-            logger:info("Valid User Request");
             returnIsValid = true;
         } else {
             returnIsValid = false;
@@ -317,14 +311,12 @@ function validateUserTokenLibrary(message request ,int libraryCategotyId)(boolea
         decodedJson = jsons:parse(decodedString);
         publicKey = conf:getConfigData("PUBLIC_KEY");
         verified = utils:getShaWithRsa(webToken,publicKey);
-        logger:info("Request Lib Admin: " + email);
         email = jsons:toString(decodedJson["http://wso2.org/claims/emailaddress"]);
         epocTimeString = jsons:toString(decodedJson["exp"]);
         epocTime,_ = <int>epocTimeString;
         time:Time currentTime = time:currentTime();
         currentTimeInt = currentTime.time / 1000;
         if((strings:hasSuffix(email,"@wso2.com")) && (currentTimeInt < (epocTime + 86400)) && verified ){
-            logger:info("Valid Lib Admin");
 
             returnJson = database:roleGetUserDetails(email);
             returnJsonLength = lengthof returnJson;
@@ -382,14 +374,12 @@ function validateUserTokenRepository(message request)(boolean returnIsAdmin){
         decodedJson = jsons:parse(decodedString);
         publicKey = conf:getConfigData("PUBLIC_KEY");
         verified = utils:getShaWithRsa(webToken,publicKey);
-        logger:info("Request Repo Admin: " + email);
         email = jsons:toString(decodedJson["http://wso2.org/claims/emailaddress"]);
         epocTimeString = jsons:toString(decodedJson["exp"]);
         epocTime,_ = <int>epocTimeString;
         time:Time currentTime = time:currentTime();
         currentTimeInt = currentTime.time / 1000;
         if((strings:hasSuffix(email,"@wso2.com")) && (currentTimeInt < (epocTime + 86400)) && verified ){
-            logger:info("Valid Repo Admin ");
 
             returnJson = database:roleGetUserDetails(email);
             returnJsonLength = lengthof returnJson;
@@ -417,6 +407,7 @@ function validateUserTokenRepository(message request)(boolean returnIsAdmin){
 function getRealRequest(message request)(message){
     string cookie;
     string realCookie;
+    string[] cookieHeaderParts;
     string[] cookieArray;
     int cookieArrayLength;
     int i = 0;
@@ -426,7 +417,11 @@ function getRealRequest(message request)(message){
         cookieArrayLength = lengthof cookieArray;
         while(i < cookieArrayLength){
             if(strings:contains(cookieArray[i],"BSESSIONID")){
-                realCookie = strings:trim(cookieArray[i]);
+                cookieHeaderParts = strings:split(cookieArray[i],"=");
+                if(lengthof cookieHeaderParts == 2){
+                    realCookie = strings:trim(cookieArray[i]);
+                }
+
 
             }
             i = i + 1;

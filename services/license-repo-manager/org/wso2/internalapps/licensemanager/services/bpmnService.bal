@@ -46,7 +46,6 @@ function bpmnRequestRepository(json requestData,json mailData,string token)(json
             setBpmnConnection();
         }
         repositoryMainUsers = database:roleSelectRepositoryMainUsers();
-        logger:info(repositoryMainUsers);
         repositoryMainUsersJsonLength = lengthof repositoryMainUsers;
         while(i < repositoryMainUsersJsonLength){
             sendToList = sendToList + jsons:toString(repositoryMainUsers[i].ROLE_EMAIL) + ", ";
@@ -54,11 +53,11 @@ function bpmnRequestRepository(json requestData,json mailData,string token)(json
         }
         url = "bpmn/runtime/process-instances/";
         variables = [
-                        {"name": "data","value":requestData},
-                        {"name": "mailData","value":mailData},
-                        {"name": "sendToList","value":sendToList},
-                        {"name": "jwt","value":token},
-                        {"name": "origin","value":originURL}
+                    {"name": "data","value":requestData},
+                    {"name": "mailData","value":mailData},
+                    {"name": "sendToList","value":sendToList},
+                    {"name": "jwt","value":token},
+                    {"name": "origin","value":originURL}
                     ];
         messages:setHeader(requestMessage,"Authorization",bpmnBasicAuthToken);
         requestPayloadJson = {
@@ -68,13 +67,13 @@ function bpmnRequestRepository(json requestData,json mailData,string token)(json
                                  "variables":variables
                              };
         messages:setJsonPayload(requestMessage,requestPayloadJson);
-        logger:info(requestMessage);
         responseFromBpmn = http:ClientConnector.post(httpConnectorBpmn,url,requestMessage);
-        logger:info(responseFromBpmn);
         responseFromBpmnJson = messages:getJsonPayload(responseFromBpmn);
         completed, _ = <boolean> jsons:toString(responseFromBpmnJson.completed);
+
         if(!completed){
             processInstanceId,_ = <int>jsons:toString(responseFromBpmnJson.id);
+
             taskId = getTaskIdFromProcessId(processInstanceId);
             repositoryName = jsons:toString(requestData[0]);
             databaseUpdateReturnValue = database:repositoryUpdateTaskAndProcessIds(taskId,processInstanceId,repositoryName);
@@ -84,10 +83,12 @@ function bpmnRequestRepository(json requestData,json mailData,string token)(json
             }else{
                 responseJson = {"responseType":"Error","responseMessage":"Task ID and Process ID update fails"};
                 logger:error("Repository request : Task and Process IDs update fails");
+                logger:info(responseFromBpmn);
             }
         }else{
             responseJson = {"responseType":"Error","responseMessage":"BPMN Error occurs"};
             logger:error("Repository request : BPMN Error occurs");
+            logger:info(responseFromBpmn);
         }
     }catch(errors:Error err){
         responseJson = {"responseType":"Error","responseMessage":err.msg};
@@ -113,18 +114,18 @@ function acceptRepositoryRequest(string repoId, string taskId, string token)(jso
             setBpmnConnection();
         }
         variables = [
-                        {
-                            "name": "outputType",
-                            "value": "Done"
-                        },
-                        {
-                            "name": "repositoryId",
-                            "value": repoId
-                        },
-                        {
-                            "name": "adminJwt",
-                            "value": token
-                        }
+                    {
+                        "name": "outputType",
+                        "value": "Done"
+                    },
+                    {
+                        "name": "repositoryId",
+                        "value": repoId
+                    },
+                    {
+                        "name": "adminJwt",
+                        "value": token
+                    }
                     ];
         requestJson = {
                           "action": "complete",
@@ -142,6 +143,7 @@ function acceptRepositoryRequest(string repoId, string taskId, string token)(jso
         }else{
             responseJson = {"responseType":"Error","responseMessage":"Error"};
             logger:info("Error encountered");
+            logger:info(response);
         }
 
     }catch(errors:Error err){
@@ -170,18 +172,18 @@ function rejectRepositoryRequest(string taskId, string rejectBy, string reasonFo
             setBpmnConnection();
         }
         variables = [
-                        {
-                            "name": "outputType",
-                            "value": "Reject"
-                        },
-                        {
-                            "name": "rejectBy",
-                            "value": rejectBy
-                        },
-                        {
-                            "name": "reasonForReject",
-                            "value": reasonForRejecting
-                        }
+                    {
+                        "name": "outputType",
+                        "value": "Reject"
+                    },
+                    {
+                        "name": "rejectBy",
+                        "value": rejectBy
+                    },
+                    {
+                        "name": "reasonForReject",
+                        "value": reasonForRejecting
+                    }
                     ];
         requestJson = {
                           "action": "complete",
@@ -199,6 +201,7 @@ function rejectRepositoryRequest(string taskId, string rejectBy, string reasonFo
         }else{
             responseJson = {"responseType":"Error","responseMessage":"Error"};
             logger:info("Error encountered");
+            logger:info(response);
         }
 
     }catch(errors:Error err){
@@ -243,12 +246,11 @@ function bpmnRequestLibrary(json requestData)(json responseJson){
         }
         url = "bpmn/runtime/process-instances/";
         variables = [
-                        {"name": "data","value":requestData.data},
-                        {"name": "sendToList","value":sendToList},
-                        {"name": "jwt","value":requestData.token},
-                        {"name": "origin","value":originURL}
+                    {"name": "data","value":requestData.data},
+                    {"name": "sendToList","value":sendToList},
+                    {"name": "jwt","value":requestData.token},
+                    {"name": "origin","value":originURL}
                     ];
-        logger:info(variables);
         messages:setHeader(requestMessage,"Authorization",bpmnBasicAuthToken);
         requestPayloadJson = {
                                  "processDefinitionKey": "libraryApprovalProcess",
@@ -260,7 +262,6 @@ function bpmnRequestLibrary(json requestData)(json responseJson){
         responseFromBpmn = http:ClientConnector.post(httpConnectorBpmn,url,requestMessage);
         responseFromBpmnJson = messages:getJsonPayload(responseFromBpmn);
         statusCode = http:getStatusCode(responseFromBpmn);
-        logger:info(statusCode);
 
         if(statusCode == 201 || statusCode == 200){
 
@@ -276,6 +277,7 @@ function bpmnRequestLibrary(json requestData)(json responseJson){
             }else{
                 responseJson = {"responseType":"Error","responseMessage":"Task ID and Process ID update fails"};
                 logger:error("Library request : Task and Process IDs update fails");
+                logger:info(responseFromBpmn);
             }
 
         }else{
@@ -287,6 +289,7 @@ function bpmnRequestLibrary(json requestData)(json responseJson){
     }catch(errors:Error err){
         responseJson = {"responseType":"Error","responseMessage":err.msg};
         logger:error(err.msg);
+        logger:info(responseFromBpmn);
 
     }
     return;
@@ -349,14 +352,14 @@ function acceptLibraryRequest(string taskId, string token)(json responseJson){
             setBpmnConnection();
         }
         variables = [
-                        {
-                            "name": "outputType",
-                            "value": "Done"
-                        },
-                        {
-                            "name": "adminJwt",
-                            "value": token
-                        }
+                    {
+                        "name": "outputType",
+                        "value": "Done"
+                    },
+                    {
+                        "name": "adminJwt",
+                        "value": token
+                    }
                     ];
         requestJson = {
                           "action": "complete",
@@ -367,8 +370,6 @@ function acceptLibraryRequest(string taskId, string token)(json responseJson){
         messages:setHeader(request,"Authorization",bpmnBasicAuthToken);
         url = "bpmn/runtime/tasks/" + taskId;
         response = httpConnectorBpmn.post(url,request);
-        logger:info(response);
-        logger:info(http:getStatusCode(response));
         statusCode = http:getStatusCode(response);
         if(statusCode == 200 || statusCode == 201){
             responseJson = {"responseType":"Done","responseMessage":"Successfully accept library request"};
@@ -376,6 +377,7 @@ function acceptLibraryRequest(string taskId, string token)(json responseJson){
         }else{
             responseJson = {"responseType":"Error","responseMessage":"Accept library request fails"};
             logger:info("Accept library request fails");
+            logger:info(response);
         }
 
     }catch(errors:Error err){
@@ -401,18 +403,18 @@ function rejectLibraryRequest(string taskId,string rejectBy, string reasonForRej
             setBpmnConnection();
         }
         variables = [
-                        {
-                            "name": "outputType",
-                            "value": "Reject"
-                        },
-                        {
-                            "name": "rejectBy",
-                            "value": rejectBy
-                        },
-                        {
-                            "name": "reasonForReject",
-                            "value": reasonForRejecting
-                        }
+                    {
+                        "name": "outputType",
+                        "value": "Reject"
+                    },
+                    {
+                        "name": "rejectBy",
+                        "value": rejectBy
+                    },
+                    {
+                        "name": "reasonForReject",
+                        "value": reasonForRejecting
+                    }
                     ];
         requestJson = {
                           "action": "complete",
@@ -430,12 +432,47 @@ function rejectLibraryRequest(string taskId,string rejectBy, string reasonForRej
         }else{
             responseJson = {"responseType":"Error","responseMessage":"Reject library request fails"};
             logger:info("Reject library request fails");
+            logger:info(response);
         }
     }catch(errors:Error err){
         logger:error(err.msg);
         responseJson = {"responseType":"Error","responseMessage":err.msg};
 
     }
+    return;
+}
+
+@doc:Description {value:"Get task ID from given process ID"}
+@doc:Param {value:"processId: Process ID"}
+@doc:Param {value:"taskId: Task ID"}
+function getTasksFromProcessId()(json responseJson){
+
+    message requestForBpmn = {};
+    message responseFromBpmn = {};
+    json responseFromBpmnJson;
+    string url;
+
+    int currentProcessId;
+    int responseFromBpmnJsonLength = 0;
+    int i = 0;
+
+    try{
+        if(httpConnectorBpmn == null){
+            setBpmnConnection();
+        }
+        messages:setHeader(requestForBpmn,"Authorization",bpmnBasicAuthToken);
+        url = "bpmn/runtime/tasks/";
+        responseFromBpmn = httpConnectorBpmn.get(url,requestForBpmn);
+        responseFromBpmnJson = messages:getJsonPayload(responseFromBpmn);
+        responseFromBpmnJson = responseFromBpmnJson.data;
+        responseFromBpmnJsonLength = lengthof responseFromBpmnJson;
+        responseJson = responseFromBpmnJson;
+    }catch(errors:Error err){
+
+        logger:error(" getTaskIdFromProcessId :" + err.msg);
+
+    }
+
     return;
 }
 

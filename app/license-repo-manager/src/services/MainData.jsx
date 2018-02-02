@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import confData from '../../conf/conf.json';
+import CONFIG from 'CONFIG';
 
 /**
  * @class MainData
@@ -14,10 +14,11 @@ class MainData extends Component {
     */
     constructor() {
         super();
-        this.ballerinaDatabaseURL = confData.serviceUrl + 'databaseService/';
-        this.ballerinaGitHubURL = confData.serviceUrl;
-        this.ballerinaURL = confData.serviceUrl;
-        this.bpmnImgURL = confData.businessUrl + 'bpmn/runtime/process-instances/';
+        this.ballerinaDatabaseURL = CONFIG.serviceUrl + 'databaseService/';
+        this.ballerinaGitHubURL = CONFIG.serviceUrl;
+        this.ballerinaURL = CONFIG.serviceUrl;
+        this.bpmnImgURL = CONFIG.businessUrl + 'bpmn/runtime/process-instances/';
+        this.microServiceURL = CONFIG.microServiceUrl;
     }
 }
 

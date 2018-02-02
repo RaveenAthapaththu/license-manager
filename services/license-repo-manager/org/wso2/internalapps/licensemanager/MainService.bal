@@ -18,7 +18,6 @@ import org.wso2.internalapps.licensemanager.conf;
 service<http> MainService {
 
     string ORIGIN = conf:getConfigData("ORIGIN");
-    string BPMN_ORIGIN = conf:getConfigData("BPMN_ORIGIN");
 
     @http:POST {}
     @http:Path {value:"/createRepositories"}
@@ -55,7 +54,6 @@ service<http> MainService {
             }else{
                 finalResponseJson = {"responseType":"Error","responseMessage":"Error","responseDefault":"Done","repoUpdatedDetails":responseDataFromDbJson[0],"teamName":teamName};
             }
-            logger:info(finalResponseJson);
             messages:setJsonPayload(response,finalResponseJson);
 
 
@@ -205,7 +203,6 @@ service<http> MainService {
         message response = {};
         int no = 0;
         no = services:getTaskIdFromProcessId(1);
-        logger:info(no);
 
         messages:setHeader(response,"Access-Control-Allow-Origin",ORIGIN);
         messages:setHeader(response, "Access-Control-Allow-Credentials", "true");
@@ -396,6 +393,7 @@ service<http> MainService {
         string requestBy;
         string description;
         string groupId;
+        string productArea;
         int license;
         int team;
         int organization;
@@ -419,7 +417,8 @@ service<http> MainService {
             organization,_ = <int>(jsons:toString(requestJson.data[9]));
             repoType,_ = <int>(jsons:toString(requestJson.data[10]));
             requestBy = jsons:toString(requestJson.data[11]);
-            responseValue = database:repositoryInsertData(name,language,buildable,nexus,private,description,groupId,license,team,organization,repoType,requestBy);
+            productArea = jsons:toString(requestJson.data[12]);
+            responseValue = database:repositoryInsertData(name,language,buildable,nexus,private,description,groupId,license,team,organization,repoType,requestBy,productArea);
 
             if(responseValue > 0){
                 getInsertedDataJson = database:repositorySelectFromName(name);
@@ -526,6 +525,7 @@ service<http> MainService {
         string name;
         string language;
         string acceptBy;
+        string productArea;
         int license;
         int team;
         int organization;
@@ -552,9 +552,10 @@ service<http> MainService {
             repoType,_ = <int>(jsons:toString(requestJson.data[10]));
             accept,_ = <boolean>(jsons:toString(requestJson.data[11]));
             acceptBy = jsons:toString(requestJson.data[12]);
+            productArea = jsons:toString(requestJson.data[13]);
             repositoryId,_ = <int>(jsons:toString(requestJson.repoId));
 
-            responseValue = database:repositoryUpdateAll(name,language,buildable,nexus,private,description,groupId,license,team,organization,repoType,accept,acceptBy,repositoryId);
+            responseValue = database:repositoryUpdateAll(name,language,buildable,nexus,private,description,groupId,license,team,organization,repoType,accept,acceptBy,productArea,repositoryId);
 
 
 
@@ -897,12 +898,11 @@ service<http> MainService {
         json inValidUserJson = {"data":[],"responseType":"Error","responseMessage":"Invalid user"};
         if(services:getIsValidUser(m)){
 
-            logger:info("valid");
+
             responseJson = database:libCategorySelectAll();
-            logger:info(responseJson);
             messages:setJsonPayload(response,responseJson);
         }else{
-            logger:info("invalid");
+
             messages:setJsonPayload(response,inValidUserJson);
         }
 
@@ -921,14 +921,12 @@ service<http> MainService {
         json responseJson;
 
         requestForService = m;
-        logger:info(messages:getHeader(m,"Origin"));
         response, sessionId = services:validateUser(requestForService);
         sessionId = "BSESSIONID=" + sessionId;
         responseJson = {"sessionId":sessionId};
         messages:setJsonPayload(response,responseJson);
         messages:setHeader(response, "Access-Control-Allow-Origin",ORIGIN);
         messages:setHeader(response, "Access-Control-Allow-Credentials", "true");
-        logger:info(response);
         reply response;
     }
 
@@ -943,7 +941,8 @@ service<http> MainService {
         response, sessionId = services:validateUser(m);
         messages:setHeader(response, "Access-Control-Allow-Origin",ORIGIN);
         messages:setHeader(response, "Access-Control-Allow-Credentials", "true");
-        logger:info(response);
+
+
         reply response;
     }
 
@@ -1106,7 +1105,6 @@ service<http> MainService {
     resource requestRepositoryResource(message m){
 
         message response = {};
-        logger:info(m);
         json requestJson = messages:getJsonPayload(m);
         json data;
         json mailData;
@@ -1146,6 +1144,7 @@ service<http> MainService {
         string repoIdString;
         string taskIdString;
         string jwToken;
+        string productArea;
         int taskId;
         int license;
         int team;
@@ -1165,7 +1164,6 @@ service<http> MainService {
         userDetails = services:getSessionDetails(m);
         valid, _ = <boolean>jsons:toString(userDetails.isRepositoryAdmin);
         acceptBy = jsons:toString(userDetails.userEmail);
-
         if(valid){
             jwToken = jsons:toString(requestJson.token);
             name = jsons:toString(requestJson.repositoryData[0]);
@@ -1180,12 +1178,13 @@ service<http> MainService {
             organization,_ = <int>(jsons:toString(requestJson.repositoryData[9]));
             repoType,_ = <int>(jsons:toString(requestJson.repositoryData[10]));
             accept,_ = <boolean>(jsons:toString(requestJson.repositoryData[11]));
+            productArea = jsons:toString(requestJson.repositoryData[13]);
             repositoryId,_ = <int>(jsons:toString(requestJson.repositoryId));
             taskId,_ = <int>(jsons:toString(requestJson.repositoryTaskId));
             repoIdString = jsons:toString(requestJson.repositoryId);
             taskIdString = jsons:toString(requestJson.repositoryTaskId);
 
-            dbResponseValue = database:repositoryUpdateAll(name,language,buildable,nexus,private,description,groupId,license,team,organization,repoType,accept,acceptBy,repositoryId);
+            dbResponseValue = database:repositoryUpdateAll(name,language,buildable,nexus,private,description,groupId,license,team,organization,repoType,accept,acceptBy,productArea,repositoryId);
 
             responseJson = services:acceptRepositoryRequest(repoIdString,taskIdString,jwToken);
             messages:setJsonPayload(response,responseJson);
@@ -1283,7 +1282,7 @@ service<http> MainService {
 
     @http:GET {}
     @http:Path {value:"/databaseService/libType/selectDefault"}
-    resource libraryTypeSelectDefaultResource(message m){
+    resource libraryTypeSelectDefaultResource(message m)    {
 
         message response = {};
         json responseJson;
@@ -1436,6 +1435,7 @@ service<http> MainService {
     @http:Path {value:"/databaseService/libraryRequest/selectFromId"}
     resource libraryRequestSelectFromId(message m,@http:QueryParam {value:"id"} int id){
 
+
         message response = {};
         json responseJson;
         json inValidUserJson = {"data":[],"responseType":"Error","responseMessage":"Invalid user"};
@@ -1473,10 +1473,61 @@ service<http> MainService {
             librarySessionDetailsLength = lengthof librarySessionDetails;
             while(i < librarySessionDetailsLength){
                 libraryIdArray[i] = librarySessionDetails[i].roleLibId;
-                logger:info(libraryIdArray[i]);
                 i = i + 1;
             }
             responseJson = database:libraryRequestSelectWaitingRequests(libraryIdArray);
+            messages:setJsonPayload(response,responseJson);
+        }else{
+            messages:setJsonPayload(response,inValidUserJson);
+        }
+
+        messages:setHeader(response,"Access-Control-Allow-Origin",ORIGIN);
+        messages:setHeader(response, "Access-Control-Allow-Credentials", "true");
+        reply response;
+    }
+
+
+    @http:POST {}
+    @http:Path {value:"/databaseService/insertJenkinsData"}
+    resource insertJenkinsDataResource(message m){
+
+        message response = {};
+        json requestJson = messages:getJsonPayload(m);
+        json responseJson;
+        json responseDataDb;
+        json inValidUserJson = {"data":[],"responseType":"Error","responseMessage":"Invalid user"};
+        string productAreaName;
+        string repositoryName;
+        string productAreaId;
+        string organization;
+        if(services:validateUserToken(m)){
+
+            repositoryName = jsons:toString(requestJson.name);
+            productAreaName = jsons:toString(requestJson.productArea);
+            organization = jsons:toString(requestJson.organization);
+            responseDataDb = database:pqdSelectProductDetailsFromName(productAreaName);
+            productAreaId = jsons:toString(responseDataDb.pqd_area_id);
+            responseJson = database:insertJenkinsData(repositoryName,productAreaId,organization,productAreaName);
+            messages:setJsonPayload(response,responseJson);
+        }else{
+            messages:setJsonPayload(response,inValidUserJson);
+        }
+
+        messages:setHeader(response,"Access-Control-Allow-Origin",ORIGIN);
+        messages:setHeader(response, "Access-Control-Allow-Credentials", "true");
+        reply response;
+    }
+
+    @http:GET {}
+    @http:Path {value:"/pqd/selectProductAreas"}
+    resource pqdSelectProductAreasResource(message m){
+
+        message response = {};
+        json responseJson;
+        json inValidUserJson = {"data":[],"responseType":"Error","responseMessage":"Invalid user"};
+
+        if(services:getIsValidUser(m)){
+            responseJson = database:pqdSelectProductAreas();
             messages:setJsonPayload(response,responseJson);
         }else{
             messages:setJsonPayload(response,inValidUserJson);
@@ -1494,8 +1545,9 @@ service<http> MainService {
         message response = {};
         json responseJson;
 
-
-
+        logger:info("Call");
+        json responseJson1 = services:getTasksFromProcessId();
+        logger:info(responseJson1);
         responseJson = {"valid":"HelloB"};
         messages:setJsonPayload(response,responseJson);
         logger:info("Call");

@@ -92,15 +92,15 @@ class Root extends Component {
                 <MuiThemeProvider muiTheme={getMuiTheme(darkBaseTheme)}>
                     <div className="container-fluid">
                         <div className="row" id="header">
-                            <div className="col-md-12" style={{ display: this.state.displayHeader, height: '50px', paddingTop: '0px' }} >
+                            <div className="col-sm-12" style={{ display: this.state.displayHeader, paddingTop: '0px' }} >
                                 <AdminHeader userDetails={this.state.userDetails} />
                             </div>
                         </div>
                         <div className="row">
-                            <div className="col-md-2" id="leftNav" style={{ display: this.state.displayNav, paddingLeft: '0px' }}>
+                            <div className="col-sm-2" style={{ display: this.state.displayNav, paddingLeft: '0px', height: '100vh', marginTop: '-8px' }}>
                                 {(this.state.isAdminUser === true) ? <AdminLeftNav /> : <LeftNav /> }
                             </div>
-                            <div className="col-md-10" style={{ display: this.state.displayChildren, height: '90vh', overflowY: 'auto', overflowX: 'hidden' }} >
+                            <div className="col-sm-10" style={{ display: this.state.displayChildren, height: '90vh', overflowY: 'auto', overflowX: 'hidden' }} >
                                 {props.children}
                             </div>
                         </div>
@@ -112,15 +112,15 @@ class Root extends Component {
                 <MuiThemeProvider muiTheme={getMuiTheme(darkBaseTheme)}>
                     <div className="container-fluid">
                         <div className="row" id="header">
-                            <div className="col-md-12" style={{ display: this.state.displayHeader, height: '50px', paddingTop: '0px' }} >
+                            <div className="col-sm-12" style={{ display: this.state.displayHeader, paddingTop: '0px' }} >
                                 <AppHeader userDetails={this.state.userDetails} />
                             </div>
                         </div>
                         <div className="row">
-                            <div className="col-md-2" id="leftNav" style={{ display: this.state.displayNav, paddingLeft: '0px' }}>
+                            <div className="col-sm-2" style={{ display: this.state.displayNav, paddingLeft: '0px', height: '100vh', marginTop: '-8px' }}>
                                 {(this.state.isAdminUser === true) ? <AdminLeftNav /> : <LeftNav /> }
                             </div>
-                            <div className="col-md-10" style={{ display: this.state.displayChildren, height: '90vh', overflowY: 'auto', overflowX: 'hidden' }} >
+                            <div className="col-sm-10" style={{ display: this.state.displayChildren, height: '90vh', overflowY: 'auto', overflowX: 'hidden' }} >
                                 {props.children}
                             </div>
                         </div>

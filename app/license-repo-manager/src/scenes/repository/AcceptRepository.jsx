@@ -28,9 +28,10 @@ import Team from '../../services/github/Team';
 import Repository from '../../services/database/Repository';
 import Common from '../../services/github/Common';
 import GitHubRepositoryCreation from '../../services/bpmn/GitHubRepositoryCreation';
+import ProductAreas from '../../services/database/ProductAreas';
 import StringValidations from '../../services/validations/StringValidations';
 import ValidateUser from '../../services/authentication/ValidateUser';
-import styles from '../../styles';
+import styles from '../../mystyles';
 
 /**
 * @class AcceptRepository
@@ -53,6 +54,7 @@ class AcceptRepository extends Component {
             repositoryTypes: [],
             organizations: [],
             teams: [],
+            productAreas: [],
             validateRepository: '',
             buttonState: false,
             repositoryId: props.location.query.repositoryId,// eslint-disable-line
@@ -64,6 +66,8 @@ class AcceptRepository extends Component {
             displayAlrearyAccept: 'none',
             displayProgress: 'none',
             displayLoader: 'none',
+            displayProductArea: 'none',
+            productAreaSelectSpan: '',
             isAdminUser: null,
             open: false,
             openError: false,
@@ -81,6 +85,7 @@ class AcceptRepository extends Component {
         this.handleCloseError = this.handleCloseError.bind(this);
         this.handleOpenSuccess = this.handleOpenSuccess.bind(this);
         this.handleCloseSuccess = this.handleCloseSuccess.bind(this);
+        this.makeProductAreaRequired = this.makeProductAreaRequired.bind(this);
     }
     /**
     * @class RequestRepository
@@ -140,11 +145,26 @@ class AcceptRepository extends Component {
             this.inputBuildable.value = response[0].REPOSITORY_BUILDABLE;
             this.inputPrivate.value = response[0].REPOSITORY_PRIVATE;
             this.textDescription.value = StringValidations.setStringToShow(response[0].REPOSITORY_DESCRIPTION);
+            if (response[0].REPOSITORY_BUILDABLE) {
+                this.setState(() => {
+                    return {
+                        displayProductArea: 'block',
+                        productAreaSelectSpan: <span className="required">*</span>,
+                    };
+                });
+            }
         });
         ValidateUser.getUserDetails().then((response) => {
             this.setState(() => {
                 return {
                     userDetails: response,
+                };
+            });
+        });
+        ProductAreas.selectAll().then((response) => {
+            this.setState(() => {
+                return {
+                    productAreas: response,
                 };
             });
         });
@@ -286,6 +306,27 @@ class AcceptRepository extends Component {
         }
     }
     /**
+    * make group id required
+    */
+    makeProductAreaRequired() {
+        const checkedValue = this.inputBuildable.checked;
+        if (checkedValue === true) {
+            this.setState(() => {
+                return {
+                    displayProductArea: 'block',
+                    productAreaSelectSpan: <span className="required">*</span>,
+                };
+            });
+        } else {
+            this.setState(() => {
+                return {
+                    displayProductArea: 'none',
+                    productAreaSelectSpan: ' ',
+                };
+            });
+        }
+    }
+    /**
     * @param {any} e event
     * go back to request
     */
@@ -333,6 +374,7 @@ class AcceptRepository extends Component {
         const organization = this.selectOrganization.value;
         const team = this.selectTeam.value;
         const license = this.selectLicense.value;
+        const productArea = this.selectProductArea.value;
         const language = StringValidations.escapeCharacters(this.selectLanguage.value);
         const groupId = StringValidations.escapeCharacters(this.inputGroupId.value.toString());
         const buildable = this.inputBuildable.checked;
@@ -356,6 +398,7 @@ class AcceptRepository extends Component {
             repositoryType,
             accept,
             acceptBy,
+            productArea,
         ];
         try {
             GitHubRepositoryCreation.acceptRequest(data, repoId, taskId).then((response) => {
@@ -545,13 +588,14 @@ class AcceptRepository extends Component {
                             </select>
                         </div>
                     </div>
+
                     <div className="form-group">
                         {/* eslint-disable max-len */}
                         <label htmlFor="inputLanguage" className="col-lg-2 control-label">Configurations</label>
                         <div className="col-lg-10">
                             <div className="checkbox">
                                 <label htmlFor="checkBuildable">
-                                    {((this.state.repositoryDetails !== null)) ? <input type="checkbox" ref={(c) => { this.inputBuildable = c; }} defaultChecked={this.state.repositoryDetails.REPOSITORY_BUILDABLE} /> : ' '}
+                                    {((this.state.repositoryDetails !== null)) ? <input type="checkbox" onChange={this.makeProductAreaRequired} ref={(c) => { this.inputBuildable = c; }} defaultChecked={this.state.repositoryDetails.REPOSITORY_BUILDABLE} /> : ' '}
                                     Component Buildable
                                 </label>
                                 <br /><br />
@@ -565,6 +609,21 @@ class AcceptRepository extends Component {
                                     Create Nexus Repository
                                 </label>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="form-group" style={{ display: this.state.displayProductArea }}>
+                        <label htmlFor="selectProductArea" className="col-lg-2 control-label"><span className="required">*</span>&nbsp;Product Area</label>
+                        <div className="col-lg-10">
+                            {/* eslint-disable */}
+                            <select className="form-control" ref={(c) => { this.selectProductArea = c; }} >
+                                {this.state.productAreas.map(productArea =>
+                                    ((this.state.repositoryDetails !== null) && (productArea.pqd_area_name === this.state.repositoryDetails.REPOSITORY_PRODUCT_AREA)) ?
+                                        <option key={productArea.pqd_area_id} selected value={productArea.pqd_area_name}>{productArea.pqd_area_name}</option> :
+                                        <option key={productArea.pqd_area_id} value={productArea.pqd_area_name}>{productArea.pqd_area_name}</option>
+                                )}
+                            </select>
+                            {/* eslint-enable */}
                         </div>
                     </div>
 

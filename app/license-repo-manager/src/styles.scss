@@ -16,9 +16,8 @@
  * under the License.
  */
  
-$paragraph-font-color: #5729f5;
 .paragraph-font {
-  color: $paragraph-font-color;
+  color: #5729f5;
 }
 
 .App {
@@ -53,15 +52,6 @@ $paragraph-font-color: #5729f5;
   background-color: #222222 !important;
 }
 
-.col-md-12, .col-md-2,.col-md-10{
-  
-  padding-right:  0px !important;
-}
-
-.col-md-10{
-  width: 85.5%;
-}
-
 #header{
   background-color: #222222 !important;
   height: 50px !important;
@@ -72,13 +62,20 @@ $paragraph-font-color: #5729f5;
   padding: 0 !important; /* removes left and right padding */
   cursor: initial !important;
 }
+
+#leftNav{
+  background-color: #222222 !important;
+  color: #fff !important;
+  padding-top: 0px !important;
+  height: '100%' !important;
+}
+
 @media only screen and (min-width: 1400px) {
 
     #leftNav{
       background-color: #222222 !important;
       color: #fff !important;
-      width: 222px !important;
-      height: 92vh !important;
+      height: '100%' !important;
       padding-top: 0px !important; 
    }
 
@@ -170,4 +167,10 @@ $paragraph-font-color: #5729f5;
 
 .tooltip:hover .tooltiptext {
   visibility: visible;
+}
+
+.icon-menu-wrapper{
+  margin: -8px -8px -8px -8px; /* the real magic */
+  padding: 0 !important; /* removes left and right padding */
+  cursor: initial !important;
 }

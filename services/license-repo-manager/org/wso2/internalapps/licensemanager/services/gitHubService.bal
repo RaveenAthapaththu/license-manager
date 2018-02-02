@@ -65,13 +65,13 @@ function createGitHubRepository(int repositoryId)(json responseJson){
         postUrl = "orgs/"+repositoryOrganization + "/repos?access_token=" + accessToken;
 
         requestDataJsonForGitHubApi = {
-                                               "name":repositoryName,
-                                               "description":repositoryDescription,
-                                               "private":repositoryPrivate,
-                                               "gitignore_template":repositoryLanguage,
-                                               "license_template":repositoryLicense,
-                                               "team_id":repositoryTeam
-                                           };
+                                          "name":repositoryName,
+                                          "description":repositoryDescription,
+                                          "private":repositoryPrivate,
+                                          "gitignore_template":repositoryLanguage,
+                                          "license_template":repositoryLicense,
+                                          "team_id":repositoryTeam
+                                      };
 
 
         messages:setJsonPayload(requestMessageForGitHub,requestDataJsonForGitHubApi);
@@ -81,9 +81,9 @@ function createGitHubRepository(int repositoryId)(json responseJson){
             responseJson = {"responseType":"Done","responseMessage":"done"};
             logger:info("Repository created successfully");
         }else{
-
             responseJson = {"responseType":"Error","responseMessage":"createGitHubRepository error"};
             logger:error("Repository creation error");
+            logger:error(responseFromGitHubApi);
         }
 
     }catch(errors:Error err){
@@ -155,6 +155,8 @@ function setIssueTemplate(string organization,string repositoryName,string userN
         }else{
             responseJson = {"responseType":"Error","responseMessage":"Unknown Error"};
             logger:error("Repository set issue template error: Unknown Error");
+            logger:error(responseMessage);
+
         }
 
 
@@ -208,7 +210,8 @@ function setPullRequestTemplate(string organization,string repositoryName,string
             logger:info("Repository set PR template successfully");
         }else{
             responseJson = {"responseType":"Done","responseMessage":"Unknown Error"};
-            logger:info("Repository set PR template error: Unknown Error");
+            logger:error("Repository set PR template error: Unknown Error");
+            logger:error(response);
         }
 
     }catch(errors:Error err){
@@ -256,6 +259,7 @@ function setReadMe(string organization,string repositoryName,string repositoryDe
         }else{
             responseJson = {"responseType":"Error","responseMessage":"Unknown Error"};
             logger:error("Repository set ReadMe error: Unknown Error");
+            logger:error(response);
         }
 
     }catch(errors:Error err){
@@ -349,7 +353,8 @@ function setDefaultTeam(string organization,string repositoryName,string teamId)
             logger:info("Repository default team assign successfully");
         }else{
             responseJson = {"responseType":"Error","responseMessage":"Unknown Error"};
-            logger:info("Repository default team assign error: Unknown Error");
+            logger:error("Repository default team assign error: Unknown Error");
+            logger:error(response);
         }
 
     }catch(errors:Error err){
