@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://wso2.org/bpmn/libraryApprovalProcess">
+  <process id="libraryApprovalProcess" name="Library Approval Process" isExecutable="true">
+    <startEvent id="startevent1" name="Start"></startEvent>
+    <serviceTask id="insertToDb" name="Insert Data Into Database" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{
+	"libName":"${data.libName}",
+	"libTypeId":"${data.libTypeId}",
+	"libCategoryId":"${data.libCategoryId}",
+ 	 "libGroupId":"${data.libGroupId}",
+  	"libArtifactId":"${data.libArtifactId}",
+	"libUseVersion":"${data.libUseVersion}",
+	"libLatestVersion":"${data.libLatestVersion}",
+	"libFileName":"${data.libFileName}",
+	"libCompany":"${data.libCompany}",
+	"libSponsored":"${data.libSponsored}",
+	"libPurpose":"${data.libPurpose}",
+	"libDescription":"${data.libDescription}",
+	"libAlternatives":"${data.libAlternatives}",
+	"libRequestBy":"${data.libRequestBy}"
+}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeInsertData:responseType,outputLibRequestId:libRequestId</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${jwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/libRequestInsertData.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="sendMailForApproval" name="Send e-mail for approval" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList}${data.libRequestBy}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[3rd Party Library Request - ${data.libName}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+  Hi all!<br /><br />
+
+  ${data.libRequestBy}&nbsp; has requested for the following 3rd party libray. <br /><br />
+  <table style="width:100%">
+  <tr><td style="width:14%;"><b>Library Name</b></td><td>${data.libName}</td></tr>
+  <tr><td><b>Library Type</b></td><td>${data.libType}</td></tr>
+  <tr><td><b>Library Category</b></td><td>${data.libCategory}</td></tr>
+  <tr><td><b>Group ID</b></td><td>${data.libGroupId}</td></tr>
+  <tr><td><b>Artifact ID</b></td><td>${data.libArtifactId}</td></tr>
+  <tr><td><b>Expected version to use</b></td><td>${data.libUseVersion}</td></tr>
+  <tr><td><b>Latest version</b></td><td>${data.libLatestVersion}</td></tr>
+  <tr><td><b>Library file name</b></td><td>${data.libFileName}</td></tr>
+  <tr><td><b>Company</b></td><td>${data.libCompany}</td></tr>
+  <tr><td><b>Sponsored by</b></td><td>${(data.libSponsored)?"Yes":"No"}</td></tr>
+  <tr><td><b>Requested by</b></td><td>${data.libRequestBy}</td></tr>
+  <tr><td style="vertical-align:top;"><b>Purpose</b></td><td>${data.libPurpose.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+  <tr><td style="vertical-align:top;"><b>Description</b></td><td>${data.libDescription.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+  <tr><td style="vertical-align:top;"><b>Alternatives</b>${data.libAlternatives.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+  </table>
+
+  <br/>
+  Please click <strong><a href=${origin}#/app/acceptLibrary?libRequestId=${outputLibRequestId}>here </a></strong> to Approve or Reject.
+
+  <br/><br/>
+  Thank You.
+  </p>]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <userTask id="approveOrRejectTask" name="Waiting for approval" activiti:assignee="admin"></userTask>
+    <serviceTask id="updateDatabase" name="Update databse" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{
+	"libName":"${data.libName}",
+	"libType":"${data.libType}",
+	"libGroupId":"${data.libGroupId}",
+  	"libArtifactId":"${data.libArtifactId}",
+	"libVersion":"${data.libVersion}",
+	"libCategoryId":"${data.libCategoryId}",
+	"libFileName":"${data.libFileName}",
+	"libDescription":"${data.libDescription}"
+}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeUpadateData:responseType</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/libraryInsertData.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="sendApprovedAck" name="Send acknowledgement" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+  Hi all!<br /><br />
+
+  The request for ${data.libName} has been accepted.<br /><br />
+  <table style="width:100%">
+  <tr><td style="width:14%;"><b>Library Name</b></td><td>${data.libName}</td></tr>
+  <tr><td><b>Library Type</b></td><td>${data.libType}</td></tr>
+  <tr><td><b>Library Category</b></td><td>${data.libCategory}</td></tr>
+  <tr><td><b>Group ID</b></td><td>${data.libGroupId}</td></tr>
+  <tr><td><b>Artifact ID</b></td><td>${data.libArtifactId}</td></tr>
+  <tr><td><b>Expected version to use</b></td><td>${data.libUseVersion}</td></tr>
+  <tr><td><b>Latest version</b></td><td>${data.libLatestVersion}</td></tr>
+  <tr><td><b>Library file name</b></td><td>${data.libFileName}</td></tr>
+  <tr><td><b>Company</b></td><td>${data.libCompany}</td></tr>
+  <tr><td><b>Sponsored by</b></td><td>${(data.libSponsored)?"Yes":"No"}</td></tr>
+  <tr><td><b>Requested by</b></td><td>${data.libRequestBy}</td></tr>
+  <tr><td style="vertical-align:top;"><b>Purpose</b></td><td>${data.libPurpose.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+  <tr><td style="vertical-align:top;"><b>Description</b></td><td>${data.libDescription.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+  <tr><td style="vertical-align:top;"><b>Alternatives</b>${data.libAlternatives.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+  </table>
+
+  <br/><br/>
+  Thank You.
+  </p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList}${data.libRequestBy}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[3rd Party Library Request Accepted - ${data.libName}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow3" sourceRef="sendMailForApproval" targetRef="approveOrRejectTask"></sequenceFlow>
+    <sequenceFlow id="flow4" sourceRef="approveOrRejectTask" targetRef="exclusivegateway1"></sequenceFlow>
+    <sequenceFlow id="flow7" sourceRef="updateDatabase" targetRef="sendApprovedAck"></sequenceFlow>
+    <sequenceFlow id="flow8" sourceRef="sendApprovedAck" targetRef="endevent1"></sequenceFlow>
+    <serviceTask id="sendRejectAck" name="Send Acknowledgement" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+  Hi all!<br /><br />
+
+  The request for ${data.libName} has been rejected.<br /><br />
+  <table style="width:100%">
+  <tr><td style="width:12%;"><b>Rejected by</b></td><td>${rejectBy}</td></tr>
+  <tr><td><b>Reason for rejection</b></td><td>${reasonForReject}</td></tr>
+  <tr></tr>
+
+  <tr><td><b>Library Name</b></td><td>${data.libName}</td></tr>
+  <tr><td><b>Library Type</b></td><td>${data.libType}</td></tr>
+  <tr><td><b>Library Category</b></td><td>${data.libCategory}</td></tr>
+  <tr><td><b>Group ID</b></td><td>${data.libGroupId}</td></tr>
+  <tr><td><b>Artifact ID</b></td><td>${data.libArtifactId}</td></tr>
+  <tr><td><b>Expected version to use</b></td><td>${data.libUseVersion}</td></tr>
+  <tr><td><b>Latest version</b></td><td>${data.libLatestVersion}</td></tr>
+  <tr><td><b>Library file name</b></td><td>${data.libFileName}</td></tr>
+  <tr><td><b>Company</b></td><td>${data.libCompany}</td></tr>
+  <tr><td><b>Sponsored by</b></td><td>${(data.libSponsored)?"Yes":"No"}</td></tr>
+  <tr><td><b>Requested by</b></td><td>${data.libRequestBy}</td></tr>
+  <tr><td style="vertical-align:top;"><b>Purpose</b></td><td>${data.libPurpose.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr><br/>
+  <tr><td style="vertical-align:top;"><b>Description</b></td><td>${data.libDescription.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr><br/>
+  <tr><td style="vertical-align:top;"><b>Alternatives</b>${data.libAlternatives.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr><br/>
+  </table>
+
+  <br/><br/>
+  Thank You.
+  </p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList}${data.libRequestBy}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[3rd Party Library Request Rejected - ${data.libName}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow9" name="Reject" sourceRef="exclusivegateway1" targetRef="sendRejectAck">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputType == "Reject"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow10" sourceRef="sendRejectAck" targetRef="endevent1"></sequenceFlow>
+    <exclusiveGateway id="exclusivegateway2" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow11" sourceRef="insertToDb" targetRef="exclusivegateway2"></sequenceFlow>
+    <sequenceFlow id="flow12" sourceRef="exclusivegateway2" targetRef="endevent1">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeInsertData == "Error"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow13" sourceRef="exclusivegateway2" targetRef="sendMailForApproval">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeInsertData == "Done"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow18" sourceRef="startevent1" targetRef="insertToDb"></sequenceFlow>
+    <sequenceFlow id="flow19" sourceRef="exclusivegateway1" targetRef="updateDatabase">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputType == "Done"}]]></conditionExpression>
+    </sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_libraryApprovalProcess">
+    <bpmndi:BPMNPlane bpmnElement="libraryApprovalProcess" id="BPMNPlane_libraryApprovalProcess">
+      <bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="110.0" y="210.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="insertToDb" id="BPMNShape_insertToDb">
+        <omgdc:Bounds height="71.0" width="141.0" x="227.0" y="192.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="sendMailForApproval" id="BPMNShape_sendMailForApproval">
+        <omgdc:Bounds height="69.0" width="155.0" x="487.0" y="193.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="approveOrRejectTask" id="BPMNShape_approveOrRejectTask">
+        <omgdc:Bounds height="65.0" width="145.0" x="687.0" y="195.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="updateDatabase" id="BPMNShape_updateDatabase">
+        <omgdc:Bounds height="65.0" width="125.0" x="1030.0" y="197.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="sendApprovedAck" id="BPMNShape_sendApprovedAck">
+        <omgdc:Bounds height="62.0" width="171.0" x="1220.0" y="197.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="1430.0" y="210.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway1" id="BPMNShape_exclusivegateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="867.0" y="210.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="sendRejectAck" id="BPMNShape_sendRejectAck">
+        <omgdc:Bounds height="61.0" width="171.0" x="802.0" y="300.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway2" id="BPMNShape_exclusivegateway2">
+        <omgdc:Bounds height="40.0" width="40.0" x="407.0" y="207.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+        <omgdi:waypoint x="642.0" y="227.0"></omgdi:waypoint>
+        <omgdi:waypoint x="687.0" y="227.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+        <omgdi:waypoint x="832.0" y="227.0"></omgdi:waypoint>
+        <omgdi:waypoint x="867.0" y="230.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
+        <omgdi:waypoint x="1155.0" y="229.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1220.0" y="228.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+        <omgdi:waypoint x="1391.0" y="228.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1430.0" y="227.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
+        <omgdi:waypoint x="887.0" y="250.0"></omgdi:waypoint>
+        <omgdi:waypoint x="887.0" y="300.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="12.0" width="31.0" x="847.0" y="260.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
+        <omgdi:waypoint x="973.0" y="330.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1374.0" y="330.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1447.0" y="245.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="368.0" y="227.0"></omgdi:waypoint>
+        <omgdi:waypoint x="407.0" y="227.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
+        <omgdi:waypoint x="427.0" y="207.0"></omgdi:waypoint>
+        <omgdi:waypoint x="424.0" y="151.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1374.0" y="151.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1447.0" y="210.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
+        <omgdi:waypoint x="447.0" y="227.0"></omgdi:waypoint>
+        <omgdi:waypoint x="487.0" y="227.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow18" id="BPMNEdge_flow18">
+        <omgdi:waypoint x="145.0" y="227.0"></omgdi:waypoint>
+        <omgdi:waypoint x="227.0" y="227.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow19" id="BPMNEdge_flow19">
+        <omgdi:waypoint x="907.0" y="230.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1030.0" y="229.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

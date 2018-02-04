@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <process id="AdminProcess" name="AdminProcess" isExecutable="true">
+    <startEvent id="startevent2" name="Start"></startEvent>
+    <endEvent id="endevent2" name="End"></endEvent>
+    <serviceTask id="mailtask3" name="Send Email" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+  Hi all,<br/><br/>
+
+  There are missing license for product ${productName}, version ${productVersion}.<br/><br/>
+
+  ${(componentExists.equals("yes"))? "<b>Components</b>":" "}
+  <br/>
+  ${(componentExists.equals("yes"))? componentTable:" "}
+  <br/><br/>
+  ${(libraryExists.equals("yes"))? "<b>Libraries</b>":" "}
+  <br/>
+  ${(libraryExists.equals("yes"))? libraryTable:" "}
+  <br/><br/>
+  Please click <strong><a href=${origin}#/app/acceptLicense?licRequestId=${licenseRequestId}>here </a></strong> to Approve or Reject.
+  Thank you,
+
+</p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${mailList}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[requester@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[License Missing Libraries for ${productName} - ${productVersion}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <userTask id="usertask2" name="Approved" activiti:assignee="admin"></userTask>
+    <serviceTask id="mailtask4" name="Send Acknowledgement" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${mailList}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[requester@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Reject License Missing Libraries for ${productName} - ${productVersion}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+  Hi all,<br/><br/>
+
+  There are missing license for product ${productName}, version ${productVersion} has been rejected.<br/><br/>
+  <table style="width:100%">
+  <tr><td style="width:12%;"><b>Rejected by</b></td><td>${rejectBy}</td></tr>
+  <tr><td><b>Reason for rejection</b></td><td>${reasonForReject}</td></tr>
+  </table>
+  <br />
+  ${(componentExists.equals("yes"))? "<b>Components</b>":" "}
+  <br/>
+  ${(componentExists.equals("yes"))? componentTable:" "}
+  <br/><br/>
+  ${(libraryExists.equals("yes"))? "<b>Libraries</b>":" "}
+  <br/>
+  ${(libraryExists.equals("yes"))? libraryTable:" "}
+  <br/><br/>
+  Thank you,
+
+</p>]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="servicetask1" name="Send License" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/sendLicense.epr</activiti:string>
+        </activiti:field>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"productName":"${productName}" , "productVersion": "${productVersion}", "licenseRequestId": "${licenseRequestId}" , "mailList":"${mailList}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputVariable">
+          <activiti:string>out</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"Content-Type": "application/json","adminJwt":"${jwToken}"}</activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow1" sourceRef="startevent2" targetRef="mailtask3"></sequenceFlow>
+    <sequenceFlow id="flow2" sourceRef="mailtask3" targetRef="usertask2"></sequenceFlow>
+    <sequenceFlow id="flow3" name="Accept" sourceRef="usertask2" targetRef="servicetask1">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputType == "Accept"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow4" name="Reject" sourceRef="usertask2" targetRef="mailtask4">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputType == "Reject"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow5" sourceRef="servicetask1" targetRef="endevent2"></sequenceFlow>
+    <sequenceFlow id="flow6" sourceRef="mailtask4" targetRef="endevent2"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_AdminProcess">
+    <bpmndi:BPMNPlane bpmnElement="AdminProcess" id="BPMNPlane_AdminProcess">
+      <bpmndi:BPMNShape bpmnElement="startevent2" id="BPMNShape_startevent2">
+        <omgdc:Bounds height="35.0" width="35.0" x="70.0" y="170.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent2" id="BPMNShape_endevent2">
+        <omgdc:Bounds height="35.0" width="35.0" x="1050.0" y="170.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask3" id="BPMNShape_mailtask3">
+        <omgdc:Bounds height="55.0" width="105.0" x="210.0" y="160.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="usertask2" id="BPMNShape_usertask2">
+        <omgdc:Bounds height="55.0" width="105.0" x="390.0" y="160.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask4" id="BPMNShape_mailtask4">
+        <omgdc:Bounds height="61.0" width="131.0" x="379.0" y="330.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask1" id="BPMNShape_servicetask1">
+        <omgdc:Bounds height="55.0" width="105.0" x="690.0" y="160.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+        <omgdi:waypoint x="105.0" y="187.0"></omgdi:waypoint>
+        <omgdi:waypoint x="210.0" y="187.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+        <omgdi:waypoint x="315.0" y="187.0"></omgdi:waypoint>
+        <omgdi:waypoint x="390.0" y="187.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+        <omgdi:waypoint x="495.0" y="187.0"></omgdi:waypoint>
+        <omgdi:waypoint x="690.0" y="187.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="12.0" width="34.0" x="495.0" y="187.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+        <omgdi:waypoint x="442.0" y="215.0"></omgdi:waypoint>
+        <omgdi:waypoint x="444.0" y="330.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="12.0" width="31.0" x="447.0" y="250.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+        <omgdi:waypoint x="795.0" y="187.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1050.0" y="187.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
+        <omgdi:waypoint x="510.0" y="360.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1067.0" y="360.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1067.0" y="205.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

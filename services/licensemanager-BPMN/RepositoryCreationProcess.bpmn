@@ -1,0 +1,1137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://wso2.org/bpmn/repositoryCreationProcess">
+  <process id="repositoryCreationProcess" name="Repository Creation Process" isExecutable="true">
+    <startEvent id="repositoryCreationStart" name="Start Repository Creation"></startEvent>
+    <serviceTask id="gitHubRepoRequestAddedIntoDbRestTask" name="GitHub Repository Request Added into Database" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/repositoryInsertData.epr</activiti:string>
+        </activiti:field>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"data":["${data[0]}","${data[1]}","${data[2]}","${data[3]}","${data[4]}","${data[5]}","${data[6]}","${data[7]}","${data[8]}","${data[9]}","${data[10]}","${data[11]}","${data[12]}"]}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputType:responseType,outputMessage:responseMessage,repositoryId:repositoryId</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${jwt}"}</activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <userTask id="approveGitHubREpositoryUserTask" name="Waiting for approval" activiti:assignee="admin"></userTask>
+    <serviceTask id="createGitHubRepositoryRestTask" name="Create GitHub Repository" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"repositoryId":${repositoryId}}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeGitHub:responseType,outputTypeGitHubMessage:responseMessage,repoUpdatedDetails:repoUpdatedDetails,outputTeamName:teamName</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/createRepositories.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <sequenceFlow id="flow1" sourceRef="repositoryCreationStart" targetRef="gitHubRepoRequestAddedIntoDbRestTask"></sequenceFlow>
+    <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow5" sourceRef="gitHubRepoRequestAddedIntoDbRestTask" targetRef="exclusivegateway1"></sequenceFlow>
+    <sequenceFlow id="flow7" name="Database insertion failed" sourceRef="exclusivegateway1" targetRef="endevent1">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputType .equals( "Error")}]]></conditionExpression>
+    </sequenceFlow>
+    <exclusiveGateway id="exclusivegateway3" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow12" sourceRef="approveGitHubREpositoryUserTask" targetRef="exclusivegateway3"></sequenceFlow>
+    <sequenceFlow id="flow13" name="Approve" sourceRef="exclusivegateway3" targetRef="createGitHubRepositoryRestTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputType .equals("Done")}]]></conditionExpression>
+    </sequenceFlow>
+    <serviceTask id="mailtask1" name="Send e-mail for approval" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:expression><![CDATA[${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Request - ${mailData[0]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+Hi all!<br /><br />
+
+${mailData[11]}&nbsp; has requested for the following repository <br /><br />
+<table style="width:100%">
+<tr><td style="width:12%;"><b>Repository Name</b></td><td>${mailData[0]}</td></tr>
+<tr><td><b>Language</b></td><td>${mailData[1]}</td></tr>
+<tr><td><b>Buildable</b></td><td>${(mailData[2] == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Nexus</b></td><td>${(mailData[3] == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Private Repository</b></td><td>${(mailData[4] == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Group ID</b></td><td>${mailData[6]}</td></tr>
+<tr><td><b>License</b></td><td>${mailData[7]}</td></tr>
+<tr><td><b>Team</b></td><td>${mailData[8]}</td></tr>
+<tr><td><b>Organization</b></td><td>${mailData[9]}</td></tr>
+<tr><td><b>Repository Type</b></td><td>${mailData[10]}</td></tr>
+<tr><td><b>Requested By</b></td><td>${mailData[11]}</td></tr>
+<tr><td style="vertical-align:top;"><b>Description</b></td><td>${mailData[5].replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr><br/>
+</table>
+<br/>
+Please click <strong><a href=${origin}#/app/acceptRepository?repositoryId=${repositoryId}>here </a></strong> to Approve or Reject.
+
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow25" name="Database insertion successfull" sourceRef="exclusivegateway1" targetRef="mailtask1">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputType .equals("Done")}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow26" sourceRef="mailtask1" targetRef="approveGitHubREpositoryUserTask"></sequenceFlow>
+    <serviceTask id="mailtask2" name="Send Acknowledement" activiti:async="true" activiti:exclusive="false" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Rejected - ${mailData[0]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+Hi all!<br /><br />
+
+The request for ${mailData[0]} has been rejected. <br/><br/>
+
+<table style="width:100%">
+<tr><td style="width:12%;"><b>Rejected by</b></td><td>${rejectBy}</td></tr>
+<tr><td><b>Reason for rejection</b></td><td>${reasonForReject}</td></tr>
+<tr></tr>
+<tr><td><b>Repository Name</b></td><td>${mailData[0]}</td></tr>
+<tr><td><b>Language</b></td><td>${mailData[1]}</td></tr>
+<tr><td><b>Buildable</b></td><td>${mailData[2]}</td></tr>
+<tr><td><b>Nexus</b></td><td>${mailData[3]}</td></tr>
+<tr><td><b>Is private</b></td><td>${mailData[4]}</td></tr>
+<tr><td><b>Group ID</b></td><td>${mailData[6]}</td></tr>
+<tr><td><b>License</b></td><td>${mailData[7]}</td></tr>
+<tr><td><b>Team</b></td><td>${mailData[8]}</td></tr>
+<tr><td><b>Organization</b></td><td>${mailData[9]}</td></tr>
+<tr><td><b>Repository Type</b></td><td>${mailData[10]}</td></tr>
+<tr><td><b>Requested By</b></td><td>${mailData[11]}</td></tr>
+<tr><td style="vertical-align:top;"><b>Description</b></td><td>${mailData[5].replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr><br/>
+</table>
+
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow27" name="Reject" sourceRef="exclusivegateway3" targetRef="mailtask2">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputType.equals( "Reject")}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow28" sourceRef="mailtask2" targetRef="endevent1"></sequenceFlow>
+    <serviceTask id="servicetask1" name="Set Issue Template" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"organization":"${repoUpdatedDetails.ORGANIZATION_NAME}","repositoryName":"${repoUpdatedDetails.REPOSITORY_NAME}","acceptedByEmail":"${repoUpdatedDetails.REPOSITORY_ACCEPTED_BY}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeGitHubIssue:responseType,outputTypeGitHubIssueMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/setIssueTemplate.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="servicetask2" name="Nexus Repository Target" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"groupId":"${repoUpdatedDetails.REPOSITORY_GROUPID}","contentClass":"maven2"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeNexusRepoTarget:responseType,outputTypeNexusRepoTargetMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/nexusRepoTarget.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="servicetask3" name="Create Jenkins" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"name":"${repoUpdatedDetails.REPOSITORY_NAME}","repositoryType":"${repoUpdatedDetails.REPOSITORYTYPE_KEY}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeJenkins:responseType,outputTypeJenkinsMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/jenkins.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="servicetask4" name="Set PR Template" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"organization":"${repoUpdatedDetails.ORGANIZATION_NAME}","repositoryName":"${repoUpdatedDetails.REPOSITORY_NAME}","acceptedByEmail":"${repoUpdatedDetails.REPOSITORY_ACCEPTED_BY}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeGitHubPullRequest:responseType,outputTypeGitHubPullRequestMessage: responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/setPrTemplate.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="servicetask5" name="Set ReadMe file" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"organization":"${repoUpdatedDetails.ORGANIZATION_NAME}","repositoryName":"${repoUpdatedDetails.REPOSITORY_NAME}","acceptedByEmail":"${repoUpdatedDetails.REPOSITORY_ACCEPTED_BY}","repositoryDescription":"${repoUpdatedDetails.REPOSITORY_DESCRIPTION}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeGitHubReadMe:responseType,outputTypeGitHubReadMeMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/setReadMe.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="mailtask5" name="Send Ack - Error" activiti:async="true" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Creation Error -  ${repoUpdatedDetails.REPOSITORY_NAME}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+
+Hi all!<br /><br />
+
+The request for ${repoUpdatedDetails.REPOSITORY_NAME} has been accepted. Errors were encountered when creating the repository. <br /><br />
+
+<table style="width:100%">
+<tr><td style="width:12%;"><b>Repository Name</b></td><td>${repoUpdatedDetails.REPOSITORY_NAME}</td></tr>
+<tr><td><b>Language</b></td><td>${repoUpdatedDetails.REPOSITORY_LANGUAGE}</td></tr>
+<tr><td><b>Buildable</b></td><td>${(repoUpdatedDetails.REPOSITORY_BUILDABLE == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Nexus</b></td><td>${(repoUpdatedDetails.REPOSITORY_NEXUS == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Private Repository</b></td><td>${(repoUpdatedDetails.REPOSITORY_PRIVATE== true)?"Yes":"No"}</td></tr>
+<tr><td><b>Group ID</b></td><td>${repoUpdatedDetails.REPOSITORY_GROUPID}</td></tr>
+<tr><td><b>License</b></td><td>${repoUpdatedDetails.LICENSE_NAME}</td></tr>
+<tr><td><b>Team</b></td><td>${outputTeamName}</td></tr>
+<tr><td><b>Organization</b></td><td>${repoUpdatedDetails.ORGANIZATION_NAME}</td></tr>
+<tr><td><b>Type</b></td><td>${repoUpdatedDetails.REPOSITORYTYPE_NAME}</td></tr>
+<tr><td><b>Requested By</b></td><td>${repoUpdatedDetails.REPOSITORY_REQUEST_BY}</td></tr>
+<tr><td style="vertical-align:top;"><b>Description</b></td><td>${repoUpdatedDetails.REPOSITORY_DESCRIPTION.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+</table>
+<br/><br/>
+
+<strong>Process Status </strong><br/><br/>
+
+  <table style="width:100%">
+    <tr><td style="width:15%;"><b>GitHub Repository Creation</b></td><td>${(outputTypeGitHub.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>GitHub Issue Template</b></td><td>${(outputTypeGitHubIssue.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub PR Template</b></td><td>${(outputTypeGitHubPullRequest.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub ReadMe File</b></td><td>${(outputTypeGitHubReadMe.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>Nexus Repository Target</b></td><td>${(outputTypeNexusRepoTarget.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>Nexus Staging Profile</b></td><td>${(outputTypeNexusStaging.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  </table>
+
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="servicetask7" name="Nexus Staging Profile" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"groupId":"${repoUpdatedDetails.REPOSITORY_GROUPID}","contentClass":"maven2"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeNexusStaging:responseType,outputTypeNexusStagingMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/nexusStaging.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow63" sourceRef="servicetask2" targetRef="servicetask7"></sequenceFlow>
+    <exclusiveGateway id="exclusivegateway4" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow78" sourceRef="servicetask7" targetRef="exclusivegateway4"></sequenceFlow>
+    <sequenceFlow id="flow80" sourceRef="exclusivegateway4" targetRef="mailtask5">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeGitHub.equals("Error") || outputTypeGitHubIssue.equals("Error") || outputTypeGitHubPullRequest.equals("Error") || outputTypeGitHubReadMe.equals("Error") || (outputTypeNexusRepoTarget.equals("Error")) || (outputTypeNexusStaging.equals("Error"))}]]></conditionExpression>
+    </sequenceFlow>
+    <exclusiveGateway id="exclusivegateway5" name="Exclusive Gateway"></exclusiveGateway>
+    <exclusiveGateway id="exclusivegateway6" name="Exclusive Gateway"></exclusiveGateway>
+    <exclusiveGateway id="exclusivegateway7" name="Exclusive Gateway"></exclusiveGateway>
+    <serviceTask id="mailtask6" name="Send Ack - Error" activiti:async="true" isForCompensation="true" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+
+Hi all!<br /><br />
+
+The request for ${repoUpdatedDetails.REPOSITORY_NAME} has been accepted. Errors were encountered when creating the repository. <br /><br />
+
+<table style="width:100%">
+<tr><td style="width:12%;"><b>Repository Name</b></td><td>${repoUpdatedDetails.REPOSITORY_NAME}</td></tr>
+<tr><td><b>Language</b></td><td>${repoUpdatedDetails.REPOSITORY_LANGUAGE}</td></tr>
+<tr><td><b>Buildable</b></td><td>${(repoUpdatedDetails.REPOSITORY_BUILDABLE == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Nexus</b></td><td>${(repoUpdatedDetails.REPOSITORY_NEXUS == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Private Repository</b></td><td>${(repoUpdatedDetails.REPOSITORY_PRIVATE== true)?"Yes":"No"}</td></tr>
+<tr><td><b>Group ID</b></td><td>${repoUpdatedDetails.REPOSITORY_GROUPID}</td></tr>
+<tr><td><b>License</b></td><td>${repoUpdatedDetails.LICENSE_NAME}</td></tr>
+<tr><td><b>Team</b></td><td>${outputTeamName}</td></tr>
+<tr><td><b>Organization</b></td><td>${repoUpdatedDetails.ORGANIZATION_NAME}</td></tr>
+<tr><td><b>Type</b></td><td>${repoUpdatedDetails.REPOSITORYTYPE_NAME}</td></tr>
+<tr><td><b>Requested By</b></td><td>${repoUpdatedDetails.REPOSITORY_REQUEST_BY}</td></tr>
+<tr><td style="vertical-align:top;"><b>Description</b></td><td>${repoUpdatedDetails.REPOSITORY_DESCRIPTION.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+</table>
+<br/><br/>
+
+<strong>Process Status</strong><br/><br/>
+
+  <table style="width:100%">
+    <tr><td style="width:15%;"><b>GitHub Repository Creation</b></td><td>${(outputTypeGitHub.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>GitHub Issue Template</b></td><td>${(outputTypeGitHubIssue.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub PR Template</b></td><td>${(outputTypeGitHubPullRequest.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub ReadMe File</b></td><td>${(outputTypeGitHubReadMe.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>Jenkins</b></td><td>${(outputTypeJenkins.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  </table>
+
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Creation Error -  ${repoUpdatedDetails.REPOSITORY_NAME}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="mailtask7" name="Send Ack - Success" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+
+Hi all!<br /><br />
+
+The request for ${repoUpdatedDetails.REPOSITORY_NAME} has been accepted and created successfully. <br /><br />
+
+<table style="width:100%">
+<tr><td style="width:12%;"><b>Repository Name</b></td><td>${repoUpdatedDetails.REPOSITORY_NAME}</td></tr>
+<tr><td><b>Language</b></td><td>${repoUpdatedDetails.REPOSITORY_LANGUAGE}</td></tr>
+<tr><td><b>Buildable</b></td><td>${(repoUpdatedDetails.REPOSITORY_BUILDABLE == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Nexus</b></td><td>${(repoUpdatedDetails.REPOSITORY_NEXUS == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Private Repository</b></td><td>${(repoUpdatedDetails.REPOSITORY_PRIVATE== true)?"Yes":"No"}</td></tr>
+<tr><td><b>Group ID</b></td><td>${repoUpdatedDetails.REPOSITORY_GROUPID}</td></tr>
+<tr><td><b>License</b></td><td>${repoUpdatedDetails.LICENSE_NAME}</td></tr>
+<tr><td><b>Team</b></td><td>${outputTeamName}</td></tr>
+<tr><td><b>Organization</b></td><td>${repoUpdatedDetails.ORGANIZATION_NAME}</td></tr>
+<tr><td><b>Type</b></td><td>${repoUpdatedDetails.REPOSITORYTYPE_NAME}</td></tr>
+<tr><td><b>Requested By</b></td><td>${repoUpdatedDetails.REPOSITORY_REQUEST_BY}</td></tr>
+<tr><td style="vertical-align:top;"><b>Description</b></td><td>${repoUpdatedDetails.REPOSITORY_DESCRIPTION.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+</table>
+<br/><br/>
+
+<strong>Process Status </strong><br/><br/>
+
+  <table style="width:100%">
+    <tr><td style="width:15%;"><b>GitHub Repository Creation</b></td><td>${(outputTypeGitHub.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>GitHub Issue Template</b></td><td>${(outputTypeGitHubIssue.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub PR Template</b></td><td>${(outputTypeGitHubPullRequest.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub ReadMe File</b></td><td>${(outputTypeGitHubReadMe.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>Jenkins</b></td><td>${(outputTypeJenkins.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  </table>
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Creation Success -  ${repoUpdatedDetails.REPOSITORY_NAME}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow98" sourceRef="exclusivegateway5" targetRef="mailtask6">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeGitHub.equals("Error") || outputTypeGitHubIssue.equals("Error") || outputTypeGitHubPullRequest.equals("Error") || outputTypeGitHubReadMe.equals("Error") || (outputTypeJenkins.equals("Error"))}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow99" sourceRef="exclusivegateway5" targetRef="mailtask7">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeGitHub.equals("Done") && outputTypeGitHubIssue.equals("Done") && outputTypeGitHubPullRequest.equals("Done") && outputTypeGitHubReadMe.equals("Done") && outputTypeJenkins.equals("Done") }]]></conditionExpression>
+    </sequenceFlow>
+    <serviceTask id="mailtask8" name="Send Ack - Error" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+
+Hi all!<br /><br />
+
+The request for ${repoUpdatedDetails.REPOSITORY_NAME} has been accepted. Errors were encountered when creating the repository. <br /><br />
+
+<table style="width:100%">
+<tr><td style="width:12%;"><b>Repository Name</b></td><td>${repoUpdatedDetails.REPOSITORY_NAME}</td></tr>
+<tr><td><b>Language</b></td><td>${repoUpdatedDetails.REPOSITORY_LANGUAGE}</td></tr>
+<tr><td><b>Buildable</b></td><td>${(repoUpdatedDetails.REPOSITORY_BUILDABLE == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Nexus</b></td><td>${(repoUpdatedDetails.REPOSITORY_NEXUS == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Private Repository</b></td><td>${(repoUpdatedDetails.REPOSITORY_PRIVATE== true)?"Yes":"No"}</td></tr>
+<tr><td><b>Group ID</b></td><td>${repoUpdatedDetails.REPOSITORY_GROUPID}</td></tr>
+<tr><td><b>License</b></td><td>${repoUpdatedDetails.LICENSE_NAME}</td></tr>
+<tr><td><b>Team</b></td><td>${outputTeamName}</td></tr>
+<tr><td><b>Organization</b></td><td>${repoUpdatedDetails.ORGANIZATION_NAME}</td></tr>
+<tr><td><b>Type</b></td><td>${repoUpdatedDetails.REPOSITORYTYPE_NAME}</td></tr>
+<tr><td><b>Requested By</b></td><td>${repoUpdatedDetails.REPOSITORY_REQUEST_BY}</td></tr>
+<tr><td style="vertical-align:top;"><b>Description</b></td><td>${repoUpdatedDetails.REPOSITORY_DESCRIPTION.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+</table>
+<br/><br/>
+
+<strong>Process Status </strong><br/><br/>
+
+  <table style="width:100%">
+    <tr><td style="width:15%;"><b>GitHub Repository Creation</b></td><td>${(outputTypeGitHub.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>GitHub Issue Template</b></td><td>${(outputTypeGitHubIssue.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub PR Template</b></td><td>${(outputTypeGitHubPullRequest.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub ReadMe File</b></td><td>${(outputTypeGitHubReadMe.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  </table>
+
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Creation Error -  ${repoUpdatedDetails.REPOSITORY_NAME}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="mailtask9" name="Send Ack - Success" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+
+Hi all!<br /><br />
+
+The request for ${repoUpdatedDetails.REPOSITORY_NAME} has been accepted and created successfully. <br /><br />
+
+<table style="width:100%">
+<tr><td style="width:12%;"><b>Repository Name</b></td><td>${repoUpdatedDetails.REPOSITORY_NAME}</td></tr>
+<tr><td><b>Language</b></td><td>${repoUpdatedDetails.REPOSITORY_LANGUAGE}</td></tr>
+<tr><td><b>Buildable</b></td><td>${(repoUpdatedDetails.REPOSITORY_BUILDABLE == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Nexus</b></td><td>${(repoUpdatedDetails.REPOSITORY_NEXUS == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Private Repository</b></td><td>${(repoUpdatedDetails.REPOSITORY_PRIVATE== true)?"Yes":"No"}</td></tr>
+<tr><td><b>Group ID</b></td><td>${repoUpdatedDetails.REPOSITORY_GROUPID}</td></tr>
+<tr><td><b>License</b></td><td>${repoUpdatedDetails.LICENSE_NAME}</td></tr>
+<tr><td><b>Team</b></td><td>${outputTeamName}</td></tr>
+<tr><td><b>Organization</b></td><td>${repoUpdatedDetails.ORGANIZATION_NAME}</td></tr>
+<tr><td><b>Type</b></td><td>${repoUpdatedDetails.REPOSITORYTYPE_NAME}</td></tr>
+<tr><td><b>Requested By</b></td><td>${repoUpdatedDetails.REPOSITORY_REQUEST_BY}</td></tr>
+<tr><td style="vertical-align:top;"><b>Description</b></td><td>${repoUpdatedDetails.REPOSITORY_DESCRIPTION.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+</table>
+<br/><br/>
+
+<strong>Process Status</strong><br/><br/>
+
+<table style="width:100%">
+  <tr><td style="width:15%;"><b>GitHub Repository Creation</b></td><td>${(outputTypeGitHub.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  <tr><td><b>GitHub Issue Template</b></td><td>${(outputTypeGitHubIssue.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+  <tr><td><b>GitHub PR Template</b></td><td>${(outputTypeGitHubPullRequest.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+  <tr><td><b>GitHub ReadMe File</b></td><td>${(outputTypeGitHubReadMe.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+</table>
+
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Creation Success -  ${repoUpdatedDetails.REPOSITORY_NAME}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow100" sourceRef="exclusivegateway6" targetRef="mailtask8">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeGitHub.equals("Error") || outputTypeGitHubIssue.equals("Error") || outputTypeGitHubPullRequest.equals("Error") || outputTypeGitHubReadMe.equals("Error")}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow101" sourceRef="exclusivegateway6" targetRef="mailtask9">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeGitHub.equals("Done") && outputTypeGitHubIssue.equals("Done") && outputTypeGitHubPullRequest.equals("Done") && outputTypeGitHubReadMe.equals("Done")}]]></conditionExpression>
+    </sequenceFlow>
+    <serviceTask id="mailtask10" name="Send Ack - Error" activiti:async="true" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+
+Hi all!<br /><br />
+
+The request for ${repoUpdatedDetails.REPOSITORY_NAME} has been accepted. Errors were encountered when creating the repository. <br /><br />
+
+<table style="width:100%">
+  <tr><td style="width:12%;"><b>Repository Name</b></td><td>${repoUpdatedDetails.REPOSITORY_NAME}</td></tr>
+  <tr><td><b>Language</b></td><td>${repoUpdatedDetails.REPOSITORY_LANGUAGE}</td></tr>
+  <tr><td><b>Buildable</b></td><td>${(repoUpdatedDetails.REPOSITORY_BUILDABLE == true)?"Yes":"No"}</td></tr>
+  <tr><td><b>Nexus</b></td><td>${(repoUpdatedDetails.REPOSITORY_NEXUS == true)?"Yes":"No"}</td></tr>
+  <tr><td><b>Private Repository</b></td><td>${(repoUpdatedDetails.REPOSITORY_PRIVATE== true)?"Yes":"No"}</td></tr>
+  <tr><td><b>Group ID</b></td><td>${repoUpdatedDetails.REPOSITORY_GROUPID}</td></tr>
+  <tr><td><b>License</b></td><td>${repoUpdatedDetails.LICENSE_NAME}</td></tr>
+  <tr><td><b>Team</b></td><td>${outputTeamName}</td></tr>
+  <tr><td><b>Organization</b></td><td>${repoUpdatedDetails.ORGANIZATION_NAME}</td></tr>
+  <tr><td><b>Type</b></td><td>${repoUpdatedDetails.REPOSITORYTYPE_NAME}</td></tr>
+  <tr><td><b>Requested By</b></td><td>${repoUpdatedDetails.REPOSITORY_REQUEST_BY}</td></tr>
+  <tr><td style="vertical-align:top;"><b>Description</b></td><td>${repoUpdatedDetails.REPOSITORY_DESCRIPTION.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+</table>
+<br/><br/>
+
+<strong>Process Status</strong><br/><br/>
+
+<table style="width:100%">
+  <tr><td style="width:15%;"><b>GitHub Repository Creation</b></td><td>${(outputTypeGitHub.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  <tr><td><b>GitHub Issue Template</b></td><td>${(outputTypeGitHubIssue.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+  <tr><td><b>GitHub PR Template</b></td><td>${(outputTypeGitHubPullRequest.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+  <tr><td><b>GitHub ReadMe File</b></td><td>${(outputTypeGitHubReadMe.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  <tr><td><b>Nexus Repository Target</b></td><td>${(outputTypeNexusRepoTarget.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  <tr><td><b>Nexus Staging Profile</b></td><td>${(outputTypeNexusStaging.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  <tr><td><b>Jenkins</b></td><td>${(outputTypeJenkins.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+</table>
+
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Creation Error -  ${repoUpdatedDetails.REPOSITORY_NAME}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="mailtask11" name="Send Ack - Success" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+
+Hi all!<br /><br />
+
+The request for ${repoUpdatedDetails.REPOSITORY_NAME} has been accepted and created successfully. <br /><br />
+
+<table style="width:100%">
+  <tr><td style="width:12%;"><b>Repository Name</b></td><td>${repoUpdatedDetails.REPOSITORY_NAME}</td></tr>
+  <tr><td><b>Language</b></td><td>${repoUpdatedDetails.REPOSITORY_LANGUAGE}</td></tr>
+  <tr><td><b>Buildable</b></td><td>${(repoUpdatedDetails.REPOSITORY_BUILDABLE == true)?"Yes":"No"}</td></tr>
+  <tr><td><b>Nexus</b></td><td>${(repoUpdatedDetails.REPOSITORY_NEXUS == true)?"Yes":"No"}</td></tr>
+  <tr><td><b>Private Repository</b></td><td>${(repoUpdatedDetails.REPOSITORY_PRIVATE== true)?"Yes":"No"}</td></tr>
+  <tr><td><b>Group ID</b></td><td>${repoUpdatedDetails.REPOSITORY_GROUPID}</td></tr>
+  <tr><td><b>License</b></td><td>${repoUpdatedDetails.LICENSE_NAME}</td></tr>
+  <tr><td><b>Team</b></td><td>${outputTeamName}</td></tr>
+  <tr><td><b>Organization</b></td><td>${repoUpdatedDetails.ORGANIZATION_NAME}</td></tr>
+  <tr><td><b>Type</b></td><td>${repoUpdatedDetails.REPOSITORYTYPE_NAME}</td></tr>
+  <tr><td><b>Requested By</b></td><td>${repoUpdatedDetails.REPOSITORY_REQUEST_BY}</td></tr>
+  <tr><td style="vertical-align:top;"><b>Description</b></td><td>${repoUpdatedDetails.REPOSITORY_DESCRIPTION.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+</table>
+<br/><br/>
+
+<strong>Process Status</strong><br/><br/>
+
+<table style="width:100%">
+  <tr><td style="width:15%;"><b>GitHub Repository Creation</b></td><td>${(outputTypeGitHub.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  <tr><td><b>GitHub Issue Template</b></td><td>${(outputTypeGitHubIssue.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+  <tr><td><b>GitHub PR Template</b></td><td>${(outputTypeGitHubPullRequest.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+  <tr><td><b>GitHub ReadMe File</b></td><td>${(outputTypeGitHubReadMe.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  <tr><td><b>Nexus Repository Target</b></td><td>${(outputTypeNexusRepoTarget.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  <tr><td><b>Nexus Staging Profile</b></td><td>${(outputTypeNexusStaging.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  <tr><td><b>Jenkins</b></td><td>${(outputTypeJenkins.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+</table>
+
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Creation Success -  ${repoUpdatedDetails.REPOSITORY_NAME}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow102" sourceRef="exclusivegateway7" targetRef="mailtask10">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeGitHub.equals("Error") || outputTypeGitHubIssue.equals("Error") || outputTypeGitHubPullRequest.equals("Error") || outputTypeGitHubReadMe.equals("Error") || (outputTypeJenkins.equals("Error")) || (outputTypeNexusRepoTarget.equals("Error")) || (outputTypeNexusStaging.equals("Error"))}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow103" sourceRef="exclusivegateway7" targetRef="mailtask11">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeGitHub.equals("Done") && outputTypeGitHubIssue.equals("Done") && outputTypeGitHubPullRequest.equals("Done") && outputTypeGitHubReadMe.equals("Done") && outputTypeJenkins.equals("Done") && outputTypeNexusRepoTarget.equals("Done") && outputTypeNexusStaging.equals("Done")}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow104" sourceRef="mailtask5" targetRef="endevent1"></sequenceFlow>
+    <sequenceFlow id="flow106" sourceRef="mailtask7" targetRef="endevent1"></sequenceFlow>
+    <sequenceFlow id="flow107" sourceRef="mailtask6" targetRef="endevent1"></sequenceFlow>
+    <sequenceFlow id="flow108" sourceRef="mailtask8" targetRef="endevent1"></sequenceFlow>
+    <sequenceFlow id="flow109" sourceRef="mailtask9" targetRef="endevent1"></sequenceFlow>
+    <sequenceFlow id="flow110" sourceRef="mailtask11" targetRef="endevent1"></sequenceFlow>
+    <sequenceFlow id="flow111" sourceRef="mailtask10" targetRef="endevent1"></sequenceFlow>
+    <serviceTask id="mailtask12" name="Send Ack - Success" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="html">
+          <activiti:expression><![CDATA[<p>
+
+Hi all!<br /><br />
+
+The request for ${repoUpdatedDetails.REPOSITORY_NAME} has been accepted and created successfully. <br /><br />
+
+<table style="width:100%">
+<tr><td style="width:12%;"><b>Repository Name</b></td><td>${repoUpdatedDetails.REPOSITORY_NAME}</td></tr>
+<tr><td><b>Language</b></td><td>${repoUpdatedDetails.REPOSITORY_LANGUAGE}</td></tr>
+<tr><td><b>Buildable</b></td><td>${(repoUpdatedDetails.REPOSITORY_BUILDABLE == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Nexus</b></td><td>${(repoUpdatedDetails.REPOSITORY_NEXUS == true)?"Yes":"No"}</td></tr>
+<tr><td><b>Private Repository</b></td><td>${(repoUpdatedDetails.REPOSITORY_PRIVATE== true)?"Yes":"No"}</td></tr>
+<tr><td><b>Group ID</b></td><td>${repoUpdatedDetails.REPOSITORY_GROUPID}</td></tr>
+<tr><td><b>License</b></td><td>${repoUpdatedDetails.LICENSE_NAME}</td></tr>
+<tr><td><b>Team</b></td><td>${outputTeamName}</td></tr>
+<tr><td><b>Organization</b></td><td>${repoUpdatedDetails.ORGANIZATION_NAME}</td></tr>
+<tr><td><b>Type</b></td><td>${repoUpdatedDetails.REPOSITORYTYPE_NAME}</td></tr>
+<tr><td><b>Requested By</b></td><td>${repoUpdatedDetails.REPOSITORY_REQUEST_BY}</td></tr>
+<tr><td style="vertical-align:top;"><b>Description</b></td><td>${repoUpdatedDetails.REPOSITORY_DESCRIPTION.replaceAll("\\\\\\\\n","<br/>&emsp;").replaceAll("\\\\\\\\;",";")}</td></tr>
+</table>
+<br/><br/>
+
+<strong>Process Status</strong><br/><br/>
+
+  <table style="width:100%">
+    <tr><td style="width:15%;"><b>GitHub Repository Creation</b></td><td>${(outputTypeGitHub.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>GitHub Issue Template</b></td><td>${(outputTypeGitHubIssue.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub PR Template</b></td><td>${(outputTypeGitHubPullRequest.equals("Done"))?"Completed":("Error encountered" )}</td></tr>
+    <tr><td><b>GitHub ReadMe File</b></td><td>${(outputTypeGitHubReadMe.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>Nexus Repository Target</b></td><td>${(outputTypeNexusRepoTarget.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+    <tr><td><b>Nexus Staging Profile</b></td><td>${(outputTypeNexusStaging.equals("Done"))?"Completed":("Error encountered")}</td></tr>
+  </table>
+
+<br/><br/>
+Thank You.
+</p>]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="to">
+          <activiti:expression><![CDATA[${sendToList} ${data[11]}]]></activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string><![CDATA[project@gmail.com]]></activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression><![CDATA[Repository Creation Success -  ${repoUpdatedDetails.REPOSITORY_NAME}]]></activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow112" sourceRef="exclusivegateway4" targetRef="mailtask12">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTypeGitHub.equals("Done") && outputTypeGitHubIssue.equals("Done") && outputTypeGitHubPullRequest.equals("Done") && outputTypeGitHubReadMe.equals("Done") && outputTypeNexusRepoTarget.equals("Done") && outputTypeNexusStaging.equals("Done")}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow113" sourceRef="mailtask12" targetRef="endevent1"></sequenceFlow>
+    <serviceTask id="servicetask8" name="Jenkins" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"name":"${repoUpdatedDetails.REPOSITORY_NAME}","repositoryType":"${repoUpdatedDetails.REPOSITORYTYPE_KEY}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeJenkins:responseType,outputTypeJenkinsMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/jenkins.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="servicetask9" name="Nexus Repo Target" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"groupId":"${repoUpdatedDetails.REPOSITORY_GROUPID}","contentClass":"maven2"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeNexusRepoTarget:responseType,outputTypeNexusRepoTargetMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/nexusRepoTarget.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="servicetask10" name="Staging Profile" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"groupId":"${repoUpdatedDetails.REPOSITORY_GROUPID}","contentClass":"maven2"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeNexusStaging:responseType,outputTypeNexusStagingMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/nexusStaging.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow116" sourceRef="servicetask9" targetRef="servicetask10"></sequenceFlow>
+    <sequenceFlow id="flow117" sourceRef="servicetask10" targetRef="exclusivegateway7"></sequenceFlow>
+    <sequenceFlow id="flow119" sourceRef="createGitHubRepositoryRestTask" targetRef="servicetask4"></sequenceFlow>
+    <sequenceFlow id="flow120" sourceRef="servicetask4" targetRef="servicetask1"></sequenceFlow>
+    <sequenceFlow id="flow121" sourceRef="servicetask1" targetRef="servicetask5"></sequenceFlow>
+    <exclusiveGateway id="exclusivegateway8" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow123" sourceRef="exclusivegateway8" targetRef="servicetask2">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${repoUpdatedDetails.REPOSITORY_BUILDABLE == false && repoUpdatedDetails.REPOSITORY_NEXUS == true && outputTypeGitHub == "Done"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow124" sourceRef="exclusivegateway8" targetRef="servicetask3">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${repoUpdatedDetails.REPOSITORY_BUILDABLE == true && repoUpdatedDetails.REPOSITORY_NEXUS == false && outputTypeGitHub == "Done"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow125" sourceRef="exclusivegateway8" targetRef="servicetask8">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${repoUpdatedDetails.REPOSITORY_BUILDABLE == true && repoUpdatedDetails.REPOSITORY_NEXUS == true && outputTypeGitHub == "Done"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow126" sourceRef="exclusivegateway8" targetRef="exclusivegateway6">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${repoUpdatedDetails.REPOSITORY_BUILDABLE == false && repoUpdatedDetails.REPOSITORY_NEXUS == false && outputTypeGitHub == "Done"}]]></conditionExpression>
+    </sequenceFlow>
+    <serviceTask id="servicetask11" name="Set default team" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"organization":"${repoUpdatedDetails.ORGANIZATION_NAME}","repositoryName":"${repoUpdatedDetails.REPOSITORY_NAME}","teamId":"${repoUpdatedDetails.ORGANIZATION_ADMIN_TEAM}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTeam:responseType</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/setDefaultTeam.epr</activiti:string>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow127" sourceRef="servicetask5" targetRef="servicetask11"></sequenceFlow>
+    <sequenceFlow id="flow128" sourceRef="servicetask11" targetRef="exclusivegateway8"></sequenceFlow>
+    <serviceTask id="servicetask12" name="Insert Jenkins" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/jenkinsApi.epr</activiti:string>
+        </activiti:field>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"name":"${repoUpdatedDetails.REPOSITORY_NAME}","productArea":"${repoUpdatedDetails.REPOSITORY_PRODUCT_AREA}","organization":"${repoUpdatedDetails.ORGANIZATION_NAME}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeJenkinsApi:responseType,outputTypeJenkinsApiMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow131" sourceRef="servicetask3" targetRef="servicetask12"></sequenceFlow>
+    <sequenceFlow id="flow132" sourceRef="servicetask12" targetRef="exclusivegateway5"></sequenceFlow>
+    <serviceTask id="servicetask13" name="Insert Jenkins" activiti:class="org.wso2.carbon.bpmn.extensions.rest.RESTTask" activiti:extensionId="org.wso2.developerstudio.bpmn.extensions.restTask.RESTTask">
+      <extensionElements>
+        <activiti:field name="serviceRef">
+          <activiti:string>conf:/conf/jenkinsApi.epr</activiti:string>
+        </activiti:field>
+        <activiti:field name="method">
+          <activiti:string>POST</activiti:string>
+        </activiti:field>
+        <activiti:field name="input">
+          <activiti:expression>{"name":"${repoUpdatedDetails.REPOSITORY_NAME}","productArea":"${repoUpdatedDetails.REPOSITORY_PRODUCT_AREA}","organization":"${repoUpdatedDetails.ORGANIZATION_NAME}"}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="outputMappings">
+          <activiti:string>outputTypeJenkinsApi:responseType,outputTypeJenkinsApiMessage:responseMessage</activiti:string>
+        </activiti:field>
+        <activiti:field name="headers">
+          <activiti:expression>{"ClientAuth":"${adminJwt}"}</activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow133" sourceRef="servicetask8" targetRef="servicetask13"></sequenceFlow>
+    <sequenceFlow id="flow134" sourceRef="servicetask13" targetRef="servicetask9"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_repositoryCreationProcess">
+    <bpmndi:BPMNPlane bpmnElement="repositoryCreationProcess" id="BPMNPlane_repositoryCreationProcess">
+      <bpmndi:BPMNShape bpmnElement="repositoryCreationStart" id="BPMNShape_repositoryCreationStart">
+        <omgdc:Bounds height="35.0" width="35.0" x="0.0" y="323.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gitHubRepoRequestAddedIntoDbRestTask" id="BPMNShape_gitHubRepoRequestAddedIntoDbRestTask">
+        <omgdc:Bounds height="82.0" width="121.0" x="50.0" y="300.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="approveGitHubREpositoryUserTask" id="BPMNShape_approveGitHubREpositoryUserTask">
+        <omgdc:Bounds height="58.0" width="143.0" x="510.0" y="313.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="createGitHubRepositoryRestTask" id="BPMNShape_createGitHubRepositoryRestTask">
+        <omgdc:Bounds height="60.0" width="141.0" x="750.0" y="311.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="2460.0" y="230.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway1" id="BPMNShape_exclusivegateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="202.0" y="321.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway3" id="BPMNShape_exclusivegateway3">
+        <omgdc:Bounds height="40.0" width="40.0" x="679.0" y="322.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask1" id="BPMNShape_mailtask1">
+        <omgdc:Bounds height="64.0" width="171.0" x="320.0" y="309.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask2" id="BPMNShape_mailtask2">
+        <omgdc:Bounds height="55.0" width="157.0" x="621.0" y="581.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask1" id="BPMNShape_servicetask1">
+        <omgdc:Bounds height="55.0" width="121.0" x="1050.0" y="315.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask2" id="BPMNShape_servicetask2">
+        <omgdc:Bounds height="65.0" width="189.0" x="1509.0" y="71.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask3" id="BPMNShape_servicetask3">
+        <omgdc:Bounds height="55.0" width="141.0" x="1550.0" y="220.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask4" id="BPMNShape_servicetask4">
+        <omgdc:Bounds height="55.0" width="128.0" x="910.0" y="315.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask5" id="BPMNShape_servicetask5">
+        <omgdc:Bounds height="55.0" width="129.0" x="1190.0" y="315.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask5" id="BPMNShape_mailtask5">
+        <omgdc:Bounds height="55.0" width="131.0" x="1914.0" y="1.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask7" id="BPMNShape_servicetask7">
+        <omgdc:Bounds height="65.0" width="181.0" x="1721.0" y="71.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway4" id="BPMNShape_exclusivegateway4">
+        <omgdc:Bounds height="40.0" width="40.0" x="1960.0" y="88.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway5" id="BPMNShape_exclusivegateway5">
+        <omgdc:Bounds height="40.0" width="40.0" x="1959.0" y="227.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway6" id="BPMNShape_exclusivegateway6">
+        <omgdc:Bounds height="40.0" width="40.0" x="1960.0" y="389.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway7" id="BPMNShape_exclusivegateway7">
+        <omgdc:Bounds height="40.0" width="40.0" x="2110.0" y="469.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask6" id="BPMNShape_mailtask6">
+        <omgdc:Bounds height="55.0" width="128.0" x="1916.0" y="151.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask7" id="BPMNShape_mailtask7">
+        <omgdc:Bounds height="55.0" width="105.0" x="2098.0" y="219.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask8" id="BPMNShape_mailtask8">
+        <omgdc:Bounds height="55.0" width="105.0" x="1927.0" y="300.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask9" id="BPMNShape_mailtask9">
+        <omgdc:Bounds height="55.0" width="105.0" x="2110.0" y="382.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask10" id="BPMNShape_mailtask10">
+        <omgdc:Bounds height="55.0" width="105.0" x="2078.0" y="541.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask11" id="BPMNShape_mailtask11">
+        <omgdc:Bounds height="55.0" width="105.0" x="2210.0" y="462.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="mailtask12" id="BPMNShape_mailtask12">
+        <omgdc:Bounds height="55.0" width="105.0" x="2120.0" y="80.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask8" id="BPMNShape_servicetask8">
+        <omgdc:Bounds height="55.0" width="105.0" x="1496.0" y="462.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask9" id="BPMNShape_servicetask9">
+        <omgdc:Bounds height="55.0" width="105.0" x="1823.0" y="462.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask10" id="BPMNShape_servicetask10">
+        <omgdc:Bounds height="55.0" width="105.0" x="1960.0" y="465.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway8" id="BPMNShape_exclusivegateway8">
+        <omgdc:Bounds height="40.0" width="40.0" x="1456.0" y="322.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask11" id="BPMNShape_servicetask11">
+        <omgdc:Bounds height="55.0" width="105.0" x="1340.0" y="315.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask12" id="BPMNShape_servicetask12">
+        <omgdc:Bounds height="55.0" width="105.0" x="1759.0" y="220.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask13" id="BPMNShape_servicetask13">
+        <omgdc:Bounds height="55.0" width="105.0" x="1647.0" y="462.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+        <omgdi:waypoint x="35.0" y="340.0"></omgdi:waypoint>
+        <omgdi:waypoint x="50.0" y="341.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+        <omgdi:waypoint x="171.0" y="341.0"></omgdi:waypoint>
+        <omgdi:waypoint x="202.0" y="341.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
+        <omgdi:waypoint x="222.0" y="361.0"></omgdi:waypoint>
+        <omgdi:waypoint x="222.0" y="673.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2286.0" y="673.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2477.0" y="265.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="36.0" width="100.0" x="231.0" y="417.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
+        <omgdi:waypoint x="653.0" y="342.0"></omgdi:waypoint>
+        <omgdi:waypoint x="679.0" y="342.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
+        <omgdi:waypoint x="719.0" y="342.0"></omgdi:waypoint>
+        <omgdi:waypoint x="750.0" y="341.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="12.0" width="41.0" x="709.0" y="323.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow25" id="BPMNEdge_flow25">
+        <omgdi:waypoint x="242.0" y="341.0"></omgdi:waypoint>
+        <omgdi:waypoint x="320.0" y="341.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="36.0" width="100.0" x="231.0" y="301.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow26" id="BPMNEdge_flow26">
+        <omgdi:waypoint x="491.0" y="341.0"></omgdi:waypoint>
+        <omgdi:waypoint x="510.0" y="342.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow27" id="BPMNEdge_flow27">
+        <omgdi:waypoint x="699.0" y="362.0"></omgdi:waypoint>
+        <omgdi:waypoint x="699.0" y="581.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="12.0" width="31.0" x="703.0" y="403.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow28" id="BPMNEdge_flow28">
+        <omgdi:waypoint x="778.0" y="608.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2287.0" y="608.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2477.0" y="265.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow63" id="BPMNEdge_flow63">
+        <omgdi:waypoint x="1698.0" y="103.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1721.0" y="103.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow78" id="BPMNEdge_flow78">
+        <omgdi:waypoint x="1902.0" y="103.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1960.0" y="108.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow80" id="BPMNEdge_flow80">
+        <omgdi:waypoint x="1980.0" y="88.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1979.0" y="56.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow98" id="BPMNEdge_flow98">
+        <omgdi:waypoint x="1979.0" y="227.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1980.0" y="206.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow99" id="BPMNEdge_flow99">
+        <omgdi:waypoint x="1999.0" y="247.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2098.0" y="246.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow100" id="BPMNEdge_flow100">
+        <omgdi:waypoint x="1980.0" y="389.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1979.0" y="355.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow101" id="BPMNEdge_flow101">
+        <omgdi:waypoint x="2000.0" y="409.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2110.0" y="409.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow102" id="BPMNEdge_flow102">
+        <omgdi:waypoint x="2130.0" y="509.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2130.0" y="541.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow103" id="BPMNEdge_flow103">
+        <omgdi:waypoint x="2150.0" y="489.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2210.0" y="489.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow104" id="BPMNEdge_flow104">
+        <omgdi:waypoint x="2045.0" y="28.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2287.0" y="29.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2477.0" y="230.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow106" id="BPMNEdge_flow106">
+        <omgdi:waypoint x="2203.0" y="246.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2460.0" y="247.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow107" id="BPMNEdge_flow107">
+        <omgdi:waypoint x="2044.0" y="178.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2287.0" y="180.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2477.0" y="230.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow108" id="BPMNEdge_flow108">
+        <omgdi:waypoint x="2032.0" y="327.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2263.0" y="328.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2477.0" y="265.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow109" id="BPMNEdge_flow109">
+        <omgdi:waypoint x="2215.0" y="409.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2287.0" y="409.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2477.0" y="265.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow110" id="BPMNEdge_flow110">
+        <omgdi:waypoint x="2262.0" y="462.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2477.0" y="265.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow111" id="BPMNEdge_flow111">
+        <omgdi:waypoint x="2183.0" y="568.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2287.0" y="568.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2477.0" y="265.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow112" id="BPMNEdge_flow112">
+        <omgdi:waypoint x="2000.0" y="108.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2120.0" y="107.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow113" id="BPMNEdge_flow113">
+        <omgdi:waypoint x="2225.0" y="107.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2287.0" y="108.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2477.0" y="230.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow116" id="BPMNEdge_flow116">
+        <omgdi:waypoint x="1928.0" y="489.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1960.0" y="492.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow117" id="BPMNEdge_flow117">
+        <omgdi:waypoint x="2065.0" y="492.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2110.0" y="489.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow119" id="BPMNEdge_flow119">
+        <omgdi:waypoint x="891.0" y="341.0"></omgdi:waypoint>
+        <omgdi:waypoint x="910.0" y="342.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow120" id="BPMNEdge_flow120">
+        <omgdi:waypoint x="1038.0" y="342.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1050.0" y="342.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow121" id="BPMNEdge_flow121">
+        <omgdi:waypoint x="1171.0" y="342.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1190.0" y="342.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow123" id="BPMNEdge_flow123">
+        <omgdi:waypoint x="1476.0" y="322.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1476.0" y="103.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1509.0" y="103.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow124" id="BPMNEdge_flow124">
+        <omgdi:waypoint x="1476.0" y="322.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1476.0" y="247.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1550.0" y="247.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow125" id="BPMNEdge_flow125">
+        <omgdi:waypoint x="1476.0" y="362.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1476.0" y="489.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1496.0" y="489.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow126" id="BPMNEdge_flow126">
+        <omgdi:waypoint x="1476.0" y="362.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1475.0" y="416.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1960.0" y="409.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow127" id="BPMNEdge_flow127">
+        <omgdi:waypoint x="1319.0" y="342.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1340.0" y="342.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow128" id="BPMNEdge_flow128">
+        <omgdi:waypoint x="1445.0" y="342.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1456.0" y="342.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow131" id="BPMNEdge_flow131">
+        <omgdi:waypoint x="1691.0" y="247.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1759.0" y="247.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow132" id="BPMNEdge_flow132">
+        <omgdi:waypoint x="1864.0" y="247.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1959.0" y="247.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow133" id="BPMNEdge_flow133">
+        <omgdi:waypoint x="1601.0" y="489.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1647.0" y="489.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow134" id="BPMNEdge_flow134">
+        <omgdi:waypoint x="1752.0" y="489.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1823.0" y="489.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
