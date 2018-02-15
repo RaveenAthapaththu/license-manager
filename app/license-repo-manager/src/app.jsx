@@ -36,7 +36,8 @@ import RejectLicense from './scenes/license/RejectLicense';
 import PendingRepository from './scenes/repository/PendingRepository';
 import WaitingRepository from './scenes/repository/WaitingRepository';
 import ErrorPage from './scenes/common/ErrorPage';
-
+import ViewByLibrary from './scenes/dependencymanager/Views/ViewByLibrary';
+import ViewByProductComponent from './scenes/dependencymanager/Views/ViewByProductOrComponent';
 /**
  * @class App
  * @extends {Component}
@@ -68,6 +69,8 @@ class App extends Component {
                     <Route path={'waitingLicense'} component={WaitingLicense} />
                     <Route path={'acceptLicense'} component={AcceptLicense} />
                     <Route path={'rejectLicense'} component={RejectLicense} />
+                    <Route path={'ViewbyLibrary'} component={ViewByLibrary} />
+                    <Route path={'ViewbyProductComponent'} component={ViewByProductComponent} />
                 </Route>
                 <Route path={'/'} component={Main} />
                 <Route path={'/errorPage'} component={ErrorPage} />

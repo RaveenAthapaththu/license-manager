@@ -2,9 +2,12 @@ import React, { Component } from 'react';
 import Paper from 'material-ui/Paper';
 import Menu from 'material-ui/Menu';
 import MenuItem from 'material-ui/MenuItem';
+import { List, ListItem } from 'material-ui/List';
 import LibraryBooks from 'material-ui/svg-icons/av/library-books';
 import ContentCopy from 'material-ui/svg-icons/content/content-copy';
 import Description from 'material-ui/svg-icons/action/description';
+import ListIcon from 'material-ui/svg-icons/av/featured-play-list';
+import SearchIcon from 'material-ui/svg-icons/action/pageview';
 import { Link } from 'react-router';
 import styles from '../../mystyles';
 
@@ -44,6 +47,29 @@ class AdminLeftNav extends Component {
                             leftIcon={<Description />}
                         />
                     </Link>
+                    <List>
+                        <ListItem
+                            primaryText="Dependency"
+                            leftIcon={<ListIcon />}
+                            style={{ paddingRight: 200 }}
+                            initiallyOpen={true}// eslint-disable-line
+                            primaryTogglesNestedList={true}// eslint-disable-line
+                            nestedItems={[
+                                <ListItem
+                                    key={1}
+                                    primaryText="Library"
+                                    leftIcon={<SearchIcon />}
+                                    containerElement={<Link to="/app/ViewbyLibrary" />}
+                                />,
+                                <ListItem
+                                    key={2}
+                                    primaryText="Product/Component"
+                                    leftIcon={<SearchIcon />}
+                                    containerElement={<Link to="/app/ViewbyProductComponent" />}
+                                />,
+                            ]}
+                        />
+                    </List>
                 </Menu>
             </Paper>
         );

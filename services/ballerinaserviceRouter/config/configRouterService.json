@@ -1,0 +1,6 @@
+{
+  "LM_MICROSERVICES": {
+    "MAVEN_CENTRAL":"http://localhost:9094/aethermicroservice",
+    "WSO2_PUBLIC":"http://localhost:9095/aethermicroservice"
+  }
+}

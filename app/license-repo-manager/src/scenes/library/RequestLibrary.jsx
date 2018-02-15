@@ -29,7 +29,7 @@ import LibraryType from '../../services/database/LibraryType';
 import LibraryCategory from '../../services/database/LibraryCategory';
 import StringValidations from '../../services/validations/StringValidations';
 import LibraryProcess from '../../services/bpmn/LibraryProcess';
-import styles from '../../styles';
+import styles from '../../mystyles';
 
 /**
  * @class RequestLibrary
@@ -70,6 +70,8 @@ class RequestLibrary extends Component {
         this.handleClose = this.handleClose.bind(this);
         this.handleOpenError = this.handleOpenError.bind(this);
         this.handleCloseError = this.handleCloseError.bind(this);
+        this.handleOpenSuccess = this.handleOpenSuccess.bind(this);
+        this.handleCloseSuccess = this.handleCloseSuccess.bind(this);
     }
     /**
     * @class RequestRepository

@@ -1,0 +1,12 @@
+#licensemanager database configurations
+DBURL: jdbc:mysql://localhost/TestLicenceManager?useSSL=false
+USER: root
+PASS: wso2
+#licensemanager database notifier email configurations
+RECIEVER_EMAIL: jayathma@wso2.com
+#licensemanager database LM_LIBRARY table update configurations
+CSV_FILEPATH: /home/jayathma/WSO2_Intern_Dashboard/
+CSV_FILENAME: lmlibrarydetails.csv
+NUM_THREAD: 4
+#Router Service
+ROUTER_URL: https://localhost:9091/

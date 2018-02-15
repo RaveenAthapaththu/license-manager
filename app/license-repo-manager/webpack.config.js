@@ -37,7 +37,6 @@ module.exports = {
             },
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
                 use: [
                     {
                         loader: 'babel-loader',
@@ -53,7 +52,6 @@ module.exports = {
             },
             {
                 test: /\.jsx?$/,
-                exclude: /(node_modules)/,
                 loader: 'babel-loader',
                 query: {
                     presets: ['es2015', 'react'],
@@ -83,6 +81,9 @@ module.exports = {
     },
     resolve: {
         extensions: ['.js', '.json', '.jsx', '.scss'],
+        alias: {
+            config: path.resolve(__dirname, './conf/dev.js'),
+        },
     },
     devServer: {
         contentBase: path.join(__dirname, 'public'),
@@ -90,6 +91,10 @@ module.exports = {
         historyApiFallback: {
             index: '/dist/bundle.js',
           }
+    },
+    externals: {
+        CONFIG: 'configurations',
+	config:  "configs",
     },
     
 };

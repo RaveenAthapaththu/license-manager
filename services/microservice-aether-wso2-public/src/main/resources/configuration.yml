@@ -1,0 +1,7 @@
+# Setting running port
+port: 9095
+# Setting Remote Repository
+name: wso2-public
+url: https://maven.wso2.org/nexus/content/groups/wso2-public
+id: central
+type: default

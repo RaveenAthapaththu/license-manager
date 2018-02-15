@@ -56,7 +56,15 @@ class Main extends Component {
                                 <b>Generate License</b>
                             </Link>
                         </div>
-                        <div className="col-md-3" />
+                        <div id="mainIcons" className="col-md-5">
+                            <Link to="/app/ViewbyLibrary" className="btn btn-success btn-lg btn-block">
+                                <span>
+                                    <i className="fa fa-address-book-o fa-1x" />
+                                </span>
+                                &nbsp;&nbsp;&nbsp;
+                                <b>View Third Party Libraries</b>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>

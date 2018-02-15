@@ -9,7 +9,7 @@ import LibraryRequest from '../../services/database/LibraryRequest';
 import ValidateUser from '../../services/authentication/ValidateUser';
 import StringValidations from '../../services/validations/StringValidations';
 import Alert from '../common/Alert';
-import styles from '../../styles';
+import styles from '../../mystyles';
 
 /**
  * @class RejectRepository

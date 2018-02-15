@@ -27,7 +27,7 @@ import LibraryRequest from '../../services/database/LibraryRequest';
 import StringValidations from '../../services/validations/StringValidations';
 import LibraryProcess from '../../services/bpmn/LibraryProcess';
 import Alert from '../common/Alert';
-import styles from '../../styles';
+import styles from '../../mystyles';
 
 /**
  * @class RequestRepository
