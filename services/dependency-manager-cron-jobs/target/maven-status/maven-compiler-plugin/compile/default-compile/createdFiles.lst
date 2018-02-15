@@ -1,7 +1,0 @@
-org/wso2/internalapps/lm/thirdpartylibrary/dbnotifieremail/mail/create/ComposeMail.class
-org/wso2/internalapps/lm/thirdpartylibrary/dbnotifieremail/mail/send/SendMail.class
-org/wso2/internalapps/lm/thirdpartylibrary/dbnotifieremail/mail/create/EncodeMimeMessage.class
-org/wso2/internalapps/lm/thirdpartylibrary/dbnotifieremail/mainclass/SendEmailNotification.class
-org/wso2/internalapps/lm/thirdpartylibrary/dbnotifieremail/checktables/CheckLM_LIBRARY.class
-org/wso2/internalapps/lm/thirdpartylibrary/dbnotifieremail/mail/create/SendEmail.class
-org/wso2/internalapps/lm/thirdpartylibrary/dbnotifieremail/mail/create/MailBody.class
