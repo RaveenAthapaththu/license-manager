@@ -29,5 +29,5 @@ public class LM_COMPONENT_TEMPLIB {
 
     public String table = "LM_COMPONENT_TEMPLIB";
     public String COMP_KEY = "COMP_KEY";
-    public String TEMPLIB_ID = "TEMPLIB_ID";
+    public String TEMPLIB_ID = "TL_ID";
 }

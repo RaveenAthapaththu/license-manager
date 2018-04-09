@@ -27,9 +27,9 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.impl.enterData.EnterData;
 import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerConfigurationException;
-import org.wso2.internal.apps.license.manager.impl.models.Configuration;
-import org.wso2.internal.apps.license.manager.util.LicenseManagerUtil;
+import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.MicroservicesRunner;
+import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,13 +44,13 @@ public class Main {
 
     public EnterData enterData(JarHolder jh) throws IOException {
 
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            String driver = configuration.getDatabaseDriver(),
-                    url = configuration.getDatabaseUrl(),
-                    username = configuration.getDatabaseUsername(),
-                    password = configuration.getDatabasePassword();
-            EnterData enterData = new EnterData(driver, url, username, password, jh);
+            EnterData enterData = new EnterData(databaseDriver, databaseUrl, databaseUsername, databasePassword, jh);
             enterData.enter();
             return enterData;
         } catch (ClassNotFoundException ex) {
@@ -59,8 +59,6 @@ public class Main {
             log.error("Main(SQLException) - " + ex.getMessage());
         } catch (DataSetException ex) {
             log.error("Main(DataSetException) - " + ex.getMessage());
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
         }
         return null;
 

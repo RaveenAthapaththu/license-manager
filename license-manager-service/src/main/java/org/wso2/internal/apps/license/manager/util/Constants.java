@@ -17,6 +17,8 @@
  */
 package org.wso2.internal.apps.license.manager.util;
 
+import org.wso2.msf4j.util.SystemVariableUtil;
+
 /**
  * Contains constant values needed for the License Generation.
  */
@@ -29,11 +31,11 @@ public class Constants {
     public static final String CONFIG_FILE_NAME = "license-manager-config.xml";
     public static final String RESOURCE_PATH = "resources";
 
-    //configuration file tags
-    public static final String DATABASE_DRIVER = "databaseDriver";
-    public static final String DATABASE_URL ="databaseUrl";
-    public static final String DATABASE_USERNAME = "databaseUsername";
-    public static final String DATABASE_PASSWORD = "databasePassword";
+    //configuration tags
+    public static final String DATABASE_DRIVER = "DATABASE_DRIVER";
+    public static final String DATABASE_URL ="DATABASE_URL";
+    public static final String DATABASE_USERNAME = "DATABASE_USERNAME";
+    public static final String DATABASE_PASSWORD = "DATABASE_PASSWORD";
     public static final String BPMN_URL = "bpmnUrl";
     public static final String BPMN_TOKEN = "bpmnToken";
     public static final String BPMN_EMAIL_ADDRESS = "emailAddress";
@@ -42,7 +44,8 @@ public class Constants {
     public static final String BPMN_SMTP_HOST = "smtpHost";
     public static final String BPMN_PUBLIC_KEY = "publicKey";
     public static final String BPMN_ORIGIN = "bpmnOrigin";
-    public static final String PATH_TO_FILE_STORAGE = "filePath";
+    public static final String FILE_UPLOAD_PATH= "LICENSE_MANAGER_FILE_UPLOAD_PATH\"";
+
     public static final String CLIENT_URL = "clientUrl";
     public static final String LICENSE_ID = "licenseId";
 

@@ -30,7 +30,7 @@ package org.wso2.internal.apps.license.manager.impl.tables;
 public class LM_TEMPLIB_PRODUCT {
 
     public String table = "LM_TEMPLIB_PRODUCT";
-    public String TEMPLIB_ID = "TEMPLIB_ID";
+    public String TEMPLIB_ID = "TL_ID";
     public String PRODUCT_ID = "PRODUCT_ID";
 
 

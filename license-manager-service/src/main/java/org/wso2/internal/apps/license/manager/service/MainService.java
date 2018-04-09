@@ -18,7 +18,6 @@
 
 package org.wso2.internal.apps.license.manager.service;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -27,33 +26,27 @@ import com.workingdogs.village.DataSetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.impl.enterData.EnterData;
-import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerConfigurationException;
 import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
 import org.wso2.internal.apps.license.manager.impl.main.LicenseFileGenerator;
 import org.wso2.internal.apps.license.manager.impl.main.Main;
 import org.wso2.internal.apps.license.manager.impl.main.MyJar;
-import org.wso2.internal.apps.license.manager.impl.models.Configuration;
 import org.wso2.internal.apps.license.manager.impl.models.DataManager;
 import org.wso2.internal.apps.license.manager.impl.models.LicenseRequest;
 import org.wso2.internal.apps.license.manager.impl.models.ResponseModel;
 import org.wso2.internal.apps.license.manager.util.Constants;
-import org.wso2.internal.apps.license.manager.util.FileUtils;
-import org.wso2.internal.apps.license.manager.util.LicenseManagerUtil;
+import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.msf4j.MicroservicesRunner;
 import org.wso2.msf4j.Request;
 import org.wso2.msf4j.Session;
-import org.wso2.msf4j.formparam.FormItem;
-import org.wso2.msf4j.formparam.FormParamIterator;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.OPTIONS;
@@ -82,61 +75,29 @@ import javax.ws.rs.core.Response;
 public class MainService {
 
     private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
-    private String FILE_PATH = "FILE_PATH";
-    private String JAR_HOLDER = "JAR_HOLDER";
-    private String ENTER_DATA = "ENTER_DATA";
-    private String LICENSE_PATH = "LICENSE_PATH";
-    private String LICENSE_FILE_NAME = "LICENSE_FILE_NAME";
-    private String VALID_USER = "VALID_USER";
-    private JarHolder jarHolder;
+    private ConcurrentHashMap<String, JarHolder> jarHolderConcurrentHashMap = new ConcurrentHashMap<>();
     private String packPath;
+    private String session_email = "pamodaaw@wso2.com";
 
     @GET
     @Path("/selectLicense")
     @Produces("application/json")
     public Response selectLicenseResource(@Context Request request) {
 
-//        JsonObject responseJson = new JsonObject();
-        String origin = null;
         JsonObject responseJson = new JsonObject();
         ResponseModel response = new ResponseModel();
-        Gson gson = new Gson();
-        Session session = request.getSession();
-//        boolean isValid = Boolean.valueOf(session.getAttribute(VALID_USER).toString());
-        // TODO: 3/28/18  change
-        boolean isValid = true;
-        try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            String driver = configuration.getDatabaseDriver();
-            String url = configuration.getDatabaseUrl();
-            String userName = configuration.getDatabaseUsername();
-            String password = configuration.getDatabasePassword();
-            if (!isValid) {
-                response.setResponseType("Error");
-                response.setResponseMessage("Invalid user request.");
-                return Response.ok(gson.toJson(response), MediaType.APPLICATION_JSON)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            }
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
 
-            DataManager dataManager = new DataManager(driver, url, userName, password);
-//            ArrayList<License> licenses = dataManager.selectAllLicense();
+        try {
+            DataManager dataManager = new DataManager(databaseDriver,databaseUrl, databaseUsername, databasePassword);
             JsonArray jsonArray = dataManager.selectAllLicense();
             responseJson.addProperty("responseType", "Done");
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", jsonArray);
-//            response.setResponseType("Done");
-//            response.setResponseMessage("Licenses are retrieved from the database.");
-//            response.setResponseData(gson.toJson(licenses));
             dataManager.closeConection();
-        } catch (LicenseManagerConfigurationException e) {
-//            response.setResponseType("Error");
-//            response.setResponseMessage("Invalid configurations.");
-            responseJson.addProperty("responseType", "Error");
-            responseJson.addProperty("responseMessage", "Failed to load the configurations information. ");
-            log.error("Failed to load the configurations information. " + e.getMessage(), e);
         } catch (SQLException | ClassNotFoundException | DataSetException e) {
 //            response.setResponseType("Error");
 //            response.setResponseMessage("Failed to retrieve data from the database.");
@@ -145,60 +106,6 @@ public class MainService {
             log.error("Failed to retrieve data from the database. " + e.getMessage(), e);
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
-    @POST
-    @Path("/uploadPack")
-    @Consumes("multipart/form-data")
-    @Produces("application/json")
-    public Response uploadPackResource(@Context FormParamIterator formParamIterator, @Context Request request) {
-
-        String origin = null;
-        FormItem item = formParamIterator.next();
-
-        Gson gson = new Gson();
-        JsonObject response = new JsonObject();
-
-        try {
-            Configuration config = LicenseManagerUtil.loadConfigurations();
-            String pathToStorage = config.getPathToFileStorage();
-            origin = config.getClientUrl();
-            new File(pathToStorage).mkdir();
-            String fileName = item.getName();
-            String zipFilePath = pathToStorage + File.separator + item.getName();
-            packPath = pathToStorage + fileName.substring(0, fileName.lastIndexOf('.'));
-            Files.copy(item.openStream(), Paths.get(zipFilePath));
-            File zipFile = new File(zipFilePath);
-            File dir = new File(packPath);
-            FileUtils.unzip(zipFile.getAbsolutePath(), dir.getAbsolutePath());
-
-            response.addProperty("responseType", Constants.SUCCESS);
-            response.addProperty("message", "Successfully uploaded");
-            log.info("File successfully added");
-        } catch (NullPointerException e) {
-            response.addProperty("responseType", Constants.ERROR);
-            response.addProperty("message", "Failed to upload the pack");
-            log.error("Pack may be too large to upload " + e.getMessage(), e);
-        } catch (FileAlreadyExistsException e) {
-            response.addProperty("responseType", Constants.ERROR);
-            response.addProperty("message", "Pack already exists");
-            log.error("Pack already exits. " + e.getMessage(), e);
-        } catch (IOException e) {
-            response.addProperty("responseType", Constants.ERROR);
-            response.addProperty("message", "Failed to upload the pack");
-            log.error("Error while uploading the pack. " + e.getMessage(), e);
-        } catch (LicenseManagerConfigurationException e) {
-            response.addProperty("responseType", Constants.ERROR);
-            response.addProperty("message", "Failed to load configuration details");
-            log.error("Error while loading configuration details. " + e.getMessage(), e);
-        } finally {
-            item.close();
-        }
-        return Response.ok(response, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -207,56 +114,60 @@ public class MainService {
     @Path("/getPacks")
     public Response listUploadedPacks() {
 
-        String origin = null;
-        Gson gson = new Gson();
         ArrayList<String> listOfPacks = new ArrayList<>();
         ResponseModel response = new ResponseModel();
+        JsonObject responseJson = new JsonObject();
+        JsonArray responseData = new JsonArray();
 
-        try {
-            Configuration config = LicenseManagerUtil.loadConfigurations();
-            String pathToStorage = System.getProperty("LICENSE_GENERATOR_FILE_UPLOAD_PATH");
-            SystemVariableUtil.getValue("LICENSE_GENERATOR_FILE_UPLOAD_PATH", "123");
-            origin = config.getClientUrl();
+        String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
 
-            File folder = new File(pathToStorage);
-            File[] listOfFiles = folder.listFiles();
+        File folder = new File(pathToStorage);
+        File[] listOfFiles = folder.listFiles();
 
-            if (listOfFiles != null) {
-                for (File file : listOfFiles) {
-                    if (file.isFile() && file.getName().endsWith(".zip")) {
-                        System.out.println("Zip folder " + file.getName());
-                        listOfPacks.add(file.getName());
-                    }
+        if (listOfFiles != null) {
+            for (File file : listOfFiles) {
+                if (file.isFile() && file.getName().endsWith(".zip")) {
+                    listOfPacks.add(file.getName());
                 }
             }
-
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
         }
 
-        return Response.ok(gson.toJson(listOfPacks), MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
+        for (int i = 0; i < listOfPacks.size(); i++) {
+            JsonObject ob = new JsonObject();
+            ob.addProperty("name", listOfPacks.get(i));
+            responseData.add(ob);
+        }
+        responseJson.addProperty("responseType", "Done");
+        responseJson.addProperty("responseMessage", "Done");
+        responseJson.add("responseData", responseData);
+
+        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
 
-    @GET
-    @Path("/checkJars")
+    @POST
+    @Path("/extractJars")
     @Produces("application/json")
-    public Response checkJarsResource(@Context Request request) {
+    public Response extractJars(@Context Request request, String stringPayload) {
 
         Main main = new Main();
         JsonObject responseJson = new JsonObject();
         JsonArray nameMissingJars = new JsonArray();
-        String origin = "";
-        JsonObject errorJson = new JsonObject();
-        JsonArray errorData = new JsonArray();
-        // TODO: 3/28/18 change
-        boolean isValid = true;
+        String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
+        String zipFilePath = pathToStorage + stringPayload;
+        String filePath = zipFilePath.substring(0, zipFilePath.lastIndexOf('.'));
+        File zipFile = new File(zipFilePath);
+        File dir = new File(filePath);
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            jarHolder = main.checkJars(packPath);
+            LicenseManagerUtils.unzip(zipFile.getAbsolutePath(), dir.getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            JarHolder jarHolder = main.checkJars(filePath);
+            // TODO: 4/9/18 obtain the email from the session
+            jarHolderConcurrentHashMap.put(session_email, jarHolder);
             log.info("Jar extraction complete.");
             List<MyJar> errorJarList = jarHolder.getErrorJarList();
             for (int i = 0; i < errorJarList.size(); i++) {
@@ -283,11 +194,8 @@ public class MainService {
             responseJson.addProperty("responseMessage", e.getMessage());
             log.error("checkJars(NullPointerException) - " + e.getMessage());
             log.error("checkJars(Exception) - " + e.getMessage());
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -297,54 +205,29 @@ public class MainService {
     @Produces("application/json")
     public Response enterJarsResource(@Context Request request, String stringPayload) {
 
-        String origin = "";
-        String fileNameWidth = "6%";
-        String nameWidth = "6%";
-        String versionWidth = "2%";
-        String componentTable = "<table style=\"width:40%\"><tr><th style=\"width:" + fileNameWidth + ";" +
-                "text-align:left;\">File Name</th><th style=\"width:" + nameWidth + ";text-align:left;\">Name</th><th" +
-                " style=\"width:" + versionWidth + ";text-align:left;\">Version</th></tr>";
-        String libraryTable = "<table style=\"width:40%\"><tr><th style=\"width:" + fileNameWidth + ";" +
-                "text-align:left;\">File Name</th><th style=\"width:" + nameWidth + ";text-align:left;\">Name</th><th" +
-                " style=\"width:" + versionWidth + ";text-align:left;\">Version</th></tr>";
         JsonObject responseJson = new JsonObject();
         Main main = new Main();
         JsonParser jsonParser = new JsonParser();
-        int licenseId, licenseRequestId = 0, productId, responseCode = 0;
-        String driver, url, userName, password, requestBy;
+        int licenseRequestId = 0, productId, responseCode = 0;
+        // TODO: 4/9/18 default license ID;
+        int licenseId = 31;
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseUserName = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+        String requestBy;
         JsonObject errorJson = new JsonObject();
         JsonArray errorData = new JsonArray();
         Session session = request.getSession();
-//        boolean isValid = Boolean.valueOf(session.getAttribute(VALID_USER).toString());
-        // TODO: 3/28/18 change
-        boolean isValid = true;
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            if (!isValid) {
-                errorJson.addProperty("responseType", "Error");
-                errorJson.addProperty("responseMessage", "Invalid User Request");
-                errorJson.add("component", errorData);
-                errorJson.add("library", errorData);
-                return Response.ok(errorJson, MediaType.APPLICATION_JSON)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            }
-            driver = configuration.getDatabaseDriver();
-            url = configuration.getDatabaseUrl();
-            userName = configuration.getDatabaseUsername();
-            password = configuration.getDatabasePassword();
-            DataManager dataManager = new DataManager(driver, url, userName, password);
-            licenseId = Integer.parseInt(configuration.getLicenseId());
+            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUserName, databasePassword);
             JsonElement jsonElement = jsonParser.parse(stringPayload);
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             JsonArray jsonArray = jsonObject.get("jars").getAsJsonArray();
-//            requestBy = jsonObject.get("requestBy").getAsString();
             // TODO: 3/28/18 change
-            requestBy = "pamoda@wso2.com";
+            requestBy = session_email;
+            JarHolder jarHolder = jarHolderConcurrentHashMap.get(session_email);
             EnterData enterData = main.enterData(jarHolder);
-            session.setAttribute(ENTER_DATA, enterData);
             List<MyJar> componentList = enterData.getLicenseMissingComponents();
             List<MyJar> libraryList = enterData.getLicenseMissingLibraries();
             productId = enterData.getProductId();
@@ -360,12 +243,6 @@ public class MainService {
                 component.addProperty("name", componentList.get(i).getProjectName());
                 component.addProperty("version", componentList.get(i).getVersion());
                 component.addProperty("license", licenseId);
-                componentTable += "<tr><td style=\"width:" + fileNameWidth + ";text-align:left;\">" +
-                        componentList.get(i).getJarFile().getName() + "</td><td style=\"width:" + nameWidth + ";" +
-                        "text-align:left;\">" +
-                        componentList.get(i).getProjectName() + "</td><td style=\"width:" + versionWidth + ";" +
-                        "text-align:left;\">" +
-                        componentList.get(i).getVersion() + "</td></tr>";
                 componentJsonArray.add(component);
                 dataManager.insertTempComponent(
                         componentList.get(i).getJarFile().getName(),
@@ -385,12 +262,6 @@ public class MainService {
                 library.addProperty("name", libraryList.get(i).getProjectName());
                 library.addProperty("version", libraryList.get(i).getVersion());
                 library.addProperty("license", licenseId);
-                libraryTable += "<tr><td style=\"width:" + fileNameWidth + ";text-align:left;\">" +
-                        libraryList.get(i).getJarFile().getName() + "</td><td style=\"width:" + nameWidth + ";" +
-                        "text-align:left;\">" +
-                        libraryList.get(i).getProjectName() + "</td><td style=\"width:" + versionWidth + ";" +
-                        "text-align:left;\">" +
-                        libraryList.get(i).getVersion() + "</td></tr>";
                 libraryJsonArray.add(library);
 
                 if (libraryList.get(i).getParent() != null) {
@@ -407,19 +278,6 @@ public class MainService {
                         licenseRequestId
                 );
             }
-//            if (componentList.size() > 0 || libraryList.size() > 0) {
-//                log.info(Integer.toString(responseCode));
-//                if (responseCode == 200 || responseCode == 201) {
-//                    responseJson.addProperty("responseType", "Done");
-//                    responseJson.addProperty("responseMessage", "Done");
-//                } else {
-//                    responseJson.addProperty("responseType", "Error");
-//                    responseJson.addProperty("responseMessage", ("Status code - " + Integer.toString(responseCode)));
-//                }
-//            } else {
-//                responseJson.addProperty("responseType", "Done");
-//                responseJson.addProperty("responseMessage", "Done");
-//            }
 
             responseJson.addProperty("responseType", "Done");
             responseJson.addProperty("responseMessage", "Done");
@@ -430,19 +288,10 @@ public class MainService {
             responseJson.addProperty("responseType", "Error");
             responseJson.addProperty("responseMessage", e.getMessage());
             log.error("enterJarsNew(IOException) - " + e.getMessage());
-//        } catch (Exception e) {
-//            responseJson.addProperty("responseType", "Error");
-//            responseJson.addProperty("responseMessage", e.getMessage());
-//            log.error("enterJarsNew(Exception) - " + e.getMessage());
-        } catch (DataSetException | LicenseManagerConfigurationException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (DataSetException | SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -455,7 +304,6 @@ public class MainService {
     public Response validateUserResource(@Context Request request, String stringPayload) {
 
         JsonObject responseJson = new JsonObject();
-        String origin = "";
         String token;
         String message;
         String key;
@@ -466,27 +314,19 @@ public class MainService {
         String[] tokenValues;
         boolean returnValue = false;
         JsonObject payloadJson;
-        try {
-            Session session = request.getSession();
-            // TODO: 3/29/18 for local validation
-            // TODO: 3/28/18  validate the user
-            session.setAttribute(VALID_USER, true);
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            responseJson.addProperty("responseType", "Done");
-            responseJson.addProperty("isValid", returnValue);
-            responseJson.addProperty("responseMessage", "Done");
-            // TODO: 3/29/18 actual usesr validation happens here
+        Session session = request.getSession();
+        // TODO: 3/29/18 for local validation
+        // TODO: 3/28/18  validate the user
+        responseJson.addProperty("responseType", "Done");
+        responseJson.addProperty("isValid", returnValue);
+        responseJson.addProperty("responseMessage", "Done");
+        // TODO: 3/29/18 actual usesr validation happens here
 //            session.setAttribute(VALID_USER, returnValue);
 
-            email = "pamoda@wso2.com";
-            log.info("Login - " + email);
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
-        }
+        email = "pamoda@wso2.com";
+        log.info("Login - " + email);
 
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -496,17 +336,6 @@ public class MainService {
     @Produces("application/json")
     public Response getUserDetails(@Context Request request) {
 
-        Configuration configuration = null;
-        try {
-            configuration = LicenseManagerUtil.loadConfigurations();
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
-        }
-        String origin = null;
-        if (configuration != null) {
-            origin = configuration.getClientUrl();
-        }
-
         JsonObject response = new JsonObject();
         response.addProperty("isValid", true);
         response.addProperty("userEmail", "pamoda@wso2.com");
@@ -515,7 +344,6 @@ public class MainService {
         response.addProperty("isLibraryAdmin", true);
         response.addProperty("libraryUserDetails", "");
         return Response.ok(response, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -526,36 +354,23 @@ public class MainService {
     public Response getLicenseResource(@Context Request request) {
 
         JsonObject responseJson = new JsonObject();
-        JsonObject errorJson = new JsonObject();
-        Session session = request.getSession();
-//        boolean isValid = Boolean.valueOf(session.getAttribute(VALID_USER).toString());
-        // TODO: 3/28/18 change
-        boolean isValid = true;
-        String origin = "";
-        String driver, url, userName, password, productName, productVersion, path;
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+        String fileUploadPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
+        String productName;
+        String productVersion;
         String licenseFilePath;
         String fileName;
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            if (!isValid) {
-                errorJson.addProperty("responseType", "Error");
-                errorJson.addProperty("responseMessage", "Invalid User Request");
-                return Response.ok(errorJson, MediaType.APPLICATION_JSON)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            }
-            driver = configuration.getDatabaseDriver();
-            url = configuration.getDatabaseUrl();
-            path = configuration.getPathToFileStorage();
-            userName = configuration.getDatabaseUsername();
-            password = configuration.getDatabasePassword();
-//            JarHolder jarHolder = (JarHolder) session.getAttribute(JAR_HOLDER);
+            // TODO: 4/9/18 get the session email
+            JarHolder jarHolder = jarHolderConcurrentHashMap.get(session_email);
             productName = jarHolder.getProductName();
             productVersion = jarHolder.getProductVersion();
-            LicenseFileGenerator licenseFileGenerator = new LicenseFileGenerator(driver, url, userName, password);
-            licenseFileGenerator.generateLicenceFile(productName, productVersion, path);
+            LicenseFileGenerator licenseFileGenerator = new LicenseFileGenerator(databaseDriver, databaseUrl,
+                    databaseUsername, databasePassword);
+            licenseFileGenerator.generateLicenceFile(productName, productVersion, fileUploadPath);
             responseJson.addProperty("responseType", "Done");
             responseJson.addProperty("responseMessage", "Done");
         } catch (Exception e) {
@@ -564,7 +379,6 @@ public class MainService {
             log.error("getLicense(Exception) - " + e.getMessage());
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -573,50 +387,24 @@ public class MainService {
     @Path("/downloadLicense")
     public Response getFile(@Context Request request) {
 
-        String origin = "";
-        String mountPath;
-        JsonObject errorJson = new JsonObject();
-        Session session = request.getSession();
-//        boolean isValid = Boolean.valueOf(session.getAttribute(VALID_USER).toString());
-        // TODO: 3/28/18 change
-        boolean isValid = true;
-        try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            mountPath = configuration.getPathToFileStorage();
-            if (!isValid) {
-                errorJson.addProperty("responseType", "Error");
-                errorJson.addProperty("responseMessage", "Invalid User Request");
-                return Response.ok(errorJson, MediaType.APPLICATION_JSON)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            }
-            origin = configuration.getClientUrl();
-//            mountPath = session.getAttribute(LICENSE_PATH).toString();
-//            String fileName = session.getAttribute(LICENSE_FILE_NAME).toString();
-            String productName = jarHolder.getProductName();
-            String productVersion = jarHolder.getProductVersion();
-            String fileName = "LICENSE(" + productName + "-" + productVersion + ").TXT";
+        String mountPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
+        JarHolder jarHolder = jarHolderConcurrentHashMap.get(session_email);
+        String productName = jarHolder.getProductName();
+        String productVersion = jarHolder.getProductVersion();
+        String fileName = "LICENSE(" + productName + "-" + productVersion + ").TXT";
 
-            File file = Paths.get(mountPath, fileName).toFile();
-            if (file.exists()) {
-                return Response.ok(file)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            } else {
-                log.error("downloadLicense - license file doesn't exists");
-            }
-
-//        } catch (FileNotFoundException e) {
-//            log.error("downloadLicense(FileNotFoundException) - " + e.getMessage());
-//        } catch (IOException e) {
-//            log.error("downloadLicense(IOException) - " + e.getMessage());
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
+        File file = Paths.get(mountPath, fileName).toFile();
+        if (file.exists()) {
+//            LicenseManagerUtils.deleteFolder(mountPath+fileName);
+            LicenseManagerUtils.deleteFolder(mountPath+productName+"-"+productVersion+".zip");
+            LicenseManagerUtils.deleteFolder(mountPath+productName+"-"+productVersion);
+            return Response.ok(file)
+                    .header("Access-Control-Allow-Credentials", true)
+                    .build();
+        } else {
+            log.error("downloadLicense - license file doesn't exists");
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-
-        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
     @GET
@@ -625,36 +413,24 @@ public class MainService {
     public Response selectWaitingLicenseRequests(@Context Request request) {
 
         JsonObject responseJson = new JsonObject();
-        String origin = "";
-        String driver, url, userName, password;
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-
-            origin = configuration.getClientUrl();
-            driver = configuration.getDatabaseDriver();
-            url = configuration.getDatabaseUrl();
-            userName = configuration.getDatabaseUsername();
-            password = configuration.getDatabasePassword();
-            DataManager dataManager = new DataManager(driver, url, userName, password);
+            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
             JsonArray waitingRequests = dataManager.selectWaitingLicenseRequests();
             responseJson.addProperty("responseType", "");
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", waitingRequests);
             dataManager.closeConection();
 
-//        } catch (Exception e) {
-//            responseJson.addProperty("responseType", "Error");
-//            responseJson.addProperty("responseMessage", e.getMessage());
-//            log.error("selectWaitingLicenseRequests(Exception) - " + e.getMessage());
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -666,48 +442,23 @@ public class MainService {
             licenseRequestId) {
 
         JsonObject responseJson = new JsonObject();
-        JsonObject errorJson = new JsonObject();
-        Session session = request.getSession();
-//        boolean isValid = Boolean.valueOf(session.getAttribute(VALID_USER).toString());
-        // TODO: 3/28/18 change
-        boolean isValid = true;
-        String origin = "";
-        String driver, url, userName, password;
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            if (!isValid) {
-                errorJson.addProperty("responseType", "Error");
-                errorJson.addProperty("responseMessage", "Invalid User Request");
-                return Response.ok(errorJson, MediaType.APPLICATION_JSON)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            }
-            driver = configuration.getDatabaseDriver();
-            url = configuration.getDatabaseUrl();
-            userName = configuration.getDatabaseUsername();
-            password = configuration.getDatabasePassword();
-            DataManager dataManager = new DataManager(driver, url, userName, password);
+            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
             JsonArray waitingComponents = dataManager.selectWaitingLicenseComponents(licenseRequestId);
             responseJson.addProperty("responseType", "Done");
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", waitingComponents);
             dataManager.closeConection();
-
-//        } catch (Exception e) {
-//            responseJson.addProperty("responseType", "Error");
-//            responseJson.addProperty("responseMessage", e.getMessage());
-//            log.error("selectWaitingComponents(Exception) - " + e.getMessage());
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
 
@@ -720,48 +471,23 @@ public class MainService {
             licenseRequestId) {
 
         JsonObject responseJson = new JsonObject();
-        JsonObject errorJson = new JsonObject();
-        Session session = request.getSession();
-//        boolean isValid = Boolean.valueOf(session.getAttribute(VALID_USER).toString());
-        // TODO: 3/28/18 change
-        boolean isValid = true;
-        String origin = "";
-        String driver, url, userName, password;
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            if (!isValid) {
-                errorJson.addProperty("responseType", "Error");
-                errorJson.addProperty("responseMessage", "Invalid User Request");
-                return Response.ok(errorJson, MediaType.APPLICATION_JSON)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            }
-            driver = configuration.getDatabaseDriver();
-            url = configuration.getDatabaseUrl();
-            userName = configuration.getDatabaseUsername();
-            password = configuration.getDatabasePassword();
-            DataManager dataManager = new DataManager(driver, url, userName, password);
+            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
             JsonArray waitingLibraries = dataManager.selectWaitingLicenseLibraries(licenseRequestId);
             responseJson.addProperty("responseType", "Done");
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", waitingLibraries);
             dataManager.closeConection();
-
-//        } catch (Exception e) {
-//            responseJson.addProperty("responseType", "Error");
-//            responseJson.addProperty("responseMessage", e.getMessage());
-//            log.error("selectWaitingLibraries(Exception) - " + e.getMessage());
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -773,42 +499,25 @@ public class MainService {
     @OPTIONS
     public Response acceptLicenseRequestResource(@Context Request request, String stringPayload) {
 
-        String origin = "";
         JsonObject responseJson = new JsonObject();
         JsonObject errorJson = new JsonObject();
         JsonObject requestJson;
         JsonArray componentsJson;
         JsonArray librariesJson;
         JsonParser jsonParser = new JsonParser();
-        String driver, url, userName, password;
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
         int productId, requestId, responseCode = 0;
-        String bpmnUrlString;
-        String bpmnToken;
         String jwt = null;
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            driver = configuration.getDatabaseDriver();
-            url = configuration.getDatabaseUrl();
-            userName = configuration.getDatabaseUsername();
-            password = configuration.getDatabasePassword();
-            DataManager dataManager = new DataManager(driver, url, userName, password);
+            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
             requestJson = jsonParser.parse(stringPayload).getAsJsonObject();
             componentsJson = requestJson.getAsJsonArray("components");
             librariesJson = requestJson.getAsJsonArray("libraries");
             productId = requestJson.get("productId").getAsInt();
             requestId = requestJson.get("requestId").getAsInt();
-//            jwt = requestJson.get("token").getAsString();
-            boolean isValidAdmin = dataManager.isLicenseAdmin(jwt);
-            if (!isValidAdmin) {
-                errorJson.addProperty("responseType", "Error");
-                errorJson.addProperty("responseMessage", "Invalid User Request");
-                dataManager.closeConection();
-                return Response.ok(errorJson, MediaType.APPLICATION_JSON)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            }
             dataManager.updateLicenseRequestAccept(requestId);
             for (int i = 0; i < componentsJson.size(); i++) {
                 String name = componentsJson.get(i).getAsJsonObject().get("TC_NAME").getAsString();
@@ -822,11 +531,11 @@ public class MainService {
             }
 
             for (int i = 0; i < librariesJson.size(); i++) {
-                String name = librariesJson.get(i).getAsJsonObject().get("TEMPLIB_NAME").getAsString();
-                String fileName = librariesJson.get(i).getAsJsonObject().get("TEMPLIB_FILE_NAME").getAsString();
-                String version = librariesJson.get(i).getAsJsonObject().get("TEMPLIB_VERSION").getAsString();
-                String type = librariesJson.get(i).getAsJsonObject().get("TEMPLIB_TYPE").getAsString();
-                String parent = librariesJson.get(i).getAsJsonObject().get("TEMPLIB_PARENT").getAsString();
+                String name = librariesJson.get(i).getAsJsonObject().get("TL_NAME").getAsString();
+                String fileName = librariesJson.get(i).getAsJsonObject().get("TL_FILE_NAME").getAsString();
+                String version = librariesJson.get(i).getAsJsonObject().get("TL_VERSION").getAsString();
+                String type = librariesJson.get(i).getAsJsonObject().get("TL_TYPE").getAsString();
+                String parent = librariesJson.get(i).getAsJsonObject().get("TL_PARENT").getAsString();
                 int licenseId = librariesJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
                 String licenseKey = dataManager.selectLicenseFromId(licenseId);
                 int libId = dataManager.insertLibrary(name, fileName, version, type);
@@ -851,12 +560,11 @@ public class MainService {
 
             dataManager.closeConection();
 
-        } catch (DataSetException | LicenseManagerConfigurationException | SQLException | ClassNotFoundException e) {
+        } catch (DataSetException | SQLException | ClassNotFoundException e) {
             responseJson.addProperty("responseType", "Error");
             responseJson.addProperty("responseMessage", "Failed");
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -868,107 +576,34 @@ public class MainService {
     @OPTIONS
     public Response rejectLicenseRequestResource(@Context Request request, String stringPayload) {
 
-        String origin = "";
         JsonObject responseJson = new JsonObject();
         JsonObject requestJson;
         JsonObject errorJson = new JsonObject();
         JsonParser jsonParser = new JsonParser();
-        String driver, url, userName, password, jwt;
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+        String jwt;
         int productId, requestId, responseCode = 0;
         String bpmnUrlString, bpmnToken, rejectBy, rejectReason;
 //        HttpsURLConnection connection;
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            driver = configuration.getDatabaseDriver();
-            url = configuration.getDatabaseUrl();
-            userName = configuration.getDatabaseUsername();
-            password = configuration.getDatabasePassword();
-            DataManager dataManager = new DataManager(driver, url, userName, password);
+            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
             requestJson = jsonParser.parse(stringPayload).getAsJsonObject();
             rejectBy = requestJson.get("rejectBy").getAsString();
             rejectReason = requestJson.get("rejectReason").getAsString();
             productId = requestJson.get("productId").getAsInt();
             requestId = requestJson.get("requestId").getAsInt();
-            jwt = requestJson.get("token").getAsString();
-            boolean isValidAdmin = dataManager.isLicenseAdmin(jwt);
-            if (!isValidAdmin) {
-                errorJson.addProperty("responseType", "Error");
-                errorJson.addProperty("responseMessage", "Invalid User Request");
-                dataManager.closeConection();
-                return Response.ok(errorJson, MediaType.APPLICATION_JSON)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            }
             dataManager.updateLicenseRequestReject(rejectBy, requestId);
-//            String taskId = dataManager.selectLicenseRequestTaskIdFromId(requestId);
-//            JsonArray variables = new JsonArray();
-//            JsonObject acceptJson = new JsonObject();
-//            JsonObject rejectByJson = new JsonObject();
-//            JsonObject rejectReasonJson = new JsonObject();
-//            JsonObject bpmnRequestJson = new JsonObject();
-//            acceptJson.addProperty("name", "outputType");
-//            acceptJson.addProperty("value", "Reject");
-//            rejectByJson.addProperty("name", "rejectBy");
-//            rejectByJson.addProperty("value", rejectBy);
-//            rejectReasonJson.addProperty("name", "reasonForReject");
-//            rejectReasonJson.addProperty("value", rejectReason);
-//            variables.add(acceptJson);
-//            variables.add(rejectByJson);
-//            variables.add(rejectReasonJson);
-//            bpmnRequestJson.addProperty("action", "complete");
-//            bpmnRequestJson.add("variables", variables);
-
-//            bpmnUrlString = configuration.getBpmnUrl() + "bpmn/runtime/tasks/" + taskId;
-//            bpmnToken = configuration.getBpmnToken();
-//            URL bpmnUrl = new URL(bpmnUrlString);
-//            connection = (HttpsURLConnection) bpmnUrl.openConnection();
-//            connection.setHostnameVerifier(new HostnameVerifier() {
-//                public boolean verify(String hostname, SSLSession session) {
-//
-//                    return true;
-//                }
-//            });
-//            connection.setRequestMethod("POST");
-//            connection.setRequestProperty("Content-Type", "application/json");
-//            connection.setRequestProperty("Authorization", bpmnToken);
-//            connection.setUseCaches(false);
-//            connection.setDoOutput(true);
-//            DataOutputStream wr = new DataOutputStream(
-//                    connection.getOutputStream());
-//            wr.writeBytes(bpmnRequestJson.toString());
-//            wr.close();
-//            InputStream is = connection.getInputStream();
-//            BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-//            StringBuilder response = new StringBuilder(); // or StringBuffer if Java version 5+
-//            String line;
-//            while ((line = rd.readLine()) != null) {
-//                response.append(line);
-//                response.append('\r');
-//            }
-//            rd.close();
-//            is.close();
-//            responseCode = connection.getResponseCode();
-//            if (responseCode == 200 || responseCode == 201) {
-//                responseJson.addProperty("responseType", "Done");
-//                responseJson.addProperty("responseMessage", "Done");
-//            } else {
-//                responseJson.addProperty("responseType", "Error");
-//                responseJson.addProperty("responseMessage", ("Status code - " + Integer.toString(responseCode)));
-//                log.error(response.toString());
-//            }
             dataManager.closeConection();
 
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
@@ -981,72 +616,21 @@ public class MainService {
 
         JsonObject responseJson = new JsonObject();
         JsonObject errorJson = new JsonObject();
-        String driver, url, userName, password, path, origin;
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+        String fileUploadPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
         String filePath, fileName, jwt;
         try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            origin = configuration.getClientUrl();
-            driver = configuration.getDatabaseDriver();
-            url = configuration.getDatabaseUrl();
-            userName = configuration.getDatabaseUsername();
-            password = configuration.getDatabasePassword();
-            path = configuration.getPathToFileStorage();
-            jwt = request.getHeader("adminJwt");
-            DataManager dataManager = new DataManager(driver, url, userName, password);
-            boolean isValidAdmin = dataManager.isLicenseAdmin(jwt);
-            if (!isValidAdmin) {
-                errorJson.addProperty("responseType", "Error");
-                errorJson.addProperty("responseMessage", "Invalid User Request");
-                dataManager.closeConection();
-                return Response.ok(errorJson, MediaType.APPLICATION_JSON)
-                        .header("Access-Control-Allow-Origin", origin)
-                        .header("Access-Control-Allow-Credentials", true)
-                        .build();
-            }
-            LicenseFileGenerator licenseFileGenerator = new LicenseFileGenerator(driver, url, userName, password);
+            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
+            LicenseFileGenerator licenseFileGenerator = new LicenseFileGenerator(databaseDriver, databaseUrl,
+                    databaseUsername, databasePassword);
             licenseFileGenerator.generateLicenceFile(licenseRequest.getProductName(), licenseRequest
-                    .getProductVersion(), path);
+                    .getProductVersion(), fileUploadPath);
             fileName = "LICENSE(" + licenseRequest.getProductName() + "-" + licenseRequest.getProductVersion() + ")" +
                     ".TXT";
-            filePath = path + fileName;
-
-//            String to = licenseRequest.getMailList();
-//            String from = configuration.getEmailAddress();
-//            final String username = configuration.getEmailAddress();
-//            final String emailPassword = configuration.getEmailPassword();
-//            String host = configuration.getSmtpHost();
-//            Properties props = new Properties();
-//            props.put("mail.smtp.auth", "true");
-//            props.put("mail.smtp.starttls.enable", "true");
-//            props.put("mail.smtp.host", host);
-//            props.put("mail.smtp.port", configuration.getSmtpPort());
-//
-//            javax.mail.Session session = javax.mail.Session.getInstance(props,
-//                    new javax.mail.Authenticator() {
-//                        protected PasswordAuthentication getPasswordAuthentication() {
-//
-//                            return new PasswordAuthentication(username, emailPassword);
-//                        }
-//                    });
-//            Message message = new MimeMessage(session);
-//            message.setFrom(new InternetAddress(from));
-//            message.setRecipients(Message.RecipientType.TO,
-//                    InternetAddress.parse(to));
-//            String subject = "License File for " + licenseRequest.getProductName() + " - " + licenseRequest
-//                    .getProductVersion();
-//            message.setSubject(subject);
-//            BodyPart messageBodyPart = new MimeBodyPart();
-//            messageBodyPart.setText("This is the license file for above $subject");
-//            Multipart multipart = new MimeMultipart();
-//            multipart.addBodyPart(messageBodyPart);
-//            messageBodyPart = new MimeBodyPart();
-//            String filename = filePath;
-//            DataSource source = new FileDataSource(filename);
-//            messageBodyPart.setDataHandler(new DataHandler(source));
-//            messageBodyPart.setFileName(fileName);
-//            multipart.addBodyPart(messageBodyPart);
-//            message.setContent(multipart);
-//            Transport.send(message);
+            filePath = fileUploadPath + fileName;
             dataManager.closeConection();
 
         } catch (ClassNotFoundException ex) {
@@ -1064,17 +648,8 @@ public class MainService {
     @Path("/test")
     public Response test(@Context Request request) {
 
-        String origin = null;
-        try {
-            Configuration config = LicenseManagerUtil.loadConfigurations();
-            origin = config.getClientUrl();
-        } catch (LicenseManagerConfigurationException e) {
-            e.printStackTrace();
-        }
-
         log.info("sample");
         return Response.ok("Hello Java", MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }

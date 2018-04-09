@@ -20,7 +20,6 @@ package org.wso2.internal.apps.license.manager.impl.models;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.workingdogs.village.DataSetException;
 import com.workingdogs.village.Record;
 import com.workingdogs.village.TableDataSet;
@@ -31,35 +30,25 @@ import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_LIBRARY;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_LICENSE;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_PRODUCT;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_TEMPLIB;
+import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_TEMP;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_LICENSE;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_PRODUCT;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LICENSE;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LICENSE_REQUEST;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_PRODUCT;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_TEMPCOMPONENT;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_TEMPCOMPONENT_LICENSE;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_TEMPLIB;
+import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_TEMP;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_TEMPLIB_LICENSE;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_TEMPLIB_PRODUCT;
 import org.wso2.internal.apps.license.manager.util.Constants;
-import org.wso2.internal.apps.license.manager.util.LicenseManagerUtil;
 import org.wso2.msf4j.MicroservicesRunner;
 
-import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.Signature;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.X509EncodedKeySpec;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Base64;
 
 public class DataManager {
 
@@ -175,17 +164,17 @@ public class DataManager {
 
     public int selectTempLib(String name, String version, String type) {
 
-        LM_TEMPLIB libTable = new LM_TEMPLIB();
+        LM_LIBRARY_TEMP libTable = new LM_LIBRARY_TEMP();
         TableDataSet tds;
         Record rec;
 
         try {
             tds = new TableDataSet(con, libTable.table);
-            tds.where(libTable.TEMPLIB_NAME + "='" + name + "' AND " + libTable.TEMPLIB_VERSION + "='" + version + "'" +
-                    " AND " + libTable.TEMPLIB_TYPE + "='" + type + "'");
+            tds.where(libTable.TL_NAME + "='" + name + "' AND " + libTable.TL_VERSION + "='" + version + "'" +
+                    " AND " + libTable.TL_TYPE + "='" + type + "'");
             tds.fetchRecords(1);
             rec = tds.getRecord(0);
-            int libraryId = rec.getValue(libTable.TEMPLIB_ID).asInt();
+            int libraryId = rec.getValue(libTable.TL_ID).asInt();
             return libraryId;
         } catch (SQLException ex) {
             log.error("selectLicenseNameFromId(SQLException) " + ex.getMessage());
@@ -287,8 +276,8 @@ public class DataManager {
         LM_PRODUCT lp = new LM_PRODUCT();
         JsonArray responseJson = new JsonArray();
         try {
-            query = "INSERT INTO LM_TEMPLIB(TEMPLIB_NAME,TEMPLIB_VERSION,TEMPLIB_FILE_NAME,TEMPLIB_PARENT," +
-                    "TEMPLIB_TYPE,TEMPLIB_LR_ID) \n" +
+            query = "INSERT INTO LM_LIBRARY_TEMP(TL_NAME,TL_VERSION,TL_FILE_NAME,TL_PARENT," +
+                    "TL_TYPE,TL_LR_ID) \n" +
                     "VALUES(?,?,?,?,?,?)";
             PreparedStatement preparedStatement = con.prepareStatement(query);
             preparedStatement.setString(1, libraryName);
@@ -313,7 +302,7 @@ public class DataManager {
         LM_PRODUCT lp = new LM_PRODUCT();
         JsonArray responseJson = new JsonArray();
         try {
-            query = "INSERT INTO LM_TEMPCOMPONENT(TC_KEY,TC_NAME,TC_TYPE,TC_VERSION,TC_FILE_NAME,TC_LR_ID) \n" +
+            query = "INSERT INTO LM_COMPONENT_TEMP(TC_KEY,TC_NAME,TC_TYPE,TC_VERSION,TC_FILE_NAME,TC_LR_ID) \n" +
                     "VALUES(?,?,?,?,?,?);";
             PreparedStatement preparedStatement = con.prepareStatement(query);
             preparedStatement.setString(1, key);
@@ -333,11 +322,11 @@ public class DataManager {
     public JsonArray selectWaitingLicenseComponents(int licenseRequestId) {
 
         String query;
-        LM_TEMPCOMPONENT tc = new LM_TEMPCOMPONENT();
+        LM_COMPONENT_TEMP tc = new LM_COMPONENT_TEMP();
         JsonArray responseJson = new JsonArray();
         try {
-            query = "SELECT LM_LICENSE_REQUEST.*, LM_TEMPCOMPONENT.* FROM LM_TEMPCOMPONENT \n" +
-                    "INNER JOIN LM_LICENSE_REQUEST ON LM_TEMPCOMPONENT.TC_LR_ID = LM_LICENSE_REQUEST.LR_ID\n" +
+            query = "SELECT LM_LICENSE_REQUEST.*, LM_COMPONENT_TEMP.* FROM LM_COMPONENT_TEMP \n" +
+                    "INNER JOIN LM_LICENSE_REQUEST ON LM_COMPONENT_TEMP.TC_LR_ID = LM_LICENSE_REQUEST.LR_ID\n" +
                     "WHERE LM_LICENSE_REQUEST.LR_ID = ?";
             PreparedStatement preparedStatement = con.prepareStatement(query);
             preparedStatement.setInt(1, licenseRequestId);
@@ -362,23 +351,23 @@ public class DataManager {
     public JsonArray selectWaitingLicenseLibraries(int licenseRequestId) {
 
         String query;
-        LM_TEMPLIB tl = new LM_TEMPLIB();
+        LM_LIBRARY_TEMP tl = new LM_LIBRARY_TEMP();
         JsonArray responseJson = new JsonArray();
         try {
-            query = "SELECT LM_LICENSE_REQUEST.*, LM_TEMPLIB.* FROM LM_TEMPLIB \n" +
-                    "INNER JOIN LM_LICENSE_REQUEST ON LM_TEMPLIB.TEMPLIB_LR_ID = LM_LICENSE_REQUEST.LR_ID\n" +
+            query = "SELECT LM_LICENSE_REQUEST.*, LM_LIBRARY_TEMP.* FROM LM_LIBRARY_TEMP \n" +
+                    "INNER JOIN LM_LICENSE_REQUEST ON LM_LIBRARY_TEMP.TL_LR_ID = LM_LICENSE_REQUEST.LR_ID\n" +
                     "WHERE LM_LICENSE_REQUEST.LR_ID = ?";
             PreparedStatement preparedStatement = con.prepareStatement(query);
             preparedStatement.setInt(1, licenseRequestId);
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
                 JsonObject waitingLibrary = new JsonObject();
-                waitingLibrary.addProperty(tl.TEMPLIB_ID, rs.getString(tl.TEMPLIB_ID));
-                waitingLibrary.addProperty(tl.TEMPLIB_NAME, rs.getString(tl.TEMPLIB_NAME));
-                waitingLibrary.addProperty(tl.TEMPLIB_VERSION, rs.getString(tl.TEMPLIB_VERSION));
-                waitingLibrary.addProperty(tl.TEMPLIB_TYPE, rs.getString(tl.TEMPLIB_TYPE));
-                waitingLibrary.addProperty(tl.TEMPLIB_FILE_NAME, rs.getString(tl.TEMPLIB_FILE_NAME));
-                waitingLibrary.addProperty(tl.TEMPLIB_PARENT, rs.getString(tl.TEMPLIB_PARENT));
+                waitingLibrary.addProperty(tl.TL_ID, rs.getString(tl.TL_ID));
+                waitingLibrary.addProperty(tl.TL_NAME, rs.getString(tl.TL_NAME));
+                waitingLibrary.addProperty(tl.TL_VERSION, rs.getString(tl.TL_VERSION));
+                waitingLibrary.addProperty(tl.TL_TYPE, rs.getString(tl.TL_TYPE));
+                waitingLibrary.addProperty(tl.TL_FILE_NAME, rs.getString(tl.TL_FILE_NAME));
+                waitingLibrary.addProperty(tl.TL_PARENT, rs.getString(tl.TL_PARENT));
                 waitingLibrary.addProperty("licenseId", 0);
                 responseJson.add(waitingLibrary);
             }
@@ -388,78 +377,78 @@ public class DataManager {
         return responseJson;
     }
 
-    public JsonArray selectWaitingLicenseComponentsWithLicense(int lrId) {
+//    public JsonArray selectWaitingLicenseComponentsWithLicense(int lrId) {
+//
+//        String query;
+//        LM_COMPONENT_TEMP tc = new LM_COMPONENT_TEMP();
+//        LM_TEMPCOMPONENT_LICENSE tcl = new LM_TEMPCOMPONENT_LICENSE();
+//        LM_LICENSE l = new LM_LICENSE();
+//        JsonArray responseJson = new JsonArray();
+//        try {
+//            query = "SELECT LM_LICENSE_REQUEST.*, LM_TEMPCOMPONENT.*,LM_TEMPCOMPONENT_LICENSE.*,LM_LICENSE" +
+//                    ".LICENSE_NAME FROM LM_TEMPCOMPONENT\n" +
+//                    "INNER JOIN LM_LICENSE_REQUEST ON LM_TEMPCOMPONENT.TC_LR_ID = LM_LICENSE_REQUEST.LR_ID\n" +
+//                    "INNER JOIN LM_TEMPCOMPONENT_LICENSE ON LM_TEMPCOMPONENT_LICENSE.TC_KEY = LM_TEMPCOMPONENT" +
+//                    ".TC_KEY\n" +
+//                    "INNER JOIN LM_LICENSE ON LM_TEMPCOMPONENT_LICENSE.LICENSE_KEY = LM_LICENSE.LICENSE_KEY\n" +
+//                    "WHERE LM_LICENSE_REQUEST.LR_ID = ?";
+//            PreparedStatement preparedStatement = con.prepareStatement(query);
+//            preparedStatement.setInt(1, lrId);
+//            ResultSet rs = preparedStatement.executeQuery();
+//            while (rs.next()) {
+//                JsonObject waitingComponent = new JsonObject();
+//                waitingComponent.addProperty(tc.TC_ID, rs.getString(tc.TC_ID));
+//                waitingComponent.addProperty(tc.TC_KEY, rs.getString(tc.TC_KEY));
+//                waitingComponent.addProperty(tc.TC_NAME, rs.getString(tc.TC_NAME));
+//                waitingComponent.addProperty(tc.TC_VERSION, rs.getString(tc.TC_VERSION));
+//                waitingComponent.addProperty(tc.TC_FILE_NAME, rs.getString(tc.TC_FILE_NAME));
+//                waitingComponent.addProperty(tcl.LICENSE_KEY, rs.getString(tcl.LICENSE_KEY));
+//                waitingComponent.addProperty(l.LICENSE_NAME, rs.getString(l.LICENSE_NAME));
+//                waitingComponent.addProperty("licenseId", 0);
+//                responseJson.add(waitingComponent);
+//            }
+//
+//        } catch (SQLException ex) {
+//            log.error("selectWaitingLicenseComponentsWithLicense(SQLException) " + ex.getMessage());
+//        }
+//        return responseJson;
+//    }
 
-        String query;
-        LM_TEMPCOMPONENT tc = new LM_TEMPCOMPONENT();
-        LM_TEMPCOMPONENT_LICENSE tcl = new LM_TEMPCOMPONENT_LICENSE();
-        LM_LICENSE l = new LM_LICENSE();
-        JsonArray responseJson = new JsonArray();
-        try {
-            query = "SELECT LM_LICENSE_REQUEST.*, LM_TEMPCOMPONENT.*,LM_TEMPCOMPONENT_LICENSE.*,LM_LICENSE" +
-                    ".LICENSE_NAME FROM LM_TEMPCOMPONENT\n" +
-                    "INNER JOIN LM_LICENSE_REQUEST ON LM_TEMPCOMPONENT.TC_LR_ID = LM_LICENSE_REQUEST.LR_ID\n" +
-                    "INNER JOIN LM_TEMPCOMPONENT_LICENSE ON LM_TEMPCOMPONENT_LICENSE.TC_KEY = LM_TEMPCOMPONENT" +
-                    ".TC_KEY\n" +
-                    "INNER JOIN LM_LICENSE ON LM_TEMPCOMPONENT_LICENSE.LICENSE_KEY = LM_LICENSE.LICENSE_KEY\n" +
-                    "WHERE LM_LICENSE_REQUEST.LR_ID = ?";
-            PreparedStatement preparedStatement = con.prepareStatement(query);
-            preparedStatement.setInt(1, lrId);
-            ResultSet rs = preparedStatement.executeQuery();
-            while (rs.next()) {
-                JsonObject waitingComponent = new JsonObject();
-                waitingComponent.addProperty(tc.TC_ID, rs.getString(tc.TC_ID));
-                waitingComponent.addProperty(tc.TC_KEY, rs.getString(tc.TC_KEY));
-                waitingComponent.addProperty(tc.TC_NAME, rs.getString(tc.TC_NAME));
-                waitingComponent.addProperty(tc.TC_VERSION, rs.getString(tc.TC_VERSION));
-                waitingComponent.addProperty(tc.TC_FILE_NAME, rs.getString(tc.TC_FILE_NAME));
-                waitingComponent.addProperty(tcl.LICENSE_KEY, rs.getString(tcl.LICENSE_KEY));
-                waitingComponent.addProperty(l.LICENSE_NAME, rs.getString(l.LICENSE_NAME));
-                waitingComponent.addProperty("licenseId", 0);
-                responseJson.add(waitingComponent);
-            }
-
-        } catch (SQLException ex) {
-            log.error("selectWaitingLicenseComponentsWithLicense(SQLException) " + ex.getMessage());
-        }
-        return responseJson;
-    }
-
-    public JsonArray selectWaitingLicenseLibrariesWithLicense(int lrId) {
-
-        String query;
-        LM_TEMPLIB tl = new LM_TEMPLIB();
-        LM_TEMPLIB_LICENSE tll = new LM_TEMPLIB_LICENSE();
-        LM_LICENSE l = new LM_LICENSE();
-        JsonArray responseJson = new JsonArray();
-        try {
-            query = "SELECT LM_LICENSE_REQUEST.*, LM_TEMPLIB.*, LM_TEMPLIB_LICENSE.*,LM_LICENSE.LICENSE_NAME FROM " +
-                    "LM_TEMPLIB \n" +
-                    "INNER JOIN LM_LICENSE_REQUEST ON LM_TEMPLIB.TEMPLIB_LR_ID = LM_LICENSE_REQUEST.LR_ID \n" +
-                    "INNER JOIN LM_TEMPLIB_LICENSE ON LM_TEMPLIB_LICENSE.TEMPLIB_ID = LM_TEMPLIB.TEMPLIB_ID\n" +
-                    "INNER JOIN LM_LICENSE ON LM_TEMPLIB_LICENSE.LICENSE_KEY = LM_LICENSE.LICENSE_KEY\n" +
-                    "WHERE LM_LICENSE_REQUEST.LR_ID = ?";
-            PreparedStatement preparedStatement = con.prepareStatement(query);
-            preparedStatement.setInt(1, lrId);
-            ResultSet rs = preparedStatement.executeQuery();
-            while (rs.next()) {
-                JsonObject waitingLibrary = new JsonObject();
-                waitingLibrary.addProperty(tl.TEMPLIB_ID, rs.getString(tl.TEMPLIB_ID));
-                waitingLibrary.addProperty(tl.TEMPLIB_NAME, rs.getString(tl.TEMPLIB_NAME));
-                waitingLibrary.addProperty(tl.TEMPLIB_VERSION, rs.getString(tl.TEMPLIB_VERSION));
-                waitingLibrary.addProperty(tl.TEMPLIB_TYPE, rs.getString(tl.TEMPLIB_TYPE));
-                waitingLibrary.addProperty(tl.TEMPLIB_FILE_NAME, rs.getString(tl.TEMPLIB_FILE_NAME));
-                waitingLibrary.addProperty(tl.TEMPLIB_PARENT, rs.getString(tl.TEMPLIB_PARENT));
-                waitingLibrary.addProperty(tll.LICENSE_KEY, rs.getString(tll.LICENSE_KEY));
-                waitingLibrary.addProperty(l.LICENSE_NAME, rs.getString(l.LICENSE_NAME));
-                waitingLibrary.addProperty("licenseId", 0);
-                responseJson.add(waitingLibrary);
-            }
-        } catch (SQLException e) {
-            log.error("selectWaitingLicenseLibrariesWithLicense(SQLException) " + e.getMessage());
-        }
-        return responseJson;
-    }
+//    public JsonArray selectWaitingLicenseLibrariesWithLicense(int lrId) {
+//
+//        String query;
+//        LM_LIBRARY_TEMP tl = new LM_LIBRARY_TEMP();
+//        LM_TEMPLIB_LICENSE tll = new LM_TEMPLIB_LICENSE();
+//        LM_LICENSE l = new LM_LICENSE();
+//        JsonArray responseJson = new JsonArray();
+//        try {
+//            query = "SELECT LM_LICENSE_REQUEST.*, LM_LIBRARY_TEMP.*, LM_TEMPLIB_LICENSE.*,LM_LICENSE.LICENSE_NAME FROM " +
+//                    "LM_LIBRARY_TEMP \n" +
+//                    "INNER JOIN LM_LICENSE_REQUEST ON LM_LIBRARY_TEMP.TL_LR_ID = LM_LICENSE_REQUEST.LR_ID \n" +
+//                    "INNER JOIN LM_TEMPLIB_LICENSE ON LM_TEMPLIB_LICENSE.TL_ID = LM_LIBRARY_TEMP.TL_ID\n" +
+//                    "INNER JOIN LM_LICENSE ON LM_TEMPLIB_LICENSE.LICENSE_KEY = LM_LICENSE.LICENSE_KEY\n" +
+//                    "WHERE LM_LICENSE_REQUEST.LR_ID = ?";
+//            PreparedStatement preparedStatement = con.prepareStatement(query);
+//            preparedStatement.setInt(1, lrId);
+//            ResultSet rs = preparedStatement.executeQuery();
+//            while (rs.next()) {
+//                JsonObject waitingLibrary = new JsonObject();
+//                waitingLibrary.addProperty(tl.TL_ID, rs.getString(tl.TL_ID));
+//                waitingLibrary.addProperty(tl.TL_NAME, rs.getString(tl.TL_NAME));
+//                waitingLibrary.addProperty(tl.TL_VERSION, rs.getString(tl.TL_VERSION));
+//                waitingLibrary.addProperty(tl.TL_TYPE, rs.getString(tl.TL_TYPE));
+//                waitingLibrary.addProperty(tl.TL_FILE_NAME, rs.getString(tl.TL_FILE_NAME));
+//                waitingLibrary.addProperty(tl.TL_PARENT, rs.getString(tl.TL_PARENT));
+//                waitingLibrary.addProperty(tll.LICENSE_KEY, rs.getString(tll.LICENSE_KEY));
+//                waitingLibrary.addProperty(l.LICENSE_NAME, rs.getString(l.LICENSE_NAME));
+//                waitingLibrary.addProperty("licenseId", 0);
+//                responseJson.add(waitingLibrary);
+//            }
+//        } catch (SQLException e) {
+//            log.error("selectWaitingLicenseLibrariesWithLicense(SQLException) " + e.getMessage());
+//        }
+//        return responseJson;
+//    }
 
     public void insertComponent(String name, String fileName, String version) throws DataSetException {
 
@@ -555,17 +544,17 @@ public class DataManager {
     public boolean insertTempLib(String name, String fileName, String version, boolean isBundle, MyJar parent, int
             licenseRequestId) throws DataSetException {
 
-        LM_TEMPLIB libTab = new LM_TEMPLIB();
+        LM_LIBRARY_TEMP libTab = new LM_LIBRARY_TEMP();
         TableDataSet tds;
         Record record;
         try {
             tds = new TableDataSet(con, libTab.table);
             record = tds.addRecord();
-            record.setValue(libTab.TEMPLIB_NAME, name)
-                    .setValue(libTab.TEMPLIB_FILE_NAME, fileName)
-                    .setValue(libTab.TEMPLIB_TYPE, (parent == null) ? ((isBundle) ? "bundle" : "jar") : "jarinbundle")
-                    .setValue(libTab.TEMPLIB_VERSION, version)
-                    .setValue(libTab.TEMPLIB_LR_ID, licenseRequestId)
+            record.setValue(libTab.TL_NAME, name)
+                    .setValue(libTab.TL_FILE_NAME, fileName)
+                    .setValue(libTab.TL_TYPE, (parent == null) ? ((isBundle) ? "bundle" : "jar") : "jarinbundle")
+                    .setValue(libTab.TL_VERSION, version)
+                    .setValue(libTab.TL_LR_ID, licenseRequestId)
                     .save(con);
         } catch (SQLException ex) {
             log.error("insertTempLib(SQLException) " + ex.getMessage());
@@ -577,7 +566,7 @@ public class DataManager {
     public int insertTempLibAndGetId(String name, String fileName, String version, boolean isBundle, MyJar parent,
                                      int licenseRequestId) throws DataSetException {
 
-        LM_TEMPLIB libTab = new LM_TEMPLIB();
+        LM_LIBRARY_TEMP libTab = new LM_LIBRARY_TEMP();
         TableDataSet tds;
         Record record;
         String parentStr = "";
@@ -587,12 +576,12 @@ public class DataManager {
             if (parent != null) {
                 parentStr = parent.getProjectName();
             }
-            record.setValue(libTab.TEMPLIB_NAME, name)
-                    .setValue(libTab.TEMPLIB_FILE_NAME, fileName)
-                    .setValue(libTab.TEMPLIB_TYPE, (parent == null) ? ((isBundle) ? "bundle" : "jar") : "jarinbundle")
-                    .setValue(libTab.TEMPLIB_VERSION, version)
-                    .setValue(libTab.TEMPLIB_PARENT, parentStr)
-                    .setValue(libTab.TEMPLIB_LR_ID, licenseRequestId)
+            record.setValue(libTab.TL_NAME, name)
+                    .setValue(libTab.TL_FILE_NAME, fileName)
+                    .setValue(libTab.TL_TYPE, (parent == null) ? ((isBundle) ? "bundle" : "jar") : "jarinbundle")
+                    .setValue(libTab.TL_VERSION, version)
+                    .setValue(libTab.TL_PARENT, parentStr)
+                    .setValue(libTab.TL_LR_ID, licenseRequestId)
                     .save(con);
             Statement stmt;
             stmt = con.createStatement();
@@ -606,58 +595,58 @@ public class DataManager {
         return -1;
     }
 
-    public void insertTempLibLicense(String licenseKey, String libId) throws DataSetException {
+//    public void insertTempLibLicense(String licenseKey, String libId) throws DataSetException {
+//
+//        LM_TEMPLIB_LICENSE liblicTab = new LM_TEMPLIB_LICENSE();
+//        TableDataSet tds;
+//        Record record;
+//        try {
+//
+//            tds = new TableDataSet(con, liblicTab.table);
+//            record = tds.addRecord();
+//            record.setValue(liblicTab.TEMPLIB_ID, libId)
+//                    .setValue(liblicTab.LICENSE_KEY, licenseKey)
+//                    .save();
+//        } catch (SQLException ex) {
+//            log.error("insertTempLibLicense(SQLException) " + ex.getMessage());
+//
+//        }
+//    }
 
-        LM_TEMPLIB_LICENSE liblicTab = new LM_TEMPLIB_LICENSE();
-        TableDataSet tds;
-        Record record;
-        try {
+//    public void insertProductTempLib(int libId, int productId) throws DataSetException {
+//
+//        LM_TEMPLIB_PRODUCT libprodtab = new LM_TEMPLIB_PRODUCT();
+//        TableDataSet tds;
+//        Record record;
+//        try {
+//
+//            tds = new TableDataSet(con, libprodtab.table);
+//            record = tds.addRecord();
+//            record.setValue(libprodtab.TL_ID, libId)
+//                    .setValue(libprodtab.PRODUCT_ID, productId)
+//                    .save();
+//        } catch (SQLException ex) {
+//            log.error("insertProductTempLib(SQLException) " + ex.getMessage());
+//        }
+//    }
 
-            tds = new TableDataSet(con, liblicTab.table);
-            record = tds.addRecord();
-            record.setValue(liblicTab.TEMPLIB_ID, libId)
-                    .setValue(liblicTab.LICENSE_KEY, licenseKey)
-                    .save();
-        } catch (SQLException ex) {
-            log.error("insertTempLibLicense(SQLException) " + ex.getMessage());
-
-        }
-    }
-
-    public void insertProductTempLib(int libId, int productId) throws DataSetException {
-
-        LM_TEMPLIB_PRODUCT libprodtab = new LM_TEMPLIB_PRODUCT();
-        TableDataSet tds;
-        Record record;
-        try {
-
-            tds = new TableDataSet(con, libprodtab.table);
-            record = tds.addRecord();
-            record.setValue(libprodtab.TEMPLIB_ID, libId)
-                    .setValue(libprodtab.PRODUCT_ID, productId)
-                    .save();
-        } catch (SQLException ex) {
-            log.error("insertProductTempLib(SQLException) " + ex.getMessage());
-        }
-    }
-
-    public void insertComponentTempLib(String component, int libraryId) throws DataSetException {
-
-        LM_COMPONENT_TEMPLIB complibtab = new LM_COMPONENT_TEMPLIB();
-        TableDataSet tds;
-        Record record;
-        try {
-
-            tds = new TableDataSet(con, complibtab.table);
-            record = tds.addRecord();
-            record.setValue(complibtab.TEMPLIB_ID, libraryId)
-                    .setValue(complibtab.COMP_KEY, component)
-                    .save();
-        } catch (SQLException ex) {
-            log.error("insertComponentTempLib(SQLException) " + ex.getMessage());
-
-        }
-    }
+//    public void insertComponentTempLib(String component, int libraryId) throws DataSetException {
+//
+//        LM_COMPONENT_TEMPLIB complibtab = new LM_COMPONENT_TEMPLIB();
+//        TableDataSet tds;
+//        Record record;
+//        try {
+//
+//            tds = new TableDataSet(con, complibtab.table);
+//            record = tds.addRecord();
+//            record.setValue(complibtab.TL_ID, libraryId)
+//                    .setValue(complibtab.COMP_KEY, component)
+//                    .save();
+//        } catch (SQLException ex) {
+//            log.error("insertComponentTempLib(SQLException) " + ex.getMessage());
+//
+//        }
+//    }
 
     public void insertComponentLicense(String compKey, String licenseKey) throws DataSetException {
 
@@ -675,22 +664,22 @@ public class DataManager {
         }
     }
 
-    public void insertTempComponentLicense(String compKey, String licenseKey) throws DataSetException {
-
-        LM_TEMPCOMPONENT_LICENSE complicTab = new LM_TEMPCOMPONENT_LICENSE();
-        TableDataSet tds;
-        Record record;
-        try {
-
-            tds = new TableDataSet(con, complicTab.table);
-            record = tds.addRecord();
-            record.setValue(complicTab.TC_KEY, compKey)
-                    .setValue(complicTab.LICENSE_KEY, licenseKey)
-                    .save();
-        } catch (SQLException ex) {
-            log.error("insertTempComponentLicense(SQLException) " + ex.getMessage());
-        }
-    }
+//    public void insertTempComponentLicense(String compKey, String licenseKey) throws DataSetException {
+//
+//        LM_TEMPCOMPONENT_LICENSE complicTab = new LM_TEMPCOMPONENT_LICENSE();
+//        TableDataSet tds;
+//        Record record;
+//        try {
+//
+//            tds = new TableDataSet(con, complicTab.table);
+//            record = tds.addRecord();
+//            record.setValue(complicTab.TC_KEY, compKey)
+//                    .setValue(complicTab.LICENSE_KEY, licenseKey)
+//                    .save();
+//        } catch (SQLException ex) {
+//            log.error("insertTempComponentLicense(SQLException) " + ex.getMessage());
+//        }
+//    }
 
     public int insertLicenseRequest(String requestBy, int productId) throws DataSetException {
 
@@ -775,52 +764,52 @@ public class DataManager {
         }
     }
 
-    public boolean isLicenseAdmin(String token) {
-
-        String[] tokenValues;
-        byte[] keyBytes, payloadBytes;
-        String message, key, query, email;
-        boolean returnValue = false;
-        JsonParser jsonParser = new JsonParser();
-        JsonObject payloadJson;
-        try {
-            Configuration configuration = LicenseManagerUtil.loadConfigurations();
-            tokenValues = token.split("\\.");
-            message = tokenValues[0] + "." + tokenValues[1];
-            key = configuration.getPublicKey();
-            keyBytes = Base64.getDecoder().decode(key.getBytes());
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            RSAPublicKey rsaPublicKey = (RSAPublicKey) kf.generatePublic(new X509EncodedKeySpec(keyBytes));
-            Signature sign = Signature.getInstance("SHA256withRSA");
-            sign.initVerify(rsaPublicKey);
-            sign.update(message.getBytes("UTF-8"));
-            byte[] signBytes = Base64.getDecoder().decode(tokenValues[2].replace('-', '+').replace('_', '/').getBytes
-                    (StandardCharsets.UTF_8));
-            returnValue = sign.verify(signBytes);
-            payloadBytes = Base64.getDecoder().decode(tokenValues[1]);
-            String payloadString = new String(payloadBytes, StandardCharsets.UTF_8);
-            payloadJson = jsonParser.parse(payloadString).getAsJsonObject();
-            email = payloadJson.get("http://wso2.org/claims/emailaddress").getAsString();
-            query = "SELECT * FROM LM_ROLE WHERE ROLE_EMAIL = ? AND ROLE_TYPE = 'LICENSE' AND ROLE_PERMISSION = " +
-                    "'ADMIN'";
-            PreparedStatement preparedStatement = con.prepareStatement(query);
-            preparedStatement.setString(1, email);
-            ResultSet rs = preparedStatement.executeQuery();
-            rs.last();
-            int rowCount = rs.getRow();
-            if (rowCount > 0) {
-                returnValue = true;
-            } else {
-                returnValue = false;
-            }
-
-        } catch (Exception e) {
-            returnValue = false;
-            log.error("updateLicenseRequestReject(SQLException) " + e.getMessage());
-        }
-
-//        return returnValue;
-        return true;
-
-    }
+//    public boolean isLicenseAdmin(String token) {
+//
+//        String[] tokenValues;
+//        byte[] keyBytes, payloadBytes;
+//        String message, key, query, email;
+//        boolean returnValue = false;
+//        JsonParser jsonParser = new JsonParser();
+//        JsonObject payloadJson;
+//        try {
+//            Configuration configuration = LicenseManagerUtil.loadConfigurations();
+//            tokenValues = token.split("\\.");
+//            message = tokenValues[0] + "." + tokenValues[1];
+//            key = configuration.getPublicKey();
+//            keyBytes = Base64.getDecoder().decode(key.getBytes());
+//            KeyFactory kf = KeyFactory.getInstance("RSA");
+//            RSAPublicKey rsaPublicKey = (RSAPublicKey) kf.generatePublic(new X509EncodedKeySpec(keyBytes));
+//            Signature sign = Signature.getInstance("SHA256withRSA");
+//            sign.initVerify(rsaPublicKey);
+//            sign.update(message.getBytes("UTF-8"));
+//            byte[] signBytes = Base64.getDecoder().decode(tokenValues[2].replace('-', '+').replace('_', '/').getBytes
+//                    (StandardCharsets.UTF_8));
+//            returnValue = sign.verify(signBytes);
+//            payloadBytes = Base64.getDecoder().decode(tokenValues[1]);
+//            String payloadString = new String(payloadBytes, StandardCharsets.UTF_8);
+//            payloadJson = jsonParser.parse(payloadString).getAsJsonObject();
+//            email = payloadJson.get("http://wso2.org/claims/emailaddress").getAsString();
+//            query = "SELECT * FROM LM_ROLE WHERE ROLE_EMAIL = ? AND ROLE_TYPE = 'LICENSE' AND ROLE_PERMISSION = " +
+//                    "'ADMIN'";
+//            PreparedStatement preparedStatement = con.prepareStatement(query);
+//            preparedStatement.setString(1, email);
+//            ResultSet rs = preparedStatement.executeQuery();
+//            rs.last();
+//            int rowCount = rs.getRow();
+//            if (rowCount > 0) {
+//                returnValue = true;
+//            } else {
+//                returnValue = false;
+//            }
+//
+//        } catch (Exception e) {
+//            returnValue = false;
+//            log.error("updateLicenseRequestReject(SQLException) " + e.getMessage());
+//        }
+//
+////        return returnValue;
+//        return true;
+//
+//    }
 }

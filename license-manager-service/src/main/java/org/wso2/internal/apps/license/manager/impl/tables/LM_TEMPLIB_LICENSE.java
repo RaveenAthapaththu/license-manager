@@ -28,6 +28,6 @@ package org.wso2.internal.apps.license.manager.impl.tables;
 public class LM_TEMPLIB_LICENSE {
 
     public String table = "LM_TEMPLIB_LICENSE";
-    public String TEMPLIB_ID = "TEMPLIB_ID";
+    public String TEMPLIB_ID = "TL_ID";
     public String LICENSE_KEY = "LICENSE_KEY";
 }
