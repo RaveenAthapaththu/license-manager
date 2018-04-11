@@ -15,7 +15,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.wso2.internal.apps.license.manager.impl.models;
 
 import com.google.gson.JsonArray;
@@ -34,6 +33,7 @@ import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_PRODUCT;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LICENSE;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.MicroservicesRunner;
+import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -42,29 +42,32 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class DataManager {
+/**
+ * TODO: Class level comments
+ */
+public class DBHandler {
 
     private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
-    private Connection con;
 
-    public DataManager(String driver, String url, String userName, String password) throws ClassNotFoundException,
-            SQLException {
+    private static Connection initiateConnection() throws ClassNotFoundException, SQLException {
 
-        Class.forName(driver);
-        this.con = DriverManager.getConnection(url, userName, password);
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+        Class.forName(databaseDriver);
+        return DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
+
     }
 
-    public void closeConection() {
+    private static void closeConection(Connection connection) throws SQLException {
 
-        try {
-            con.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        connection.close();
     }
 
-    public JsonArray selectAllLicense() throws SQLException, DataSetException {
+    public static JsonArray selectAllLicense() throws SQLException, DataSetException, ClassNotFoundException {
 
+        Connection con = initiateConnection();
         LM_LICENSE licenseTable = new LM_LICENSE();
         TableDataSet tds;
 
@@ -82,13 +85,15 @@ public class DataManager {
             }
         } catch (SQLException | DataSetException e) {
             throw e;
+        } finally {
+            closeConection(con);
         }
-
         return resultArray;
     }
 
-    public String selectLicenseFromId(int id) {
+    public static String selectLicenseFromId(int id) throws SQLException, ClassNotFoundException {
 
+        Connection con = initiateConnection();
         LM_LICENSE licenseTable = new LM_LICENSE();
         TableDataSet tds;
         Record rec;
@@ -106,11 +111,16 @@ public class DataManager {
 
         } catch (DataSetException ex) {
             log.error("selectLicenseFromId(DataSetException) " + ex.getMessage());
+        } finally {
+            closeConection(con);
         }
         return "";
     }
 
-    public void insertComponent(String name, String fileName, String version) throws  SQLException {
+    public static void insertComponent(String name, String fileName, String version) throws SQLException,
+            ClassNotFoundException {
+
+        Connection con = initiateConnection();
 
         String insertComponent = "INSERT INTO LM_COMPONENT"
                 + "(COMP_NAME, COMP_FILE_NAME, COMP_KEY, COMP_TYPE,COMP_VERSION) VALUES"
@@ -126,15 +136,19 @@ public class DataManager {
 
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-                throw ex;
-            }
+//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
+//                throw ex;
+//            }
+        } finally {
+            closeConection(con);
         }
 
     }
 
-    private int insertLibrary(String name, String fileName, String version, String type) throws DataSetException,
-            SQLException {
+    private static int insertLibrary(String name, String fileName, String version, String type) throws DataSetException,
+            SQLException, ClassNotFoundException {
+
+        Connection con = initiateConnection();
 
         LM_LIBRARY libTab = new LM_LIBRARY();
         TableDataSet tds;
@@ -153,14 +167,19 @@ public class DataManager {
             rs.next();
             return rs.getInt("LAST_INSERT_ID()");
         } catch (SQLException ex) {
-            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-                throw ex;
-            }
+//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
+//                throw ex;
+//            }
+        } finally {
+            closeConection(con);
         }
         return -1;
     }
 
-    public void insertProductComponent(String compKey, int productId) throws DataSetException, SQLException {
+    public static void insertProductComponent(String compKey, int productId) throws DataSetException, SQLException,
+            ClassNotFoundException {
+
+        Connection con = initiateConnection();
 
         LM_COMPONENT_PRODUCT compprodtab = new LM_COMPONENT_PRODUCT();
         TableDataSet tds;
@@ -172,14 +191,18 @@ public class DataManager {
                     .setValue(compprodtab.PRODUCT_ID, productId)
                     .save();
         } catch (SQLException ex) {
-            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-                throw ex;
-            }
+//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
+//                throw ex;
+//            }
+        } finally {
+            closeConection(con);
         }
-
     }
 
-    public void insertProductLibrary(int libId, int productId) throws DataSetException, SQLException {
+    public static void insertProductLibrary(int libId, int productId) throws DataSetException, SQLException,
+            ClassNotFoundException {
+
+        Connection con = initiateConnection();
 
         LM_LIBRARY_PRODUCT libprodtab = new LM_LIBRARY_PRODUCT();
         TableDataSet tds;
@@ -191,13 +214,18 @@ public class DataManager {
                     .setValue(libprodtab.PRODUCT_ID, productId)
                     .save();
         } catch (SQLException ex) {
-            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-                throw ex;
-            }
+//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
+//                throw ex;
+//            }
+        } finally {
+            closeConection(con);
         }
     }
 
-    public void insertComponentLibrary(String component, int libraryId) throws DataSetException, SQLException {
+    public static void insertComponentLibrary(String component, int libraryId) throws DataSetException, SQLException,
+            ClassNotFoundException {
+
+        Connection con = initiateConnection();
 
         LM_COMPONENT_LIBRARY complibtab = new LM_COMPONENT_LIBRARY();
         TableDataSet tds;
@@ -209,13 +237,18 @@ public class DataManager {
                     .setValue(complibtab.COMP_KEY, component)
                     .save();
         } catch (SQLException ex) {
-            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-                throw ex;
-            }
+//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
+//                throw ex;
+//            }
+        } finally {
+            closeConection(con);
         }
     }
 
-    public void insertComponentLicense(String compKey, String licenseKey) throws DataSetException, SQLException {
+    public static void insertComponentLicense(String compKey, String licenseKey) throws DataSetException, SQLException,
+            ClassNotFoundException {
+
+        Connection con = initiateConnection();
 
         LM_COMPONENT_LICENSE complicTab = new LM_COMPONENT_LICENSE();
         TableDataSet tds;
@@ -229,9 +262,15 @@ public class DataManager {
         } catch (SQLException ex) {
             log.error(ex.getMessage());
         }
+        finally {
+            closeConection(con);
+        }
     }
 
-    public void insertLibraryLicense(String licenseKey, String libId) throws DataSetException {
+    public static void insertLibraryLicense(String licenseKey, String libId) throws DataSetException, SQLException,
+            ClassNotFoundException {
+
+        Connection con = initiateConnection();
 
         LM_LIBRARY_LICENSE liblicTab = new LM_LIBRARY_LICENSE();
         TableDataSet tds;
@@ -246,9 +285,14 @@ public class DataManager {
         } catch (SQLException ex) {
             log.error("insertLibraryLicense(SQLException) " + ex.getMessage());
         }
+        finally {
+            closeConection(con);
+        }
     }
 
-    private int selectLibraryId(String name, String version, String type) throws SQLException {
+    private static int selectLibraryId(String name, String version, String type) throws SQLException, ClassNotFoundException {
+
+        Connection con = initiateConnection();
 
         int libraryId = -1;
         String query;
@@ -262,10 +306,12 @@ public class DataManager {
         while (rs.next()) {
             libraryId = rs.getInt("LIB_ID");
         }
+        closeConection(con);
         return libraryId;
     }
 
-    public int getLibraryId(String name, String fileName, String version, String type) throws SQLException {
+    public static int getLibraryId(String name, String fileName, String version, String type) throws SQLException,
+            ClassNotFoundException {
 
         int libraryId = -1;
         libraryId = selectLibraryId(name, version, type);

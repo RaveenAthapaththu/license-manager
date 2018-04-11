@@ -26,13 +26,14 @@ import com.workingdogs.village.DataSetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.impl.enterData.EnterData;
+import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerRuntimeException;
+import org.wso2.internal.apps.license.manager.impl.main.Jar;
 import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
 import org.wso2.internal.apps.license.manager.impl.main.LicenseFileGenerator;
 import org.wso2.internal.apps.license.manager.impl.main.Main;
-import org.wso2.internal.apps.license.manager.impl.main.MyJar;
-import org.wso2.internal.apps.license.manager.impl.models.DataManager;
-import org.wso2.internal.apps.license.manager.impl.models.LicenseRequest;
+import org.wso2.internal.apps.license.manager.impl.models.DBHandler;
 import org.wso2.internal.apps.license.manager.impl.models.ResponseModel;
+import org.wso2.internal.apps.license.manager.impl.models.SessionObjectHolder;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.msf4j.MicroservicesRunner;
@@ -53,7 +54,6 @@ import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -75,7 +75,7 @@ import javax.ws.rs.core.Response;
 public class MainService {
 
     private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
-    private ConcurrentHashMap<String, JarHolder> jarHolderConcurrentHashMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, SessionObjectHolder> objectHolderMap = new ConcurrentHashMap<>();
     private String packPath;
     private String session_email = "pamodaaw@wso2.com";
 
@@ -85,22 +85,13 @@ public class MainService {
     public Response selectLicenseResource(@Context Request request) {
 
         JsonObject responseJson = new JsonObject();
-        ResponseModel response = new ResponseModel();
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-
         try {
-            DataManager dataManager = new DataManager(databaseDriver,databaseUrl, databaseUsername, databasePassword);
-            JsonArray jsonArray = dataManager.selectAllLicense();
+            JsonArray jsonArray = DBHandler.selectAllLicense();
             responseJson.addProperty("responseType", "Done");
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", jsonArray);
-            dataManager.closeConection();
         } catch (SQLException | ClassNotFoundException | DataSetException e) {
-//            response.setResponseType("Error");
-//            response.setResponseMessage("Failed to retrieve data from the database.");
+
             responseJson.addProperty("responseType", "Error");
             responseJson.addProperty("responseMessage", "Failed to retrieve data from the database.");
             log.error("Failed to retrieve data from the database. " + e.getMessage(), e);
@@ -119,7 +110,7 @@ public class MainService {
         JsonObject responseJson = new JsonObject();
         JsonArray responseData = new JsonArray();
 
-        String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
+        String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
 
         File folder = new File(pathToStorage);
         File[] listOfFiles = folder.listFiles();
@@ -154,7 +145,7 @@ public class MainService {
         Main main = new Main();
         JsonObject responseJson = new JsonObject();
         JsonArray nameMissingJars = new JsonArray();
-        String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
+        String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
         String zipFilePath = pathToStorage + stringPayload;
         String filePath = zipFilePath.substring(0, zipFilePath.lastIndexOf('.'));
         File zipFile = new File(zipFilePath);
@@ -166,13 +157,15 @@ public class MainService {
         }
         try {
             JarHolder jarHolder = main.checkJars(filePath);
+            SessionObjectHolder userObjectHolder = new SessionObjectHolder();
+            userObjectHolder.setJarHolder(jarHolder);
             // TODO: 4/9/18 obtain the email from the session
-            jarHolderConcurrentHashMap.put(session_email, jarHolder);
+            objectHolderMap.put(session_email, userObjectHolder);
             log.info("Jar extraction complete.");
-            List<MyJar> errorJarList = jarHolder.getErrorJarList();
+            List<Jar> errorJarList = jarHolder.getErrorJarList();
             for (int i = 0; i < errorJarList.size(); i++) {
                 JsonObject currentJar = new JsonObject();
-                currentJar.addProperty("id", i);
+                currentJar.addProperty("index", i);
                 currentJar.addProperty("name", errorJarList.get(i).getProjectName());
                 currentJar.addProperty("version", errorJarList.get(i).getVersion());
                 nameMissingJars.add(currentJar);
@@ -181,19 +174,10 @@ public class MainService {
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", nameMissingJars);
 
-        } catch (IOException e) {
+        } catch (LicenseManagerRuntimeException e) {
             responseJson.addProperty("responseType", "Error");
-            responseJson.addProperty("responseMessage", e.getMessage());
-            log.error("checkJars(IOException) - " + e.getMessage());
-        } catch (ClassNotFoundException e) {
-            responseJson.addProperty("responseType", "Error");
-            responseJson.addProperty("responseMessage", e.getMessage());
-            log.error("checkJars(ClassNotFoundException) - " + e.getMessage());
-        } catch (NullPointerException e) {
-            responseJson.addProperty("responseType", "Error");
-            responseJson.addProperty("responseMessage", e.getMessage());
-            log.error("checkJars(NullPointerException) - " + e.getMessage());
-            log.error("checkJars(Exception) - " + e.getMessage());
+            responseJson.addProperty("responseMessage", "Internal Server Error. Failed to extract jars.");
+            log.error("Error while extracting jars. " + e.getMessage());
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
@@ -208,87 +192,67 @@ public class MainService {
         JsonObject responseJson = new JsonObject();
         Main main = new Main();
         JsonParser jsonParser = new JsonParser();
-        int licenseRequestId = 0, productId, responseCode = 0;
         // TODO: 4/9/18 default license ID;
-        int licenseId = 31;
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseUserName = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-        String requestBy;
-        JsonObject errorJson = new JsonObject();
-        JsonArray errorData = new JsonArray();
-        Session session = request.getSession();
+        int licenseId = 1;
         try {
-            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUserName, databasePassword);
             JsonElement jsonElement = jsonParser.parse(stringPayload);
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             JsonArray jsonArray = jsonObject.get("jars").getAsJsonArray();
             // TODO: 3/28/18 change
-            requestBy = session_email;
-            JarHolder jarHolder = jarHolderConcurrentHashMap.get(session_email);
+            JarHolder jarHolder = objectHolderMap.get(session_email).getJarHolder();
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JsonObject jar = jsonArray.get(i).getAsJsonObject();
+                int index = jar.get("index").getAsInt();
+                jarHolder.getErrorJarList().get(index).setProjectName(jar.get("name").getAsString());
+                jarHolder.getErrorJarList().get(index).setVersion(jar.get("version").getAsString());
+            }
+
+            // Add name defined jars into the jar list of the jar holder.
+            for (Jar jar : jarHolder.getErrorJarList()) {
+                jarHolder.getJarList().add(jar);
+
+            }
+
             EnterData enterData = main.enterData(jarHolder);
-            List<MyJar> componentList = enterData.getLicenseMissingComponents();
-            List<MyJar> libraryList = enterData.getLicenseMissingLibraries();
-            productId = enterData.getProductId();
+            List<Jar> componentList = enterData.getLicenseMissingComponents();
+            List<Jar> libraryList = enterData.getLicenseMissingLibraries();
+            objectHolderMap.get(session_email).setLicenseMissingComponents(componentList);
+            objectHolderMap.get(session_email).setLicenseMissingLibraries(libraryList);
+            objectHolderMap.get(session_email).setProductId(enterData.getProductId());
             JsonArray componentJsonArray = new JsonArray();
             JsonArray libraryJsonArray = new JsonArray();
-            if (componentList.size() > 0 || libraryList.size() > 0) {
-                licenseRequestId = dataManager.insertLicenseRequest(requestBy, productId);
-            }
 
             for (int i = 0; i < componentList.size(); i++) {
                 JsonObject component = new JsonObject();
-                component.addProperty("id", i);
+                component.addProperty("index", i);
                 component.addProperty("name", componentList.get(i).getProjectName());
                 component.addProperty("version", componentList.get(i).getVersion());
-                component.addProperty("license", licenseId);
+                component.addProperty("type", componentList.get(i).getType());
+                component.addProperty("licenseId", licenseId);
                 componentJsonArray.add(component);
-                dataManager.insertTempComponent(
-                        componentList.get(i).getJarFile().getName(),
-                        componentList.get(i).getProjectName(),
-                        componentList.get(i).getType(),
-                        componentList.get(i).getVersion(),
-                        componentList.get(i).getJarFile().getName(),
-                        licenseRequestId
-                );
-
             }
 
             for (int i = 0; i < libraryList.size(); i++) {
                 JsonObject library = new JsonObject();
-                String parent = "";
-                library.addProperty("id", i);
+                String libraryType = (libraryList.get(i).getParent() == null) ? ((libraryList.get(i).isBundle()) ?
+                        "bundle" : "jar") :
+                        "jarinbundle";
+                library.addProperty("index", i);
                 library.addProperty("name", libraryList.get(i).getProjectName());
                 library.addProperty("version", libraryList.get(i).getVersion());
-                library.addProperty("license", licenseId);
+                library.addProperty("type", libraryType);
+                library.addProperty("licenseId", licenseId);
                 libraryJsonArray.add(library);
-
-                if (libraryList.get(i).getParent() != null) {
-                    parent = libraryList.get(i).getParent().getProjectName();
-                }
-                String type = (libraryList.get(i).getParent() == null) ? ((libraryList.get(i).isBundle()) ? "bundle"
-                        : "jar") : "jarinbundle";
-                dataManager.insertTempLib(
-                        libraryList.get(i).getProjectName(),
-                        libraryList.get(i).getVersion(),
-                        libraryList.get(i).getJarFile().getName(),
-                        parent,
-                        type,
-                        licenseRequestId
-                );
             }
 
             responseJson.addProperty("responseType", "Done");
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("component", componentJsonArray);
             responseJson.add("library", libraryJsonArray);
-            dataManager.closeConection();
-        } catch (IOException e) {
+        } catch (SQLException | ClassNotFoundException | DataSetException e) {
             responseJson.addProperty("responseType", "Error");
-            responseJson.addProperty("responseMessage", e.getMessage());
-            log.error("enterJarsNew(IOException) - " + e.getMessage());
-        } catch (DataSetException | SQLException | ClassNotFoundException e) {
+            responseJson.addProperty("responseMessage", "Internal Server Error. Can not load data.");
+            log.error("Failed to retrieve data from the database. " + e.getMessage(), e);
             e.printStackTrace();
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
@@ -358,14 +322,14 @@ public class MainService {
         String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
         String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
         String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-        String fileUploadPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
+        String fileUploadPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
         String productName;
         String productVersion;
         String licenseFilePath;
         String fileName;
         try {
             // TODO: 4/9/18 get the session email
-            JarHolder jarHolder = jarHolderConcurrentHashMap.get(session_email);
+            JarHolder jarHolder = objectHolderMap.get(session_email).getJarHolder();
             productName = jarHolder.getProductName();
             productVersion = jarHolder.getProductVersion();
             LicenseFileGenerator licenseFileGenerator = new LicenseFileGenerator(databaseDriver, databaseUrl,
@@ -387,8 +351,8 @@ public class MainService {
     @Path("/downloadLicense")
     public Response getFile(@Context Request request) {
 
-        String mountPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
-        JarHolder jarHolder = jarHolderConcurrentHashMap.get(session_email);
+        String mountPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
+        JarHolder jarHolder = objectHolderMap.get(session_email).getJarHolder();
         String productName = jarHolder.getProductName();
         String productVersion = jarHolder.getProductVersion();
         String fileName = "LICENSE(" + productName + "-" + productVersion + ").TXT";
@@ -396,251 +360,82 @@ public class MainService {
         File file = Paths.get(mountPath, fileName).toFile();
         if (file.exists()) {
 //            LicenseManagerUtils.deleteFolder(mountPath+fileName);
-            LicenseManagerUtils.deleteFolder(mountPath+productName+"-"+productVersion+".zip");
-            LicenseManagerUtils.deleteFolder(mountPath+productName+"-"+productVersion);
+            LicenseManagerUtils.deleteFolder(mountPath + productName + "-" + productVersion + ".zip");
+            LicenseManagerUtils.deleteFolder(mountPath + productName + "-" + productVersion);
+            objectHolderMap.remove(session_email);
             return Response.ok(file)
                     .header("Access-Control-Allow-Credentials", true)
                     .build();
         } else {
-            log.error("downloadLicense - license file doesn't exists");
+            log.error("License file does not exist");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
 
-    @GET
-    @Path("/selectWaitingLicenseRequests")
-    @Produces("application/json")
-    public Response selectWaitingLicenseRequests(@Context Request request) {
-
-        JsonObject responseJson = new JsonObject();
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-        try {
-            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
-            JsonArray waitingRequests = dataManager.selectWaitingLicenseRequests();
-            responseJson.addProperty("responseType", "");
-            responseJson.addProperty("responseMessage", "Done");
-            responseJson.add("responseData", waitingRequests);
-            dataManager.closeConection();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
-    @GET
-    @Path("/selectWaitingComponents")
-    @Produces("application/json")
-    public Response selectWaitingComponents(@Context Request request, @QueryParam("licenseRequestId") int
-            licenseRequestId) {
-
-        JsonObject responseJson = new JsonObject();
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-        try {
-            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
-            JsonArray waitingComponents = dataManager.selectWaitingLicenseComponents(licenseRequestId);
-            responseJson.addProperty("responseType", "Done");
-            responseJson.addProperty("responseMessage", "Done");
-            responseJson.add("responseData", waitingComponents);
-            dataManager.closeConection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-
-    }
-
-    @GET
-    @Path("/selectWaitingLibraries")
-    @Produces("application/json")
-    public Response selectWaitingLibraries(@Context Request request, @QueryParam("licenseRequestId") int
-            licenseRequestId) {
-
-        JsonObject responseJson = new JsonObject();
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-        try {
-            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
-            JsonArray waitingLibraries = dataManager.selectWaitingLicenseLibraries(licenseRequestId);
-            responseJson.addProperty("responseType", "Done");
-            responseJson.addProperty("responseMessage", "Done");
-            responseJson.add("responseData", waitingLibraries);
-            dataManager.closeConection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
     @POST
-    @Path("/acceptLicenseRequest")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Path("/addLicense")
     @Produces(MediaType.APPLICATION_JSON)
     @OPTIONS
-    public Response acceptLicenseRequestResource(@Context Request request, String stringPayload) {
+    public Response addLicenseForJars(@Context Request request, String stringPayload) {
 
         JsonObject responseJson = new JsonObject();
-        JsonObject errorJson = new JsonObject();
         JsonObject requestJson;
         JsonArray componentsJson;
         JsonArray librariesJson;
         JsonParser jsonParser = new JsonParser();
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-        int productId, requestId, responseCode = 0;
-        String jwt = null;
+        SessionObjectHolder sessionObjectHolder = objectHolderMap.get(session_email);
+        int productId = sessionObjectHolder.getProductId();
         try {
-            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
             requestJson = jsonParser.parse(stringPayload).getAsJsonObject();
             componentsJson = requestJson.getAsJsonArray("components");
             librariesJson = requestJson.getAsJsonArray("libraries");
-            productId = requestJson.get("productId").getAsInt();
-            requestId = requestJson.get("requestId").getAsInt();
-            dataManager.updateLicenseRequestAccept(requestId);
             for (int i = 0; i < componentsJson.size(); i++) {
-                String name = componentsJson.get(i).getAsJsonObject().get("TC_NAME").getAsString();
-                String fileName = componentsJson.get(i).getAsJsonObject().get("TC_FILE_NAME").getAsString();
-                String version = componentsJson.get(i).getAsJsonObject().get("TC_VERSION").getAsString();
+                int index = componentsJson.get(i).getAsJsonObject().get("index").getAsInt();
+                String componentName = sessionObjectHolder.getLicenseMissingComponents().get(index).getJarFile()
+                        .getName();
+                String name = componentsJson.get(i).getAsJsonObject().get("name").getAsString();
+                String version = componentsJson.get(i).getAsJsonObject().get("version").getAsString();
+                String type = componentsJson.get(i).getAsJsonObject().get("type").getAsString();
                 int licenseId = componentsJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
-                String licenseKey = dataManager.selectLicenseFromId(licenseId);
-                dataManager.insertComponent(name, fileName, version);
-                dataManager.insertProductComponent(fileName, productId);
-                dataManager.insertComponentLicense(fileName, licenseKey);
+                String licenseKey = DBHandler.selectLicenseFromId(licenseId);
+                DBHandler.insertComponent(name, componentName, version);
+                DBHandler.insertProductComponent(componentName, productId);
+                DBHandler.insertComponentLicense(componentName, licenseKey);
             }
 
             for (int i = 0; i < librariesJson.size(); i++) {
-                String name = librariesJson.get(i).getAsJsonObject().get("TL_NAME").getAsString();
-                String fileName = librariesJson.get(i).getAsJsonObject().get("TL_FILE_NAME").getAsString();
-                String version = librariesJson.get(i).getAsJsonObject().get("TL_VERSION").getAsString();
-                String type = librariesJson.get(i).getAsJsonObject().get("TL_TYPE").getAsString();
-                String parent = librariesJson.get(i).getAsJsonObject().get("TL_PARENT").getAsString();
-                int licenseId = librariesJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
-                String licenseKey = dataManager.selectLicenseFromId(licenseId);
-                int libId = dataManager.insertLibrary(name, fileName, version, type);
-                dataManager.insertLibraryLicense(licenseKey, Integer.toString(libId));
-                if (type == "jarinbundle") {
-                    dataManager.insertComponentLibrary(parent, libId);
-                } else {
-                    dataManager.insertProductLibrary(libId, productId);
+                int index = librariesJson.get(i).getAsJsonObject().get("index").getAsInt();
+                String libraryFileName = sessionObjectHolder.getLicenseMissingLibraries().get(index).getJarFile()
+                        .getName();
+                String parent = null;
+                if (sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent() != null) {
+                    parent = sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent().getProjectName();
                 }
+                String name = librariesJson.get(i).getAsJsonObject().get("name").getAsString();
+                String version = librariesJson.get(i).getAsJsonObject().get("version").getAsString();
+                String type = librariesJson.get(i).getAsJsonObject().get("type").getAsString();
+                int licenseId = librariesJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
+                String licenseKey = DBHandler.selectLicenseFromId(licenseId);
+
+                int libId = DBHandler.getLibraryId(name, libraryFileName, version, type);
+                DBHandler.insertLibraryLicense(licenseKey, Integer.toString(libId));
+                if (type.equals("jarinbundle")) {
+                    DBHandler.insertComponentLibrary(parent, libId);
+                } else {
+                    DBHandler.insertProductLibrary(libId, productId);
+                }
+
             }
-            JsonArray variables = new JsonArray();
-            JsonObject acceptJson = new JsonObject();
-            JsonObject tokenJson = new JsonObject();
-            acceptJson.addProperty("name", "outputType");
-            acceptJson.addProperty("value", "Accept");
-            tokenJson.addProperty("name", "jwToken");
-            tokenJson.addProperty("value", jwt);
-            variables.add(acceptJson);
-            variables.add(tokenJson);
             responseJson.addProperty("responseType", "Done");
             responseJson.addProperty("responseMessage", "Done");
-
-            dataManager.closeConection();
 
         } catch (DataSetException | SQLException | ClassNotFoundException e) {
             responseJson.addProperty("responseType", "Error");
             responseJson.addProperty("responseMessage", "Failed");
+            log.error("Failed to add licenses." + e.getMessage());
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
-    @POST
-    @Path("/rejectLicenseRequest")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.APPLICATION_JSON)
-    @OPTIONS
-    public Response rejectLicenseRequestResource(@Context Request request, String stringPayload) {
-
-        JsonObject responseJson = new JsonObject();
-        JsonObject requestJson;
-        JsonObject errorJson = new JsonObject();
-        JsonParser jsonParser = new JsonParser();
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-        String jwt;
-        int productId, requestId, responseCode = 0;
-        String bpmnUrlString, bpmnToken, rejectBy, rejectReason;
-//        HttpsURLConnection connection;
-        try {
-            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
-            requestJson = jsonParser.parse(stringPayload).getAsJsonObject();
-            rejectBy = requestJson.get("rejectBy").getAsString();
-            rejectReason = requestJson.get("rejectReason").getAsString();
-            productId = requestJson.get("productId").getAsInt();
-            requestId = requestJson.get("requestId").getAsInt();
-            dataManager.updateLicenseRequestReject(rejectBy, requestId);
-            dataManager.closeConection();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
-    @POST
-    @Path("/sendLicense")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response sendLicenseResource(@Context Request request, LicenseRequest licenseRequest) {
-
-        JsonObject responseJson = new JsonObject();
-        JsonObject errorJson = new JsonObject();
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-        String fileUploadPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, "/home/pamoda/programming/license_manager/test/");
-        String filePath, fileName, jwt;
-        try {
-            DataManager dataManager = new DataManager(databaseDriver, databaseUrl, databaseUsername, databasePassword);
-            LicenseFileGenerator licenseFileGenerator = new LicenseFileGenerator(databaseDriver, databaseUrl,
-                    databaseUsername, databasePassword);
-            licenseFileGenerator.generateLicenceFile(licenseRequest.getProductName(), licenseRequest
-                    .getProductVersion(), fileUploadPath);
-            fileName = "LICENSE(" + licenseRequest.getProductName() + "-" + licenseRequest.getProductVersion() + ")" +
-                    ".TXT";
-            filePath = fileUploadPath + fileName;
-            dataManager.closeConection();
-
-        } catch (ClassNotFoundException ex) {
-            log.error("sendLicense(ClassNotFoundException) - " + ex.getMessage());
-        } catch (SQLException ex) {
-            log.error("sendLicense(SQLException) - " + ex.getMessage());
-        } catch (Exception ex) {
-            log.error("sendLicense(Exception) - " + ex.getMessage());
-        }
-        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .build();
     }
 

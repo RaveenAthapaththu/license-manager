@@ -27,8 +27,8 @@ import com.workingdogs.village.Record;
 import com.workingdogs.village.TableDataSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.internal.apps.license.manager.impl.main.Jar;
 import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
-import org.wso2.internal.apps.license.manager.impl.main.MyJar;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_LIBRARY;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_LICENSE;
@@ -38,6 +38,7 @@ import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_LICENSE;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_PRODUCT;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LICENSE;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_PRODUCT;
+import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.MicroservicesRunner;
 
 import java.sql.Connection;
@@ -59,8 +60,8 @@ public class EnterData {
     private Connection con;
     private JarHolder jarHolder;
     private Scanner scan = JarHolder.scan;
-    private List<MyJar> licenseMissingComponents = new ArrayList<>();
-    private List<MyJar> licenseMissingLibraries = new ArrayList<>();
+    private List<Jar> licenseMissingComponents = new ArrayList<>();
+    private List<Jar> licenseMissingLibraries = new ArrayList<>();
     private int productId;
 
     public EnterData(String driver, String url, String uname, String password, JarHolder jarHolder) throws
@@ -80,12 +81,12 @@ public class EnterData {
         return rs.getInt("LAST_INSERT_ID()");
     }
 
-    public List<MyJar> getLicenseMissingComponents() {
+    public List<Jar> getLicenseMissingComponents() {
 
         return licenseMissingComponents;
     }
 
-    public List<MyJar> getLicenseMissingLibraries() {
+    public List<Jar> getLicenseMissingLibraries() {
 
         return licenseMissingLibraries;
     }
@@ -95,20 +96,22 @@ public class EnterData {
         return productId;
     }
 
-    public void enter() throws DataSetException {
+    public void enter() throws DataSetException, SQLException {
 
         insertProduct(jarHolder.getProductName(), jarHolder.getProductVersion());
-        Iterator<MyJar> i = jarHolder.getJarList().iterator();
+        Iterator<Jar> i = jarHolder.getJarList().iterator();
         while (i.hasNext()) {
-            MyJar j = i.next();
+            Jar j = i.next();
             insert(j);
         }
     }
 
-    private void insert(MyJar mj) throws DataSetException {
+    private void insert(Jar mj) throws DataSetException, SQLException {
 
-        String name = mj.getProjectName(), version = mj.getVersion(), fileName = mj.getJarFile().getName(), type = mj
-                .getType();
+        String version = mj.getVersion();
+        String name = mj.getProjectName();
+        String fileName = mj.getJarFile().getName();
+        String type = mj.getType();
         if (type.equals("wso2")) {
 
             if (!isComponentExists(fileName)) {
@@ -189,27 +192,7 @@ public class EnterData {
 
     }
 
-    private boolean insertComponent(String name, String fileName, String version) throws DataSetException {
-
-        LM_COMPONENT compTab = new LM_COMPONENT();
-        TableDataSet tds;
-        Record record;
-        try {
-            tds = new TableDataSet(con, compTab.table);
-            record = tds.addRecord();
-            record.setValue(compTab.COMP_NAME, name).setValue(
-                    compTab.COMP_FILE_NAME, fileName).setValue(
-                    compTab.COMP_KEY, fileName).setValue(
-                    compTab.COMP_TYPE, "bundle")
-                    .setValue(compTab.COMP_VERSION, version).save(con);
-        } catch (SQLException ex) {
-            log.error(ex.getMessage());
-            return false;
-        }
-        return true;
-    }
-
-    private boolean insertLibrary(String name, String fileName, String version, boolean isBundle, MyJar parent)
+    private boolean insertLibrary(String name, String fileName, String version, boolean isBundle, Jar parent)
             throws DataSetException {
 
         LM_LIBRARY libTab = new LM_LIBRARY();
@@ -229,22 +212,6 @@ public class EnterData {
         return true;
     }
 
-    private void insertComponentLicsnse(String compKey, String licenseKey) throws DataSetException {
-
-        LM_COMPONENT_LICENSE complicTab = new LM_COMPONENT_LICENSE();
-        TableDataSet tds;
-        Record record;
-        try {
-            tds = new TableDataSet(con, complicTab.table);
-            record = tds.addRecord();
-            record.setValue(complicTab.COMP_KEY, compKey).setValue(
-                    complicTab.LICENSE_KEY,
-                    getLibraryLicense(licenseKey, con, compKey)).save();
-        } catch (SQLException ex) {
-            log.error(ex.getMessage());
-        }
-    }
-
     private void insertLibraryLicense(String licenseKey, String libId) throws DataSetException {
 
         LM_LIBRARY_LICENSE liblicTab = new LM_LIBRARY_LICENSE();
@@ -259,21 +226,6 @@ public class EnterData {
                     .save();
         } catch (SQLException ex) {
             log.error(ex.getMessage());
-        }
-    }
-
-    private String getLibraryLicense(String license, Connection con, String jarName) throws DataSetException,
-            SQLException {
-
-        LM_LICENSE licTab = new LM_LICENSE();
-        TableDataSet tds = new TableDataSet(con, licTab.table);
-        tds.where(licTab.LICENSE_KEY + "='" + license + "'");
-        tds.fetchRecords();
-        if (tds.size() == 0) {
-            String key = scan.nextLine();
-            return getLibraryLicense(key, con, jarName);
-        } else {
-            return tds.getRecord(0).getValue("LICENSE_KEY").asString();
         }
     }
 
@@ -425,7 +377,7 @@ public class EnterData {
 
     }
 
-    private void insertProductComponent(String compKey) throws DataSetException {
+    private void insertProductComponent(String compKey) throws DataSetException, SQLException {
 
         LM_COMPONENT_PRODUCT compprodtab = new LM_COMPONENT_PRODUCT();
         TableDataSet tds;
@@ -442,7 +394,7 @@ public class EnterData {
 
     }
 
-    private void insertProductLibrary(int libId) throws DataSetException {
+    private void insertProductLibrary(int libId) throws DataSetException, SQLException {
 
         LM_LIBRARY_PRODUCT libprodtab = new LM_LIBRARY_PRODUCT();
         TableDataSet tds;
@@ -458,7 +410,7 @@ public class EnterData {
         }
     }
 
-    private void insertComponentLibrary(String component, int libraryId) throws DataSetException {
+    private void insertComponentLibrary(String component, int libraryId) throws DataSetException, SQLException {
 
         LM_COMPONENT_LIBRARY complibtab = new LM_COMPONENT_LIBRARY();
         TableDataSet tds;
@@ -474,7 +426,7 @@ public class EnterData {
         }
     }
 
-    private int getLibId(String fileName, MyJar parent, boolean isBundle) throws DataSetException {
+    private int getLibId(String fileName, Jar parent, boolean isBundle) throws DataSetException {
 
         LM_LIBRARY libtab = new LM_LIBRARY();
         TableDataSet tds;

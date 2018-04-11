@@ -23,11 +23,11 @@
 package org.wso2.internal.apps.license.manager.impl.main;
 
 import org.apache.commons.lang.StringUtils;
-import org.wso2.internal.apps.license.manager.impl.filters.ZipFilter;
-import org.wso2.internal.apps.license.manager.impl.folderCrawler.Crawler;
 import org.op4j.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.internal.apps.license.manager.impl.filters.ZipFilter;
+import org.wso2.internal.apps.license.manager.impl.folderCrawler.Crawler;
 import org.wso2.msf4j.MicroservicesRunner;
 
 import java.io.File;
@@ -50,13 +50,14 @@ public class JarHolder implements Serializable {
 
     private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
     public static Scanner scan = new Scanner(System.in);
-    private List<MyJar> jarList = new ArrayList<>();
-    private List<MyJar> errorJarList = new ArrayList<>();
+    private List<Jar> jarList = new ArrayList<>();
+    private List<Jar> errorJarList = new ArrayList<>();
     private String productName;
     private String productVersion;
     private Crawler crawler = new Crawler();
 
     public static String getName(String name) {
+
         if ("pdepublishing.jar".equals(name) || "pdepublishing-ant.jar".equals(name)) {
             return name;
         }
@@ -74,6 +75,7 @@ public class JarHolder implements Serializable {
     }
 
     public static String getVersion(String name) {
+
         name = name.replace(".jar", "");
         name = name.replace(".mar", "");
         if ("pdepublishing".equals(name) || "pdepublishing-ant".equals(name)) {
@@ -90,27 +92,33 @@ public class JarHolder implements Serializable {
         return null;
     }
 
-    public List<MyJar> getJarList() {
+    public List<Jar> getJarList() {
+
         return jarList;
     }
 
-    public void setJarList(List<MyJar> jarList) {
+    public void setJarList(List<Jar> jarList) {
+
         this.jarList = jarList;
     }
 
-    public List<MyJar> getErrorJarList() {
+    public List<Jar> getErrorJarList() {
+
         return errorJarList;
     }
 
     public String getProductName() {
+
         return productName;
     }
 
     public String getProductVersion() {
+
         return productVersion;
     }
 
-    public void generateMap(String target) throws FileNotFoundException, IOException {
+    public void generateMap(String target) throws IOException {
+
         String targetFolder = new File(target).getName();
         String dest = new File(target).getParent() + File.separator + "jars";
         productName = getName(targetFolder);
@@ -120,11 +128,11 @@ public class JarHolder implements Serializable {
     }
 
     private void findDirectJars(String path) {
+
         ZipFilter zipFilter = new ZipFilter();
         List<File> directZips = crawler.find(path, zipFilter);
         Iterator<File> i = directZips.iterator();
-        MyJar currentJar;
-
+        Jar currentJar;
 
         while (i.hasNext()) {
             File jarFile = i.next();
@@ -133,19 +141,20 @@ public class JarHolder implements Serializable {
         }
     }
 
-    private void extractJarsRecursively(String dest) throws FileNotFoundException, IOException {
+    private void extractJarsRecursively(String dest) throws IOException {
+
         log.info("Extracting JARs recursively");
         new File(dest).mkdir();
 
-        Stack<MyJar> zipStack = new Stack<MyJar>();
+        Stack<Jar> zipStack = new Stack<Jar>();
 
         zipStack.addAll(jarList);
         jarList = new ArrayList<>();
         ZipFilter zipFilter = new ZipFilter();
 
         while (!zipStack.empty()) {
-            MyJar jar = zipStack.pop();
-            MyJar currentJar = jar;
+            Jar jar = zipStack.pop();
+            Jar currentJar = jar;
 
             File toBeExtracted = jar.getJarFile();
             if (!dest.endsWith(File.separator)) {
@@ -182,7 +191,8 @@ public class JarHolder implements Serializable {
         }
     }
 
-    private String getType(Manifest man, MyJar jar) {
+    private String getType(Manifest man, Jar jar) {
+
         Attributes map = man.getMainAttributes();
         String name = map.getValue("Bundle-Name");
         if ((name != null && name.startsWith("org.wso2"))
@@ -194,8 +204,9 @@ public class JarHolder implements Serializable {
         }
     }
 
-    private MyJar getJar(File jarFile, MyJar parent) {
-        MyJar jar = new MyJar();
+    private Jar getJar(File jarFile, Jar parent) {
+
+        Jar jar = new Jar();
         String jarName = getName(jarFile.getName());
         String jarVersion = getVersion(jarFile.getName());
 
@@ -206,8 +217,9 @@ public class JarHolder implements Serializable {
         return jar;
     }
 
-    private MyJar getDefaultJar(File jarFile, MyJar parent) {
-        MyJar jar = new MyJar();
+    private Jar getDefaultJar(File jarFile, Jar parent) {
+
+        Jar jar = new Jar();
         String jarName = jarFile.getName();
         String jarVersion = jarFile.getName();
         jar.setJarFile(jarFile);
@@ -217,8 +229,9 @@ public class JarHolder implements Serializable {
         return jar;
     }
 
-    private MyJar getActualJar(File jarFile, MyJar parent) {
-        MyJar jar = new MyJar();
+    private Jar getActualJar(File jarFile, Jar parent) {
+
+        Jar jar = new Jar();
         String jarName = getName(jarFile.getName());
         String jarVersion = getVersion(jarFile.getName());
 
@@ -238,6 +251,7 @@ public class JarHolder implements Serializable {
     }
 
     private boolean getIsBundle(Manifest man) {
+
         Attributes map = man.getMainAttributes();
         String bundleManifest = map.getValue("Bundle-ManifestVersion");
         if (bundleManifest == null) {

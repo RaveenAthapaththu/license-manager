@@ -28,110 +28,133 @@ import java.io.Serializable;
 /**
  * @author pubudu
  */
-public class MyJar implements Serializable {
+public class Jar implements Serializable {
 
     private String projectName, type, version, product, vendor, description, url;
     private File jarFile, extractedFolder;
-    private MyJar parent;
+    private Jar parent;
     private boolean isBundle = false;
     private boolean isValidName = false;
 
     public void setIsBundle(boolean isBundle) {
+
         this.isBundle = isBundle;
     }
 
     public boolean isBundle() {
+
         return isBundle;
     }
 
     public String getUrl() {
+
         return url;
     }
 
     public void setUrl(String url) {
+
         this.url = url;
     }
 
     public String getDescription() {
+
         return description;
     }
 
     public void setDescription(String description) {
+
         this.description = description;
     }
 
     public String getVendor() {
+
         return vendor;
     }
 
     public void setVendor(String vendor) {
+
         this.vendor = vendor;
     }
 
-    public MyJar getParent() {
+    public Jar getParent() {
+
         return parent;
     }
 
-    public void setParent(MyJar parent) {
+    public void setParent(Jar parent) {
+
         this.parent = parent;
 
     }
 
     public File getExtractedFolder() {
+
         return extractedFolder;
     }
 
     public void setExtractedFolder(File extractedFolder) {
+
         this.extractedFolder = extractedFolder;
     }
 
     public String getProjectName() {
+
         return projectName;
     }
 
     public void setProjectName(String projectName) {
+
         this.projectName = projectName;
 
     }
 
     public File getJarFile() {
+
         return jarFile;
 
     }
 
     public void setJarFile(File jarFile) {
+
         this.jarFile = jarFile;
 
     }
 
     public String getProduct() {
+
         return product;
     }
 
     public void setProduct(String product) {
+
         this.product = product;
 
     }
 
     public String getType() {
+
         return type;
     }
 
     public void setType(String type) {
+
         this.type = type;
 
     }
 
     public String getVersion() {
+
         return version;
     }
 
     public void setVersion(String version) {
+
         this.version = version;
 
     }
 
     public void print() {
+
         System.out.println("jarFile = " + jarFile.getName());
         System.out.println("version = " + version);
         System.out.println("type = " + type);
@@ -147,10 +170,12 @@ public class MyJar implements Serializable {
     }
 
     public boolean isValidName() {
+
         return this.isValidName;
     }
 
     public void setValidName(boolean validName) {
+
         this.isValidName = validName;
     }
 }

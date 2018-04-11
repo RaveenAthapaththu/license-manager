@@ -147,7 +147,7 @@ public class LicenseFileGenerator {
                     ("LICENSE_NAME"), "", rs.getString("LICENSE_URL"));
             file += formatString;
         }
-        System.out.println(file);
+//        System.out.println(file);
         try {
             FileWriter fw = new FileWriter(packPath + File.separator + "LICENSE(" + product + "-" + version + ").TXT");
             fw.write(file);

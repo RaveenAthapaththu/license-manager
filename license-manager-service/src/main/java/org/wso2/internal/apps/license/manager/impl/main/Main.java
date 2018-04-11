@@ -27,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.impl.enterData.EnterData;
 import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerConfigurationException;
+import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerRuntimeException;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.MicroservicesRunner;
 import org.wso2.msf4j.util.SystemVariableUtil;
@@ -42,7 +43,7 @@ public class Main {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
 
-    public EnterData enterData(JarHolder jh) throws IOException {
+    public EnterData enterData(JarHolder jh) throws ClassNotFoundException, SQLException, DataSetException {
 
         String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
         String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
@@ -53,26 +54,24 @@ public class Main {
             EnterData enterData = new EnterData(databaseDriver, databaseUrl, databaseUsername, databasePassword, jh);
             enterData.enter();
             return enterData;
-        } catch (ClassNotFoundException ex) {
-            log.error("Main(ClassNotFoundException) - " + ex.getMessage());
-        } catch (SQLException ex) {
-            log.error("Main(SQLException) - " + ex.getMessage());
-        } catch (DataSetException ex) {
-            log.error("Main(DataSetException) - " + ex.getMessage());
+        } catch (ClassNotFoundException | SQLException | DataSetException ex) {
+            throw ex;
         }
-        return null;
 
     }
 
-    public JarHolder checkJars(String file) throws IOException, ClassNotFoundException {
+    public JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
 
         if (StringUtils.isEmpty(file) || !new File(file).exists() || !new File(file).isDirectory()) {
-            log.error("Folder not found - Main - check JARs");
-            System.exit(1);
+            throw new LicenseManagerRuntimeException("Folder is not found in the location");
         }
         String inputFile = file;
         JarHolder jh = new JarHolder();
-        jh.generateMap(inputFile);
+        try {
+            jh.generateMap(inputFile);
+        } catch (IOException e) {
+            throw new LicenseManagerRuntimeException("Folder is not found in the location", e);
+        }
         return jh;
     }
 }

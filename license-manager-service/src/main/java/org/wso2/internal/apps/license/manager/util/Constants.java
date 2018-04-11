@@ -44,7 +44,7 @@ public class Constants {
     public static final String BPMN_SMTP_HOST = "smtpHost";
     public static final String BPMN_PUBLIC_KEY = "publicKey";
     public static final String BPMN_ORIGIN = "bpmnOrigin";
-    public static final String FILE_UPLOAD_PATH= "LICENSE_MANAGER_FILE_UPLOAD_PATH\"";
+    public static final String FILE_UPLOAD_PATH= "LICENSE_MANAGER_FILE_UPLOAD_PATH";
 
     public static final String CLIENT_URL = "clientUrl";
     public static final String LICENSE_ID = "licenseId";
@@ -58,4 +58,5 @@ public class Constants {
 
     //Database
     public static final String WAITING = "WAITING";
+    public static final int DUPLICATE_ENTRY_ERROR_CODE = 1062;
 }
