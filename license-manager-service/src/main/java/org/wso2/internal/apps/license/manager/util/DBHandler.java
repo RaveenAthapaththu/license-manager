@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.internal.apps.license.manager.impl.models;
+package org.wso2.internal.apps.license.manager.util;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

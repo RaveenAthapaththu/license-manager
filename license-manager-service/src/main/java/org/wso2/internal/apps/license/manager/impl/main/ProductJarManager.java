@@ -20,15 +20,13 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.wso2.internal.apps.license.manager.impl.enterData;
+package org.wso2.internal.apps.license.manager.impl.main;
 
 import com.workingdogs.village.DataSetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.impl.main.Jar;
-import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
-import org.wso2.internal.apps.license.manager.impl.models.DBHandler;
 import org.wso2.internal.apps.license.manager.util.Constants;
+import org.wso2.internal.apps.license.manager.util.DBHandler;
 import org.wso2.msf4j.MicroservicesRunner;
 
 import java.sql.SQLException;
@@ -38,7 +36,7 @@ import java.util.List;
 /**
  * @author pubudu
  */
-public class EnterData {
+public class ProductJarManager {
 
     private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
     private DBHandler dbHandler;
@@ -47,7 +45,7 @@ public class EnterData {
     private List<Jar> licenseMissingLibraries = new ArrayList<>();
     private int productId;
 
-    public EnterData(JarHolder jarHolder) throws
+    public ProductJarManager(JarHolder jarHolder) throws
             ClassNotFoundException, SQLException {
 
         this.dbHandler = new DBHandler();
@@ -69,7 +67,7 @@ public class EnterData {
         return productId;
     }
 
-    public void enter() throws DataSetException, SQLException {
+    public void enterJarsIntoDB() throws DataSetException, SQLException {
 
         try {
             this.productId = dbHandler.getProductId(jarHolder.getProductName(), jarHolder.getProductVersion());

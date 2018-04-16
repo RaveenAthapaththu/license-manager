@@ -25,16 +25,12 @@ package org.wso2.internal.apps.license.manager.impl.filters;
 import java.io.File;
 
 /**
- *
- * @author pubudu
+ * Checks whether a given file is a directory or not
  */
 public class DirectoryFilter implements java.io.FileFilter {
 
     public boolean accept(File file) {
-        if (file.isDirectory()) {
-            return true;
-        } else {
-            return false;
-        }
+
+        return file.isDirectory();
     }
 }

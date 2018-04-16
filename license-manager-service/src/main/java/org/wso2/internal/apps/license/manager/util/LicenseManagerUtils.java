@@ -18,6 +18,9 @@
 package org.wso2.internal.apps.license.manager.util;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerRuntimeException;
+import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -87,6 +90,20 @@ public class LicenseManagerUtils {
 
         }
 
+    }
+
+    public static JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
+
+        if (StringUtils.isEmpty(file) || !new File(file).exists() || !new File(file).isDirectory()) {
+            throw new LicenseManagerRuntimeException("Folder is not found in the location");
+        }
+        JarHolder jh = new JarHolder();
+        try {
+            jh.generateMap(file);
+        } catch (IOException e) {
+            throw new LicenseManagerRuntimeException("Folder is not found in the location", e);
+        }
+        return jh;
     }
 
 //    public static String sendEmail(String fromAddress, ArrayList<String> toList, ArrayList<String> ccList,

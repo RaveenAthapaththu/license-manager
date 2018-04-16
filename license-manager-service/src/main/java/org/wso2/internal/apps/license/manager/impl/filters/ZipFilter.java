@@ -25,15 +25,12 @@ package org.wso2.internal.apps.license.manager.impl.filters;
 import java.io.File;
 
 /**
- * 
- * @author pubudu
+ * Filter zip files
  */
 public class ZipFilter implements java.io.FileFilter {
 
     public boolean accept(File file) {
-        if (file.getName().endsWith(".jar") || file.getName().endsWith(".mar")) {
-            return true;
-        }
-        return false;
+
+        return file.getName().endsWith(".jar") || file.getName().endsWith(".mar");
     }
 }

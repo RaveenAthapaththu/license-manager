@@ -25,16 +25,14 @@ import com.google.gson.JsonParser;
 import com.workingdogs.village.DataSetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.impl.enterData.EnterData;
 import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerRuntimeException;
 import org.wso2.internal.apps.license.manager.impl.main.Jar;
 import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
 import org.wso2.internal.apps.license.manager.impl.main.LicenseFileGenerator;
-import org.wso2.internal.apps.license.manager.impl.main.Main;
-import org.wso2.internal.apps.license.manager.impl.models.DBHandler;
-import org.wso2.internal.apps.license.manager.impl.models.ResponseModel;
+import org.wso2.internal.apps.license.manager.impl.main.ProductJarManager;
 import org.wso2.internal.apps.license.manager.impl.models.SessionObjectHolder;
 import org.wso2.internal.apps.license.manager.util.Constants;
+import org.wso2.internal.apps.license.manager.util.DBHandler;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.msf4j.MicroservicesRunner;
 import org.wso2.msf4j.Request;
@@ -152,7 +150,6 @@ public class MainService {
     @Produces("application/json")
     public Response extractJars(@Context Request request, String stringPayload) {
 
-        Main main = new Main();
         JsonObject responseJson = new JsonObject();
         JsonArray nameMissingJars = new JsonArray();
         String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
@@ -166,7 +163,7 @@ public class MainService {
             e.printStackTrace();
         }
         try {
-            JarHolder jarHolder = main.checkJars(filePath);
+            JarHolder jarHolder = LicenseManagerUtils.checkJars(filePath);
             SessionObjectHolder userObjectHolder = new SessionObjectHolder();
             userObjectHolder.setJarHolder(jarHolder);
             // TODO: 4/9/18 obtain the email from the session
@@ -200,7 +197,6 @@ public class MainService {
     public Response enterJarsResource(@Context Request request, String stringPayload) {
 
         JsonObject responseJson = new JsonObject();
-        Main main = new Main();
         JsonParser jsonParser = new JsonParser();
         // TODO: 4/9/18 default license ID;
         int licenseId = 1;
@@ -223,12 +219,13 @@ public class MainService {
 
             }
 
-            EnterData enterData = main.enterData(jarHolder);
-            List<Jar> componentList = enterData.getLicenseMissingComponents();
-            List<Jar> libraryList = enterData.getLicenseMissingLibraries();
+            ProductJarManager productJarManager = new ProductJarManager(jarHolder);
+            productJarManager.enterJarsIntoDB();
+            List<Jar> componentList = productJarManager.getLicenseMissingComponents();
+            List<Jar> libraryList = productJarManager.getLicenseMissingLibraries();
             objectHolderMap.get(session_email).setLicenseMissingComponents(componentList);
             objectHolderMap.get(session_email).setLicenseMissingLibraries(libraryList);
-            objectHolderMap.get(session_email).setProductId(enterData.getProductId());
+            objectHolderMap.get(session_email).setProductId(productJarManager.getProductId());
             JsonArray componentJsonArray = new JsonArray();
             JsonArray libraryJsonArray = new JsonArray();
 
@@ -431,10 +428,10 @@ public class MainService {
                 int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
                 dbHandler.insertLibraryLicense(licenseKey, Integer.toString(libId));
 
-                if(parent!=null && parent.getType().equals(Constants.JAR_TYPE_WSO2)){
+                if (parent != null && parent.getType().equals(Constants.JAR_TYPE_WSO2)) {
                     dbHandler.insertComponentLibrary(componentKey, libId);
-                }else{
-                    dbHandler.insertProductLibrary(libId,productId);
+                } else {
+                    dbHandler.insertProductLibrary(libId, productId);
                 }
 
             }

@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.impl.filters.ZipFilter;
 import org.wso2.internal.apps.license.manager.impl.folderCrawler.Crawler;
+import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.msf4j.MicroservicesRunner;
 
 import java.io.File;
@@ -49,14 +50,13 @@ import java.util.jar.Manifest;
 public class JarHolder implements Serializable {
 
     private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
-    public static Scanner scan = new Scanner(System.in);
     private List<Jar> jarList = new ArrayList<>();
     private List<Jar> errorJarList = new ArrayList<>();
     private String productName;
     private String productVersion;
     private Crawler crawler = new Crawler();
 
-    public static String getName(String name) {
+    private static String getName(String name) {
 
         if ("pdepublishing.jar".equals(name) || "pdepublishing-ant.jar".equals(name)) {
             return name;
@@ -74,7 +74,7 @@ public class JarHolder implements Serializable {
         return null;
     }
 
-    public static String getVersion(String name) {
+    private static String getVersion(String name) {
 
         name = name.replace(".jar", "");
         name = name.replace(".mar", "");
@@ -162,7 +162,7 @@ public class JarHolder implements Serializable {
             }
             File extraxtTo = new File(dest + toBeExtracted.getName());
             extraxtTo.mkdir();
-            Unzip.unzip(toBeExtracted.getAbsolutePath(), extraxtTo.getAbsolutePath());
+            LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extraxtTo.getAbsolutePath());
             Manifest man = new JarFile(toBeExtracted).getManifest();
             if (man != null) {
                 currentJar = getActualJar(jar.getJarFile(), jar.getParent());
