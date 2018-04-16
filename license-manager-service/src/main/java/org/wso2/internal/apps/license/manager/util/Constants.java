@@ -56,7 +56,10 @@ public class Constants {
     public static final String SUCCESS = "Done";
     public static final String ERROR = "Error";
 
-    //Database
-    public static final String WAITING = "WAITING";
-    public static final int DUPLICATE_ENTRY_ERROR_CODE = 1062;
+    // Constants in extracting licenses
+    public static final String JAR_TYPE_WSO2 = "wso2";
+    public static final String JAR_TYPE_BUNDLE = "bundle";
+    public static final String JAR_TYPE_JAR_IN_BUNDLE = "jarinbundle";
+    public static final String JAR_TYPE_JAR = "jar";
+
 }

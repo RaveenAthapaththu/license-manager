@@ -89,12 +89,12 @@ public class MainService {
         try {
             dbHandler = new DBHandler();
             JsonArray jsonArray = dbHandler.selectAllLicense();
-            responseJson.addProperty("responseType", "Done");
+            responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", jsonArray);
         } catch (SQLException | ClassNotFoundException | DataSetException e) {
 
-            responseJson.addProperty("responseType", "Error");
+            responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", "Failed to retrieve data from the database.");
             log.error("Failed to retrieve data from the database. " + e.getMessage(), e);
         } finally {
@@ -117,7 +117,6 @@ public class MainService {
     public Response listUploadedPacks() {
 
         ArrayList<String> listOfPacks = new ArrayList<>();
-        ResponseModel response = new ResponseModel();
         JsonObject responseJson = new JsonObject();
         JsonArray responseData = new JsonArray();
 
@@ -134,12 +133,12 @@ public class MainService {
             }
         }
 
-        for (int i = 0; i < listOfPacks.size(); i++) {
+        for (String listOfPack : listOfPacks) {
             JsonObject ob = new JsonObject();
-            ob.addProperty("name", listOfPacks.get(i));
+            ob.addProperty("name", listOfPack);
             responseData.add(ob);
         }
-        responseJson.addProperty("responseType", "Done");
+        responseJson.addProperty("responseType", Constants.SUCCESS);
         responseJson.addProperty("responseMessage", "Done");
         responseJson.add("responseData", responseData);
 
@@ -181,12 +180,12 @@ public class MainService {
                 currentJar.addProperty("version", errorJarList.get(i).getVersion());
                 nameMissingJars.add(currentJar);
             }
-            responseJson.addProperty("responseType", "Done");
+            responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", nameMissingJars);
 
         } catch (LicenseManagerRuntimeException e) {
-            responseJson.addProperty("responseType", "Error");
+            responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", "Internal Server Error. Failed to extract jars.");
             log.error("Error while extracting jars. " + e.getMessage());
         }
@@ -245,9 +244,9 @@ public class MainService {
 
             for (int i = 0; i < libraryList.size(); i++) {
                 JsonObject library = new JsonObject();
-                String libraryType = (libraryList.get(i).getParent() == null) ? ((libraryList.get(i).isBundle()) ?
-                        "bundle" : "jar") :
-                        "jarinbundle";
+                String libraryType = (libraryList.get(i).getParent() == null) ?
+                        ((libraryList.get(i).isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :
+                        Constants.JAR_TYPE_JAR_IN_BUNDLE;
                 library.addProperty("index", i);
                 library.addProperty("name", libraryList.get(i).getProjectName());
                 library.addProperty("version", libraryList.get(i).getVersion());
@@ -256,12 +255,12 @@ public class MainService {
                 libraryJsonArray.add(library);
             }
 
-            responseJson.addProperty("responseType", "Done");
+            responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("component", componentJsonArray);
             responseJson.add("library", libraryJsonArray);
         } catch (SQLException | ClassNotFoundException | DataSetException e) {
-            responseJson.addProperty("responseType", "Error");
+            responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", "Internal Server Error. Can not load data.");
             log.error("Failed to retrieve data from the database. " + e.getMessage(), e);
             e.printStackTrace();
@@ -292,7 +291,7 @@ public class MainService {
         Session session = request.getSession();
         // TODO: 3/29/18 for local validation
         // TODO: 3/28/18  validate the user
-        responseJson.addProperty("responseType", "Done");
+        responseJson.addProperty("responseType", Constants.SUCCESS);
         responseJson.addProperty("isValid", returnValue);
         responseJson.addProperty("responseMessage", "Done");
         // TODO: 3/29/18 actual usesr validation happens here
@@ -336,8 +335,6 @@ public class MainService {
         String fileUploadPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
         String productName;
         String productVersion;
-        String licenseFilePath;
-        String fileName;
         try {
             // TODO: 4/9/18 get the session email
             JarHolder jarHolder = objectHolderMap.get(session_email).getJarHolder();
@@ -346,10 +343,10 @@ public class MainService {
             LicenseFileGenerator licenseFileGenerator = new LicenseFileGenerator(databaseDriver, databaseUrl,
                     databaseUsername, databasePassword);
             licenseFileGenerator.generateLicenceFile(productName, productVersion, fileUploadPath);
-            responseJson.addProperty("responseType", "Done");
+            responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Done");
         } catch (Exception e) {
-            responseJson.addProperty("responseType", "Error");
+            responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", e.getMessage());
             log.error("getLicense(Exception) - " + e.getMessage());
         }
@@ -408,7 +405,6 @@ public class MainService {
                         .getName();
                 String name = componentsJson.get(i).getAsJsonObject().get("name").getAsString();
                 String version = componentsJson.get(i).getAsJsonObject().get("version").getAsString();
-                String type = componentsJson.get(i).getAsJsonObject().get("type").getAsString();
                 int licenseId = componentsJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
                 String licenseKey = dbHandler.selectLicenseFromId(licenseId);
                 dbHandler.insertComponent(name, componentName, version);
@@ -435,18 +431,18 @@ public class MainService {
                 int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
                 dbHandler.insertLibraryLicense(licenseKey, Integer.toString(libId));
 
-                if(parent!=null && parent.getType().equals("wso2")){
+                if(parent!=null && parent.getType().equals(Constants.JAR_TYPE_WSO2)){
                     dbHandler.insertComponentLibrary(componentKey, libId);
                 }else{
                     dbHandler.insertProductLibrary(libId,productId);
                 }
 
             }
-            responseJson.addProperty("responseType", "Done");
+            responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Done");
 
         } catch (DataSetException | SQLException | ClassNotFoundException e) {
-            responseJson.addProperty("responseType", "Error");
+            responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", "Failed");
             log.error("Failed to add licenses." + e.getMessage(), e);
         } finally {

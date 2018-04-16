@@ -28,11 +28,11 @@ import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.impl.main.Jar;
 import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
 import org.wso2.internal.apps.license.manager.impl.models.DBHandler;
+import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.MicroservicesRunner;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -69,18 +69,14 @@ public class EnterData {
         return productId;
     }
 
-    public void enter() throws ClassNotFoundException, DataSetException, SQLException {
+    public void enter() throws DataSetException, SQLException {
 
         try {
             this.productId = dbHandler.getProductId(jarHolder.getProductName(), jarHolder.getProductVersion());
-            Iterator<Jar> i = jarHolder.getJarList().iterator();
-            while (i.hasNext()) {
-                Jar j = i.next();
+            for (Jar j : jarHolder.getJarList()) {
                 insert(j);
 
             }
-        } catch (DataSetException | SQLException | ClassNotFoundException e) {
-            throw e;
         } finally {
             if (dbHandler != null) {
                 dbHandler.closeConnection();
@@ -89,13 +85,13 @@ public class EnterData {
 
     }
 
-    private void insert(Jar mj) throws DataSetException, SQLException, ClassNotFoundException {
+    private void insert(Jar mj) throws DataSetException, SQLException {
 
         String version = mj.getVersion();
         String name = mj.getProjectName();
         String fileName = mj.getJarFile().getName();
         String type = mj.getType();
-        if (type.equals("wso2")) {
+        if (type.equals(Constants.JAR_TYPE_WSO2)) {
 
             if (!dbHandler.isComponentExists(fileName)) {
                 licenseMissingComponents.add(mj);
@@ -106,96 +102,28 @@ public class EnterData {
             }
 
         } else {
-            String libraryType = (mj.getParent() == null) ? ((mj.isBundle()) ? "bundle" : "jar") :
-                    "jarinbundle";
+            String libraryType = (mj.getParent() == null) ?
+                    ((mj.isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :
+                    Constants.JAR_TYPE_JAR_IN_BUNDLE;
             int libraryId = dbHandler.selectLibraryId(name, version, libraryType);
             if (libraryId != -1) {
-                try {
-                    boolean isLicenseExists = dbHandler.isLibraryLicenseExists(libraryId);
-                    if (mj.getParent() != null && mj.getParent().getType().equals("wso2")) {
-                        if (dbHandler.isComponentExists(mj.getParent().getJarFile().getName())) {
-                            dbHandler.insertComponentLibrary(mj.getParent().getJarFile().getName(), libraryId);
-                        } else
-                            licenseMissingLibraries.add(mj);
-                    } else {
-                        dbHandler.insertProductLibrary(libraryId, productId);
-                    }
-                    if (!isLicenseExists) {
+                boolean isLicenseExists = dbHandler.isLibraryLicenseExists(libraryId);
+                // If a jar has a parent and i the parent is "wso2", add parent and library to the
+                // LM_COMPONENT_LIBRARY table.
+                if (mj.getParent() != null && mj.getParent().getType().equals(Constants.JAR_TYPE_WSO2)) {
+                    if (dbHandler.isComponentExists(mj.getParent().getJarFile().getName())) {
+                        dbHandler.insertComponentLibrary(mj.getParent().getJarFile().getName(), libraryId);
+                    } else
                         licenseMissingLibraries.add(mj);
-                    }
-                } catch (DataSetException e) {
-                    throw e;
+                } else {
+                    dbHandler.insertProductLibrary(libraryId, productId);
+                }
+                if (!isLicenseExists) {
+                    licenseMissingLibraries.add(mj);
                 }
             } else {
                 licenseMissingLibraries.add(mj);
             }
-
         }
     }
-
-//    private void insertProductComponent(String compKey) throws DataSetException, SQLException {
-//
-//        LM_COMPONENT_PRODUCT compprodtab = new LM_COMPONENT_PRODUCT();
-//        TableDataSet tds;
-//        Record record;
-//        try {
-//            tds = new TableDataSet(con, compprodtab.table);
-//            record = tds.addRecord();
-//            record.setValue(compprodtab.COMP_KEY, compKey)
-//                    .setValue(compprodtab.PRODUCT_ID, productId)
-//                    .save();
-//        } catch (SQLException ex) {
-//            log.error(ex.getMessage());
-//        }
-//
-//    }
-//
-//    private void insertLibraryLicense(String licenseKey, String libId) throws DataSetException {
-//
-//        LM_LIBRARY_LICENSE liblicTab = new LM_LIBRARY_LICENSE();
-//        TableDataSet tds;
-//        Record record;
-//        try {
-//
-//            tds = new TableDataSet(con, liblicTab.table);
-//            record = tds.addRecord();
-//            record.setValue(liblicTab.LIB_ID, libId)
-//                    .setValue(liblicTab.LICENSE_KEY, licenseKey)
-//                    .save();
-//        } catch (SQLException ex) {
-//            log.error(ex.getMessage());
-//        }
-//    }
-//
-//    private void insertProductLibrary(int libId) throws DataSetException, SQLException {
-//
-//        LM_LIBRARY_PRODUCT libprodtab = new LM_LIBRARY_PRODUCT();
-//        TableDataSet tds;
-//        Record record;
-//        try {
-//            tds = new TableDataSet(con, libprodtab.table);
-//            record = tds.addRecord();
-//            record.setValue(libprodtab.LIB_ID, libId)
-//                    .setValue(libprodtab.PRODUCT_ID, productId)
-//                    .save();
-//        } catch (SQLException ex) {
-//            log.error(ex.getMessage());
-//        }
-//    }
-//
-//    private void insertComponentLibrary(String component, int libraryId) throws DataSetException, SQLException {
-//
-//        LM_COMPONENT_LIBRARY complibtab = new LM_COMPONENT_LIBRARY();
-//        TableDataSet tds;
-//        Record record;
-//        try {
-//            tds = new TableDataSet(con, complibtab.table);
-//            record = tds.addRecord();
-//            record.setValue(complibtab.LIB_ID, libraryId)
-//                    .setValue(complibtab.COMP_KEY, component)
-//                    .save();
-//        } catch (SQLException ex) {
-//            log.error(ex.getMessage());
-//        }
-//    }
 }
