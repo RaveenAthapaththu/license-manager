@@ -89,70 +89,45 @@ public class LicenseManagerUtils {
 
     }
 
-    /**
-     * Load the configuration information.
-     */
-//    public static Configuration loadConfigurations() throws LicenseManagerConfigurationException {
+//    public static String sendEmail(String fromAddress, ArrayList<String> toList, ArrayList<String> ccList,
+//                                   String subject, String body, String logMessage) throws IOException {
 //
-//        Configuration configuration = null;
-////        String filePath = LicenseManagerConstants.RESOURCE_PATH +File.separator+LicenseManagerConstants
-//// .CONFIG_FILE_NAME;
-////        OMElement conf = loadConfigXML(filePath);
+//        prop.load( SyncService.class.getClassLoader().getResourceAsStream("application.properties"));
 //
-//        File configFile = new File(Constants.RESOURCE_PATH + File.separator +
-//                Constants.CONFIG_FILE_NAME);
-//        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+//
+//        prop.put("mail.smtp.port", "587");
+//        prop.put("mail.smtp.auth", "true");
+//        prop.put("mail.smtp.starttls.enable", "true");
+//        prop.put("mail.smtp.host", "smtp.gmail.com");
+//
+//        javax.mail.Session session = javax.mail.Session.getDefaultInstance(prop, new Authenticator() {
+//            protected PasswordAuthentication getPasswordAuthentication() {
+//                return new PasswordAuthentication(prop.getProperty("user"), prop.getProperty("emailPassword"));
+//            }
+//        });
+//
 //        try {
-//            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-//            Document configDoucment = documentBuilder.parse(configFile);
-//            configDoucment.getDocumentElement().normalize();
+//            MimeMessage message = new MimeMessage(session);
+//            message.setFrom(new InternetAddress(fromAddress));
+//            for (String aToList : toList) {
+//                message.addRecipient(Message.RecipientType.TO,
+//                        new InternetAddress(aToList));
+//            }
+//            for (String aCcList : ccList) {
+//                message.addRecipient(Message.RecipientType.CC,
+//                        new InternetAddress(aCcList));
+//            }
+//            message.setSubject(subject);
+//            message.setContent(body, "text/html");
+//            Transport transport = session.getTransport(prop.getProperty("protocol"));
+//            transport.connect(prop.getProperty("host"), prop.getProperty("user"), prop.getProperty("emailPassword"));
+//            Transport.send(message);
+//            LOG.info("Email sent successfully");
 //
-//            String databaseDriver = configDoucment.getElementsByTagName(Constants.DATABASE_DRIVER)
-//                    .item(0).getTextContent();
-//            String databaseUrl = configDoucment.getElementsByTagName(Constants.DATABASE_URL)
-//                    .item(0).getTextContent();
-//            String databaseUsername = configDoucment.getElementsByTagName(Constants.DATABASE_USERNAME)
-//                    .item(0).getTextContent();
-//            String databasePassword = configDoucment.getElementsByTagName(Constants.DATABASE_PASSWORD)
-//                    .item(0).getTextContent();
-//            String bpmnUrl = configDoucment.getElementsByTagName(Constants.BPMN_URL)
-//                    .item(0).getTextContent();
-//            String bpmnToken = configDoucment.getElementsByTagName(Constants.BPMN_TOKEN)
-//                    .item(0).getTextContent();
-//            String emailAddress = configDoucment.getElementsByTagName(Constants.BPMN_EMAIL_ADDRESS)
-//                    .item(0).getTextContent();
-//            String emailPassword = configDoucment.getElementsByTagName(Constants.BPMN_EMAIL_PASSWORD)
-//                    .item(0).getTextContent();
-//            String smtpPort = configDoucment.getElementsByTagName(Constants.BPMN_SMTP_PORT)
-//                    .item(0).getTextContent();
-//            String smtpHost = configDoucment.getElementsByTagName(Constants.BPMN_SMTP_HOST)
-//                    .item(0).getTextContent();
-//            String publicKey = configDoucment.getElementsByTagName(Constants.BPMN_PUBLIC_KEY)
-//                    .item(0).getTextContent();
-//            String bpmnOrigin = configDoucment.getElementsByTagName(Constants.BPMN_ORIGIN)
-//                    .item(0).getTextContent();
-//            String pathToFileStorage = configDoucment.getElementsByTagName(Constants
-//                    .PATH_TO_FILE_STORAGE)
-//                    .item(0).getTextContent();
-//            String clientUrl = configDoucment.getElementsByTagName(Constants.CLIENT_URL)
-//                    .item(0).getTextContent();
-//            String licenseId = configDoucment.getElementsByTagName(Constants.LICENSE_ID)
-//                    .item(0).getTextContent();
-//            configuration = new Configuration(databaseDriver, databaseUrl, databaseUsername, databasePassword, bpmnUrl,
-//                    bpmnToken, emailAddress, emailPassword, smtpPort, smtpHost, bpmnOrigin, publicKey,
-//                    pathToFileStorage, clientUrl, licenseId);
-//
-//        } catch (ParserConfigurationException e) {
-//            throw new LicenseManagerConfigurationException("Error occurred in parsing Configurations", e);
-//        } catch (IOException e) {
-//            throw new LicenseManagerConfigurationException("Configuration file Not Found", e);
-//        } catch (NullPointerException e) {
-//            throw new LicenseManagerConfigurationException("One or more required tags not found in " +
-//                    "the configurations file", e);
-//        } catch (SAXException e) {
-//            e.printStackTrace();
+//        } catch (MessagingException mex) {
+//            LOG.error("Email sending failed", mex);
 //        }
-//        return configuration;
+//        return null;
 //    }
 }
 

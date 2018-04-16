@@ -28,13 +28,13 @@ package org.wso2.internal.apps.license.manager.impl.tables;
  */
 public class LM_LICENSE {
 
-    public String table = "LM_LICENSE";
-    public String LICENSE_ID = "LICENSE_ID";
-    public String LICENSE_KEY = "LICENSE_KEY";
-    public String LICENSE_NAME = "LICENSE_NAME";
-    public String LICENSE_VERSION = "LICENSE_VERSION";
-    public String LICENSE_YEAR = "LICENSE_YEAR";
-    public String LICENSE_SOURCE = "LICENSE_SOURCE";
-    public String LICENSE_URL = "LICENSE_URL";
-    public String LICENSE_CONTENT = "LICENSE_CONTENT";
+    public static String table = "LM_LICENSE";
+    public static String LICENSE_ID = "LICENSE_ID";
+    public static String LICENSE_KEY = "LICENSE_KEY";
+    public static String LICENSE_NAME = "LICENSE_NAME";
+    public static String LICENSE_VERSION = "LICENSE_VERSION";
+    public static String LICENSE_YEAR = "LICENSE_YEAR";
+    public static String LICENSE_SOURCE = "LICENSE_SOURCE";
+    public static String LICENSE_URL = "LICENSE_URL";
+    public static String LICENSE_CONTENT = "LICENSE_CONTENT";
 }

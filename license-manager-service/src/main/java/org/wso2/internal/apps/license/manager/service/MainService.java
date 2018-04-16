@@ -85,8 +85,10 @@ public class MainService {
     public Response selectLicenseResource(@Context Request request) {
 
         JsonObject responseJson = new JsonObject();
+        DBHandler dbHandler = null;
         try {
-            JsonArray jsonArray = DBHandler.selectAllLicense();
+            dbHandler = new DBHandler();
+            JsonArray jsonArray = dbHandler.selectAllLicense();
             responseJson.addProperty("responseType", "Done");
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", jsonArray);
@@ -95,6 +97,15 @@ public class MainService {
             responseJson.addProperty("responseType", "Error");
             responseJson.addProperty("responseMessage", "Failed to retrieve data from the database.");
             log.error("Failed to retrieve data from the database. " + e.getMessage(), e);
+        } finally {
+            if (dbHandler != null) {
+                try {
+                    dbHandler.closeConnection();
+                } catch (SQLException e) {
+                    log.error("Failed to close the database connection. " + e.getMessage(), e);
+                }
+
+            }
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
@@ -383,9 +394,11 @@ public class MainService {
         JsonArray componentsJson;
         JsonArray librariesJson;
         JsonParser jsonParser = new JsonParser();
+        DBHandler dbHandler = null;
         SessionObjectHolder sessionObjectHolder = objectHolderMap.get(session_email);
         int productId = sessionObjectHolder.getProductId();
         try {
+            dbHandler = new DBHandler();
             requestJson = jsonParser.parse(stringPayload).getAsJsonObject();
             componentsJson = requestJson.getAsJsonArray("components");
             librariesJson = requestJson.getAsJsonArray("libraries");
@@ -397,32 +410,35 @@ public class MainService {
                 String version = componentsJson.get(i).getAsJsonObject().get("version").getAsString();
                 String type = componentsJson.get(i).getAsJsonObject().get("type").getAsString();
                 int licenseId = componentsJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
-                String licenseKey = DBHandler.selectLicenseFromId(licenseId);
-                DBHandler.insertComponent(name, componentName, version);
-                DBHandler.insertProductComponent(componentName, productId);
-                DBHandler.insertComponentLicense(componentName, licenseKey);
+                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
+                dbHandler.insertComponent(name, componentName, version);
+                dbHandler.insertProductComponent(componentName, productId);
+                dbHandler.insertComponentLicense(componentName, licenseKey);
             }
 
             for (int i = 0; i < librariesJson.size(); i++) {
                 int index = librariesJson.get(i).getAsJsonObject().get("index").getAsInt();
                 String libraryFileName = sessionObjectHolder.getLicenseMissingLibraries().get(index).getJarFile()
                         .getName();
-                String parent = null;
+                String componentKey = null;
+                Jar parent = null;
                 if (sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent() != null) {
-                    parent = sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent().getProjectName();
+                    parent = sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent();
+                    componentKey = parent.getJarFile().getName();
                 }
                 String name = librariesJson.get(i).getAsJsonObject().get("name").getAsString();
                 String version = librariesJson.get(i).getAsJsonObject().get("version").getAsString();
                 String type = librariesJson.get(i).getAsJsonObject().get("type").getAsString();
                 int licenseId = librariesJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
-                String licenseKey = DBHandler.selectLicenseFromId(licenseId);
+                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
 
-                int libId = DBHandler.getLibraryId(name, libraryFileName, version, type);
-                DBHandler.insertLibraryLicense(licenseKey, Integer.toString(libId));
-                if (type.equals("jarinbundle")) {
-                    DBHandler.insertComponentLibrary(parent, libId);
-                } else {
-                    DBHandler.insertProductLibrary(libId, productId);
+                int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
+                dbHandler.insertLibraryLicense(licenseKey, Integer.toString(libId));
+
+                if(parent!=null && parent.getType().equals("wso2")){
+                    dbHandler.insertComponentLibrary(componentKey, libId);
+                }else{
+                    dbHandler.insertProductLibrary(libId,productId);
                 }
 
             }
@@ -432,7 +448,17 @@ public class MainService {
         } catch (DataSetException | SQLException | ClassNotFoundException e) {
             responseJson.addProperty("responseType", "Error");
             responseJson.addProperty("responseMessage", "Failed");
-            log.error("Failed to add licenses." + e.getMessage());
+            log.error("Failed to add licenses." + e.getMessage(), e);
+        } finally {
+            if (dbHandler != null) {
+                try {
+                    dbHandler.closeConnection();
+                } catch (SQLException e) {
+                    log.error("Failed to close the database connection. " + e.getMessage(), e);
+                }
+            }
+            sessionObjectHolder.getLicenseMissingComponents().clear();
+            sessionObjectHolder.getLicenseMissingLibraries().clear();
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)

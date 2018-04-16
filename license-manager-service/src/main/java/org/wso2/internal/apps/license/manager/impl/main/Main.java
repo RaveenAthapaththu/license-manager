@@ -44,14 +44,8 @@ public class Main {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
 
     public EnterData enterData(JarHolder jh) throws ClassNotFoundException, SQLException, DataSetException {
-
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-
         try {
-            EnterData enterData = new EnterData(databaseDriver, databaseUrl, databaseUsername, databasePassword, jh);
+            EnterData enterData = new EnterData(jh);
             enterData.enter();
             return enterData;
         } catch (ClassNotFoundException | SQLException | DataSetException ex) {

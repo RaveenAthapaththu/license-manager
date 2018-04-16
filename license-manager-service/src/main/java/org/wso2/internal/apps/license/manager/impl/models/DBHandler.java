@@ -31,6 +31,7 @@ import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_LICENSE;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_PRODUCT;
 import org.wso2.internal.apps.license.manager.impl.tables.LM_LICENSE;
+import org.wso2.internal.apps.license.manager.impl.tables.LM_PRODUCT;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.MicroservicesRunner;
 import org.wso2.msf4j.util.SystemVariableUtil;
@@ -43,13 +44,25 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * TODO: Class level comments
+ * Class to handle the interactions with the database.
  */
 public class DBHandler {
 
     private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
+    private Connection con;
 
-    private static Connection initiateConnection() throws ClassNotFoundException, SQLException {
+    public DBHandler() throws ClassNotFoundException, SQLException {
+
+        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+        Class.forName(databaseDriver);
+        con = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
+
+    }
+
+    private Connection initiateConnection() throws ClassNotFoundException, SQLException {
 
         String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
         String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
@@ -60,14 +73,13 @@ public class DBHandler {
 
     }
 
-    private static void closeConection(Connection connection) throws SQLException {
+    public void closeConnection() throws SQLException {
 
-        connection.close();
+        con.close();
     }
 
-    public static JsonArray selectAllLicense() throws SQLException, DataSetException, ClassNotFoundException {
+    public JsonArray selectAllLicense() throws SQLException, DataSetException, ClassNotFoundException {
 
-        Connection con = initiateConnection();
         LM_LICENSE licenseTable = new LM_LICENSE();
         TableDataSet tds;
 
@@ -85,44 +97,30 @@ public class DBHandler {
             }
         } catch (SQLException | DataSetException e) {
             throw e;
-        } finally {
-            closeConection(con);
         }
         return resultArray;
     }
 
-    public static String selectLicenseFromId(int id) throws SQLException, ClassNotFoundException {
+    public String selectLicenseFromId(int id) throws SQLException, DataSetException {
 
-        Connection con = initiateConnection();
-        LM_LICENSE licenseTable = new LM_LICENSE();
+//        LM_LICENSE licenseTable = new LM_LICENSE();
         TableDataSet tds;
         Record rec;
+        String licenseKey = null;
 
-        try {
-            tds = new TableDataSet(con, licenseTable.table);
-            tds.where(licenseTable.LICENSE_ID + "=" + Integer.toString(id));
-            tds.fetchRecords(1);
-            rec = tds.getRecord(0);
-            String licenseKey = rec.getValue(licenseTable.LICENSE_KEY).toString();
-            return licenseKey;
-
-        } catch (SQLException ex) {
-            log.error("selectLicenseFromId(SQLException) " + ex.getMessage());
-
-        } catch (DataSetException ex) {
-            log.error("selectLicenseFromId(DataSetException) " + ex.getMessage());
-        } finally {
-            closeConection(con);
+        String query = "SELECT * FROM LM_LICENSE WHERE LICENSE_ID=?";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setInt(1, id);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            licenseKey = rs.getString("LICENSE_KEY");
         }
-        return "";
+        return licenseKey;
     }
 
-    public static void insertComponent(String name, String fileName, String version) throws SQLException,
-            ClassNotFoundException {
+    public void insertComponent(String name, String fileName, String version) throws SQLException {
 
-        Connection con = initiateConnection();
-
-        String insertComponent = "INSERT INTO LM_COMPONENT"
+        String insertComponent = "INSERT IGNORE INTO LM_COMPONENT"
                 + "(COMP_NAME, COMP_FILE_NAME, COMP_KEY, COMP_TYPE,COMP_VERSION) VALUES"
                 + "(?,?,?,?,?)";
         PreparedStatement preparedStatement = null;
@@ -136,19 +134,13 @@ public class DBHandler {
 
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-//                throw ex;
-//            }
-        } finally {
-            closeConection(con);
+            throw ex;
         }
 
     }
 
-    private static int insertLibrary(String name, String fileName, String version, String type) throws DataSetException,
-            SQLException, ClassNotFoundException {
-
-        Connection con = initiateConnection();
+    private int insertLibrary(String name, String fileName, String version, String type) throws DataSetException,
+            SQLException {
 
         LM_LIBRARY libTab = new LM_LIBRARY();
         TableDataSet tds;
@@ -167,88 +159,116 @@ public class DBHandler {
             rs.next();
             return rs.getInt("LAST_INSERT_ID()");
         } catch (SQLException ex) {
-//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-//                throw ex;
-//            }
-        } finally {
-            closeConection(con);
+            throw ex;
+
         }
-        return -1;
     }
 
-    public static void insertProductComponent(String compKey, int productId) throws DataSetException, SQLException,
-            ClassNotFoundException {
-
-        Connection con = initiateConnection();
+    public void insertProductComponent(String compKey, int productId) throws DataSetException, SQLException {
 
         LM_COMPONENT_PRODUCT compprodtab = new LM_COMPONENT_PRODUCT();
         TableDataSet tds;
         Record record;
-        try {
-            tds = new TableDataSet(con, compprodtab.table);
-            record = tds.addRecord();
-            record.setValue(compprodtab.COMP_KEY, compKey)
-                    .setValue(compprodtab.PRODUCT_ID, productId)
-                    .save();
-        } catch (SQLException ex) {
-//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-//                throw ex;
-//            }
-        } finally {
-            closeConection(con);
+        if (selectProductComponent(compKey, productId) == -1) {
+            try {
+                tds = new TableDataSet(con, compprodtab.table);
+                record = tds.addRecord();
+                record.setValue(compprodtab.COMP_KEY, compKey)
+                        .setValue(compprodtab.PRODUCT_ID, productId)
+                        .save();
+            } catch (SQLException ex) {
+                throw ex;
+
+            }
         }
     }
 
-    public static void insertProductLibrary(int libId, int productId) throws DataSetException, SQLException,
-            ClassNotFoundException {
+    private int selectProductComponent(String compKey, int productId) throws SQLException {
 
-        Connection con = initiateConnection();
+        int id = -1;
+        String query;
+
+        query = "SELECT * FROM LM_COMPONENT_PRODUCT WHERE COMP_KEY=? AND PRODUCT_ID=?";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setString(1, compKey);
+        preparedStatement.setInt(2, productId);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            id = rs.getInt("PRODUCT_ID");
+        }
+        return id;
+    }
+
+    public void insertProductLibrary(int libId, int productId) throws DataSetException, SQLException {
 
         LM_LIBRARY_PRODUCT libprodtab = new LM_LIBRARY_PRODUCT();
         TableDataSet tds;
-        Record record;
-        try {
-            tds = new TableDataSet(con, libprodtab.table);
-            record = tds.addRecord();
-            record.setValue(libprodtab.LIB_ID, libId)
-                    .setValue(libprodtab.PRODUCT_ID, productId)
-                    .save();
-        } catch (SQLException ex) {
-//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-//                throw ex;
-//            }
-        } finally {
-            closeConection(con);
+        if (selectProductLibrary(libId, productId) == -1) {
+            Record record;
+            try {
+                tds = new TableDataSet(con, libprodtab.table);
+                record = tds.addRecord();
+                record.setValue(libprodtab.LIB_ID, libId)
+                        .setValue(libprodtab.PRODUCT_ID, productId)
+                        .save();
+            } catch (SQLException ex) {
+                throw ex;
+            }
         }
+
     }
 
-    public static void insertComponentLibrary(String component, int libraryId) throws DataSetException, SQLException,
-            ClassNotFoundException {
+    private int selectProductLibrary(int libId, int productId) throws SQLException {
 
-        Connection con = initiateConnection();
+        int id = -1;
+        String query;
+
+        query = "SELECT * FROM LM_LIBRARY_PRODUCT WHERE LIB_ID=? AND PRODUCT_ID=?";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setInt(1, libId);
+        preparedStatement.setInt(2, productId);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            id = rs.getInt("LIB_ID");
+        }
+        return id;
+    }
+
+    public void insertComponentLibrary(String component, int libraryId) throws SQLException, DataSetException {
 
         LM_COMPONENT_LIBRARY complibtab = new LM_COMPONENT_LIBRARY();
         TableDataSet tds;
-        Record record;
-        try {
-            tds = new TableDataSet(con, complibtab.table);
-            record = tds.addRecord();
-            record.setValue(complibtab.LIB_ID, libraryId)
-                    .setValue(complibtab.COMP_KEY, component)
-                    .save();
-        } catch (SQLException ex) {
-//            if (ex.getErrorCode() != Constants.DUPLICATE_ENTRY_ERROR_CODE) {
-//                throw ex;
-//            }
-        } finally {
-            closeConection(con);
+        if (selectComponentLibrary(component, libraryId) == -1) {
+            Record record;
+            try {
+                tds = new TableDataSet(con, complibtab.table);
+                record = tds.addRecord();
+                record.setValue(complibtab.LIB_ID, libraryId)
+                        .setValue(complibtab.COMP_KEY, component)
+                        .save();
+            } catch (SQLException | DataSetException ex) {
+                throw ex;
+            }
         }
+
     }
 
-    public static void insertComponentLicense(String compKey, String licenseKey) throws DataSetException, SQLException,
-            ClassNotFoundException {
+    private int selectComponentLibrary(String component, int libraryId) throws SQLException {
 
-        Connection con = initiateConnection();
+        int id = -1;
+        String query;
+        query = "SELECT * FROM LM_COMPONENT_LIBRARY WHERE LIB_ID=? AND COMP_KEY=?";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setInt(1, libraryId);
+        preparedStatement.setString(2, component);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            id = rs.getInt("LIB_ID");
+        }
+        return id;
+    }
+
+    public void insertComponentLicense(String compKey, String licenseKey) throws DataSetException, SQLException {
 
         LM_COMPONENT_LICENSE complicTab = new LM_COMPONENT_LICENSE();
         TableDataSet tds;
@@ -260,17 +280,12 @@ public class DBHandler {
             record.setValue(complicTab.COMP_KEY, compKey).setValue(
                     complicTab.LICENSE_KEY, licenseKey).save();
         } catch (SQLException ex) {
-            log.error(ex.getMessage());
-        }
-        finally {
-            closeConection(con);
+            throw ex;
+
         }
     }
 
-    public static void insertLibraryLicense(String licenseKey, String libId) throws DataSetException, SQLException,
-            ClassNotFoundException {
-
-        Connection con = initiateConnection();
+    public void insertLibraryLicense(String licenseKey, String libId) throws DataSetException, SQLException {
 
         LM_LIBRARY_LICENSE liblicTab = new LM_LIBRARY_LICENSE();
         TableDataSet tds;
@@ -283,16 +298,11 @@ public class DBHandler {
                     .setValue(liblicTab.LICENSE_KEY, licenseKey)
                     .save();
         } catch (SQLException ex) {
-            log.error("insertLibraryLicense(SQLException) " + ex.getMessage());
-        }
-        finally {
-            closeConection(con);
+            throw ex;
         }
     }
 
-    private static int selectLibraryId(String name, String version, String type) throws SQLException, ClassNotFoundException {
-
-        Connection con = initiateConnection();
+    public int selectLibraryId(String name, String version, String type) throws SQLException, ClassNotFoundException {
 
         int libraryId = -1;
         String query;
@@ -306,12 +316,11 @@ public class DBHandler {
         while (rs.next()) {
             libraryId = rs.getInt("LIB_ID");
         }
-        closeConection(con);
         return libraryId;
     }
 
-    public static int getLibraryId(String name, String fileName, String version, String type) throws SQLException,
-            ClassNotFoundException {
+    public int getLibraryId(String name, String fileName, String version, String type) throws SQLException,
+            ClassNotFoundException, DataSetException {
 
         int libraryId = -1;
         libraryId = selectLibraryId(name, version, type);
@@ -319,10 +328,267 @@ public class DBHandler {
             try {
                 libraryId = insertLibrary(name, fileName, version, type);
             } catch (DataSetException e) {
-                e.printStackTrace();
+                throw e;
             }
         }
         return libraryId;
     }
+
+    private int insertProduct(String product, String version) throws DataSetException, SQLException {
+
+        LM_PRODUCT prodTab = new LM_PRODUCT();
+        TableDataSet tds;
+        Record record;
+        int productId = -1;
+        try {
+            tds = new TableDataSet(con, prodTab.table);
+            record = tds.addRecord();
+            record.setValue(prodTab.PRODUCT_NAME, product)
+                    .setValue(prodTab.PRODUCT_VERSION, version)
+                    .save(con);
+            productId = getLastInsertId(con);
+            return productId;
+        } catch (SQLException ex) {
+            throw ex;
+        }
+
+    }
+
+    private int selectProductId(String product, String version) throws SQLException {
+
+        int productId = -1;
+        String query;
+
+        query = "SELECT * FROM LM_PRODUCT WHERE PRODUCT_NAME=? AND PRODUCT_VERSION=? ";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setString(1, product);
+        preparedStatement.setString(2, version);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            productId = rs.getInt("PRODUCT_ID");
+        }
+        return productId;
+    }
+
+    public int getProductId(String product, String version) throws SQLException, DataSetException {
+
+        int productId = -1;
+        productId = selectProductId(product, version);
+        if (productId == -1) {
+            try {
+                productId = insertProduct(product, version);
+            } catch (DataSetException e) {
+                throw e;
+            }
+        }
+        return productId;
+
+    }
+
+    public boolean isComponentExists(String fileName) throws SQLException {
+
+        String query;
+        int id= -1;
+        query = "SELECT * FROM LM_COMPONENT WHERE COMP_KEY=?";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setString(1, fileName);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            id = rs.getInt("COMP_ID");
+        }
+        return id != -1;
+    }
+
+    public boolean isLibraryLicenseExists(int libraryId) throws DataSetException, SQLException {
+
+        LM_LIBRARY_LICENSE libTable = new LM_LIBRARY_LICENSE();
+        TableDataSet tds;
+        boolean isExist = false;
+        try {
+            tds = new TableDataSet(con, libTable.table);
+            tds.where(libTable.LIB_ID + "=" + Integer.toString(libraryId));
+            tds.fetchRecords();
+            if (tds.size() == 0) {
+
+                isExist = false;
+            } else {
+
+                isExist = true;
+            }
+        } catch (SQLException ex) {
+            throw ex;
+        }
+        return isExist;
+    }
+
+    public boolean isComponentLicenseExists(String fileName) throws DataSetException, SQLException {
+
+        LM_COMPONENT_LICENSE compLicenseTable = new LM_COMPONENT_LICENSE();
+        TableDataSet tds;
+        Record record;
+        try {
+            tds = new TableDataSet(con, compLicenseTable.table);
+            tds.where(compLicenseTable.COMP_KEY + "='" + fileName + "'");
+            tds.fetchRecords();
+            if (tds.size() == 0) {
+                return false;
+            } else {
+                return true;
+            }
+        } catch (SQLException ex) {
+            throw ex;
+        }
+
+    }
+    public static int getLastInsertId(Connection con) throws SQLException {
+
+        Statement stmt;
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID();");
+        rs.next();
+        return rs.getInt("LAST_INSERT_ID()");
+    }
+    //
+    //        LM_LIBRARY libTab = new LM_LIBRARY();
+    //        TableDataSet tds;
+    //            throws DataSetException, SQLException, ClassNotFoundException {
+    //        Record record;
+    //        try {
+    //            tds = new TableDataSet(con, libTab.table);
+    //            record = tds.addRecord();
+    //            record.setValue(libTab.LIB_NAME, name).setValue(
+    //                    libTab.LIB_FILE_NAME, fileName).setValue(
+    //                    libTab.LIB_TYPE, (parent == null) ? ((isBundle) ? "bundle" : "jar") : "jarinbundle")
+    //                    .setValue(libTab.LIB_VERSION, version).save(con);
+    //        } catch (SQLException ex) {
+    //            log.error(ex.getMessage());
+    //            return false;
+    //        }
+    //        return true;
+    //    }
+    //
+    //    public boolean isLibraryExists(String name, String version) throws DataSetException, SQLException,
+    //            ClassNotFoundException {
+    //
+    //        LM_LIBRARY libTable = new LM_LIBRARY();
+    //        TableDataSet tds;
+    //        try {
+    //            tds = new TableDataSet(con, libTable.table);
+    //            tds.where(libTable.LIB_NAME + "='" + name + "' AND " + libTable.LIB_VERSION + "='" + version + "'");
+    //            tds.fetchRecords();
+    //            if (tds.size() == 0) {
+    //                return false;
+    //            } else {
+    //                return true;
+    //            }
+    //        } catch (SQLException ex) {
+    //            log.error(ex.getMessage());
+    //            return false;
+    //
+    //        }
+
+//    public boolean insertLibrary(String name, String fileName, String version, boolean isBundle, Jar parent)
+    //            ClassNotFoundException {
+    //
+    //        int libraryId = selectLibraryId(name, version,type);
+    //        boolean isExist = false;
+    //        if(libraryId != -1){
+    //            isExist =true;
+    //        }
+    //        return isExist;
+    //    }
+//    }
+
+//    public boolean isLibraryExists(String name, String version, String type) throws DataSetException, SQLException,
+    //
+    //        }
+    //            return id;
+    //            log.error(ex.getMessage());
+    //        } catch (SQLException ex) {
+    //            return id;
+    //            id = record.getValue(libTable.LIB_ID).asInt();
+    //            Record record = tds.getRecord(0);
+    //            tds.fetchRecords();
+    //            tds.where(libTable.LIB_NAME + "='" + name + "' AND " + libTable.LIB_VERSION + "='" + version + "'");
+    //            tds = new TableDataSet(con, libTable.table);
+    //        try {
+    //        int id = 0;
+    //        TableDataSet tds;
+    //        LM_LIBRARY libTable = new LM_LIBRARY();
+    //
+    //    public int getLibraryId(String name, String version) throws DataSetException {
+    //
+    //    }
+    //
+    //        return licenseKey;
+    //        }
+    //
+    //            log.error(ex.getMessage());
+    //        } catch (SQLException ex) {
+    //
+    //            return licenseKey;
+    //            licenseKey = record.getValue(libTable.LICENSE_KEY).toString();
+    //            record = tds.getRecord(0);
+    //            tds.fetchRecords();
+    //            tds.where(libTable.LIB_ID + "=" + Integer.toString(libraryId));
+    //            tds = new TableDataSet(con, libTable.table);
+    //
+    //        try {
+    //
+    //        String licenseKey = "";
+    //        Record record;
+    //        TableDataSet tds;
+    //        LM_LIBRARY_LICENSE libTable = new LM_LIBRARY_LICENSE();
+    //
+    //    public String getLicenseKeyFromLibraryLicense(int libraryId) throws DataSetException {
+    //
+    //    }
+    //
+    //        return id;
+    //        }
+    //            log.error(ex.getMessage());
+    //        } catch (SQLException ex) {
+    //
+    //            id = record.getValue(libTable.LIB_ID).asInt();
+    //            record = tds.getRecord(0);
+    //            tds.fetchRecords();
+    //                    libTable.LIB_TYPE + "='" + type + "'");
+    //            tds.where(libTable.LIB_NAME + "='" + name + "' AND " + libTable.LIB_VERSION + "='" + version + "'
+    // AND " +
+    //            tds = new TableDataSet(con, libTable.table);
+    //        try {
+    //
+    //        int id = -1;
+    //        Record record;
+    //        TableDataSet tds;
+    //        LM_LIBRARY libTable = new LM_LIBRARY();
+    //
+//    public int getActualLibraryId(String name, String version, String type) throws DataSetException {
+
+//    }
+
+//    public int getLibId(String fileName, Jar parent, boolean isBundle) throws DataSetException {
+//
+//        LM_LIBRARY libtab = new LM_LIBRARY();
+//        TableDataSet tds;
+//        try {
+//
+//            tds = new TableDataSet(con, libtab.table);
+//            String type;
+//            if (parent == null) {
+//                type = ((isBundle) ? "bundle" : "jar");
+//            } else {
+//                type = "jarinbundle";
+//            }
+//
+//            tds.where(libtab.LIB_FILE_NAME + "='" + fileName + "' AND " + libtab.LIB_TYPE + "='" + type + "'");
+//            tds.fetchRecords(1);
+//            return tds.getRecord(0).getValue(libtab.LIB_ID).asInt();
+//
+//        } catch (SQLException ex) {
+//            return -1;
+//        }
+//
+//    }
 
 }
