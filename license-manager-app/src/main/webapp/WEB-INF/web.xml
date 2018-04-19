@@ -9,35 +9,38 @@
 
   <display-name>Archetype Created Web Application</display-name>
 
-  <filter>
-    <filter-name>AuthenticationFilter</filter-name>
-    <filter-class>org.wso2.outsiders_contributions.filters.JWTAction</filter-class>
-  </filter>
-  <filter-mapping>
-    <filter-name>AuthenticationFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-  </filter-mapping>
+  <!--<filter>-->
+    <!--<filter-name>AuthenticationFilter</filter-name>-->
+    <!--<filter-class>org.wso2.internal.apps.license.manager.client.filters.JWTAction</filter-class>-->
+  <!--</filter>-->
+  <!--<filter-mapping>-->
+    <!--<filter-name>AuthenticationFilter</filter-name>-->
+    <!--<url-pattern>/*</url-pattern>-->
+  <!--</filter-mapping>-->
 
   <context-param>
     <param-name>log4jConfiguration</param-name>
     <param-value>./classes/log4jconfig.xml</param-value>
   </context-param>
 
-  <!--<servlet>-->
-    <!--<servlet-name>pullRequests</servlet-name>-->
-    <!--<servlet-class>org.wso2.outsiders_contributions.serverlets.PullRequests</servlet-class>-->
-  <!--</servlet>-->
-  <!--<servlet>-->
-    <!--<servlet-name>count</servlet-name>-->
-    <!--<servlet-class>org.wso2.outsiders_contributions.serverlets.count</servlet-class>-->
-  <!--</servlet>-->
+  <servlet>
+    <servlet-name>licenseManagerEndpoint</servlet-name>
+    <servlet-class>org.wso2.internal.apps.license.manager.client.services.LicenseManagerService</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>userDetailsEndpoint</servlet-name>
+    <servlet-class>org.wso2.internal.apps.license.manager.client.services.ApplicationService</servlet-class>
+  </servlet>
 
+  <servlet-mapping>
+    <servlet-name>licenseManagerEndpoint</servlet-name>
+    <url-pattern>/manageLicense/*</url-pattern>
+  </servlet-mapping>
 
-
-  <!--<servlet-mapping>-->
-    <!--<servlet-name>pullRequests</servlet-name>-->
-    <!--<url-pattern>/pullRequests</url-pattern>-->
-  <!--</servlet-mapping>-->
+  <servlet-mapping>
+    <servlet-name>userDetailsEndpoint</servlet-name>
+    <url-pattern>/manageUser/*</url-pattern>
+  </servlet-mapping>
   <!--<servlet-mapping>-->
     <!--<servlet-name>count</servlet-name>-->
     <!--<url-pattern>/count</url-pattern>-->
