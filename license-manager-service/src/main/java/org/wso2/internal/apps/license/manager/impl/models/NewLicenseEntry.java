@@ -1,5 +1,5 @@
 /*
- * Copyright (c) {2018}, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,7 +18,59 @@
 package org.wso2.internal.apps.license.manager.impl.models;
 
 /**
- * TODO: Class level comments
+ * Java object to contain the details of new entry of licenses for components/libraries
  */
-public class NewEntry {
+public class NewLicenseEntry {
+    private String fileName;
+    private String name;
+    private String version;
+    private String licenseKey;
+
+    public NewLicenseEntry(String fileName, String name, String version, String licenseKey) {
+
+        this.fileName = fileName;
+        this.name = name;
+        this.version = version;
+        this.licenseKey = licenseKey;
+    }
+
+    public String getFileName() {
+
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+
+        this.fileName = fileName;
+    }
+
+    public String getName() {
+
+        return name;
+    }
+
+    public void setName(String name) {
+
+        this.name = name;
+    }
+
+    public String getVersion() {
+
+        return version;
+    }
+
+    public void setVersion(String version) {
+
+        this.version = version;
+    }
+
+    public String getLicenseKey() {
+
+        return licenseKey;
+    }
+
+    public void setLicenseKey(String licenseKey) {
+
+        this.licenseKey = licenseKey;
+    }
 }
