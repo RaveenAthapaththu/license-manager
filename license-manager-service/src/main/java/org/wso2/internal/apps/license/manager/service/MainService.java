@@ -274,60 +274,6 @@ public class MainService {
                 .build();
     }
 
-    @POST
-    @Path("/validateUser")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.APPLICATION_JSON)
-    @OPTIONS
-    public Response validateUserResource(@Context Request request,
-                                         @QueryParam("username") String username,
-                                         String stringPayload) {
-
-        JsonObject responseJson = new JsonObject();
-        String token;
-        String message;
-        String key;
-        String email;
-        JsonObject requestJson;
-        JsonParser jsonParser = new JsonParser();
-        byte[] keyBytes, payloadBytes;
-        String[] tokenValues;
-        boolean returnValue = false;
-        JsonObject payloadJson;
-        Session session = request.getSession();
-        // TODO: 3/29/18 for local validation
-        // TODO: 3/28/18  validate the user
-        responseJson.addProperty("responseType", Constants.SUCCESS);
-        responseJson.addProperty("isValid", returnValue);
-        responseJson.addProperty("responseMessage", "Done");
-        // TODO: 3/29/18 actual usesr validation happens here
-//            session.setAttribute(VALID_USER, returnValue);
-
-        email = "pamoda@wso2.com";
-        log.info("Login - " + email);
-
-        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
-    @GET
-    @Path("/getUserDetails")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getUserDetails(@Context Request request) {
-
-        JsonObject response = new JsonObject();
-        response.addProperty("isValid", true);
-        response.addProperty("userEmail", "pamoda@wso2.com");
-        response.addProperty("isAnyAdmin", true);
-        response.addProperty("isRepositoryAdmin", true);
-        response.addProperty("isLibraryAdmin", true);
-        response.addProperty("libraryUserDetails", "");
-        return Response.ok(response, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
     @GET
     @Path("/getLicense")
     @Produces(MediaType.APPLICATION_JSON)
