@@ -30,11 +30,11 @@ import org.wso2.internal.apps.license.manager.impl.main.Jar;
 import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
 import org.wso2.internal.apps.license.manager.impl.main.LicenseFileGenerator;
 import org.wso2.internal.apps.license.manager.impl.main.ProductJarManager;
+import org.wso2.internal.apps.license.manager.impl.models.NewLicenseEntry;
 import org.wso2.internal.apps.license.manager.impl.models.SessionObjectHolder;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.DBHandler;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
-import org.wso2.msf4j.MicroservicesRunner;
 import org.wso2.msf4j.Request;
 import org.wso2.msf4j.Session;
 import org.wso2.msf4j.util.SystemVariableUtil;
@@ -46,12 +46,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.mail.MessagingException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -72,14 +74,12 @@ import javax.ws.rs.core.Response;
 @Path("/")
 public class MainService {
 
-    private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
+    private static final Logger log = LoggerFactory.getLogger(MainService.class);
     private ConcurrentHashMap<String, SessionObjectHolder> objectHolderMap = new ConcurrentHashMap<>();
-    private String packPath;
-    private String session_email = "pamodaaw@wso2.com";
 
     @GET
     @Path("/selectLicense")
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response selectLicenseResource(@Context Request request) {
 
         JsonObject responseJson = new JsonObject();
@@ -112,6 +112,7 @@ public class MainService {
 
     @GET
     @Path("/getPacks")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response listUploadedPacks() {
 
         ArrayList<String> listOfPacks = new ArrayList<>();
@@ -147,11 +148,15 @@ public class MainService {
 
     @POST
     @Path("/extractJars")
-    @Produces("application/json")
-    public Response extractJars(@Context Request request, String stringPayload) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response extractJars(@Context Request request,
+                                @QueryParam("username") String username,
+                                String stringPayload) {
 
         JsonObject responseJson = new JsonObject();
         JsonArray nameMissingJars = new JsonArray();
+        SessionObjectHolder userObjectHolder = new SessionObjectHolder();
         String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
         String zipFilePath = pathToStorage + stringPayload;
         String filePath = zipFilePath.substring(0, zipFilePath.lastIndexOf('.'));
@@ -164,12 +169,12 @@ public class MainService {
         }
         try {
             JarHolder jarHolder = LicenseManagerUtils.checkJars(filePath);
-            SessionObjectHolder userObjectHolder = new SessionObjectHolder();
             userObjectHolder.setJarHolder(jarHolder);
-            // TODO: 4/9/18 obtain the email from the session
-            objectHolderMap.put(session_email, userObjectHolder);
+            objectHolderMap.put(username, userObjectHolder);
             log.info("Jar extraction complete.");
             List<Jar> errorJarList = jarHolder.getErrorJarList();
+
+            // Convert the java List to a json object array.
             for (int i = 0; i < errorJarList.size(); i++) {
                 JsonObject currentJar = new JsonObject();
                 currentJar.addProperty("index", i);
@@ -193,8 +198,11 @@ public class MainService {
 
     @POST
     @Path("/enterJars")
-    @Produces("application/json")
-    public Response enterJarsResource(@Context Request request, String stringPayload) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response enterJarsResource(@Context Request request,
+                                      @QueryParam("username") String username,
+                                      String stringPayload) {
 
         JsonObject responseJson = new JsonObject();
         JsonParser jsonParser = new JsonParser();
@@ -204,8 +212,7 @@ public class MainService {
             JsonElement jsonElement = jsonParser.parse(stringPayload);
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             JsonArray jsonArray = jsonObject.get("jars").getAsJsonArray();
-            // TODO: 3/28/18 change
-            JarHolder jarHolder = objectHolderMap.get(session_email).getJarHolder();
+            JarHolder jarHolder = objectHolderMap.get(username).getJarHolder();
             for (int i = 0; i < jsonArray.size(); i++) {
                 JsonObject jar = jsonArray.get(i).getAsJsonObject();
                 int index = jar.get("index").getAsInt();
@@ -223,9 +230,9 @@ public class MainService {
             productJarManager.enterJarsIntoDB();
             List<Jar> componentList = productJarManager.getLicenseMissingComponents();
             List<Jar> libraryList = productJarManager.getLicenseMissingLibraries();
-            objectHolderMap.get(session_email).setLicenseMissingComponents(componentList);
-            objectHolderMap.get(session_email).setLicenseMissingLibraries(libraryList);
-            objectHolderMap.get(session_email).setProductId(productJarManager.getProductId());
+            objectHolderMap.get(username).setLicenseMissingComponents(componentList);
+            objectHolderMap.get(username).setLicenseMissingLibraries(libraryList);
+            objectHolderMap.get(username).setProductId(productJarManager.getProductId());
             JsonArray componentJsonArray = new JsonArray();
             JsonArray libraryJsonArray = new JsonArray();
 
@@ -272,7 +279,9 @@ public class MainService {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     @OPTIONS
-    public Response validateUserResource(@Context Request request, String stringPayload) {
+    public Response validateUserResource(@Context Request request,
+                                         @QueryParam("username") String username,
+                                         String stringPayload) {
 
         JsonObject responseJson = new JsonObject();
         String token;
@@ -304,7 +313,7 @@ public class MainService {
 
     @GET
     @Path("/getUserDetails")
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getUserDetails(@Context Request request) {
 
         JsonObject response = new JsonObject();
@@ -321,8 +330,8 @@ public class MainService {
 
     @GET
     @Path("/getLicense")
-    @Produces("application/json")
-    public Response getLicenseResource(@Context Request request) {
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLicenseResource(@Context Request request,@QueryParam("username") String username) {
 
         JsonObject responseJson = new JsonObject();
         String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
@@ -333,8 +342,7 @@ public class MainService {
         String productName;
         String productVersion;
         try {
-            // TODO: 4/9/18 get the session email
-            JarHolder jarHolder = objectHolderMap.get(session_email).getJarHolder();
+            JarHolder jarHolder = objectHolderMap.get(username).getJarHolder();
             productName = jarHolder.getProductName();
             productVersion = jarHolder.getProductVersion();
             LicenseFileGenerator licenseFileGenerator = new LicenseFileGenerator(databaseDriver, databaseUrl,
@@ -345,7 +353,7 @@ public class MainService {
         } catch (Exception e) {
             responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", e.getMessage());
-            log.error("getLicense(Exception) - " + e.getMessage());
+            log.error("Failed to generate licenses. " + e.getMessage(), e);
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
@@ -354,20 +362,21 @@ public class MainService {
 
     @GET
     @Path("/downloadLicense")
-    public Response getFile(@Context Request request) {
+    public Response getFile(@Context Request request, @QueryParam("username") String username) {
 
         String mountPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
-        JarHolder jarHolder = objectHolderMap.get(session_email).getJarHolder();
+        JarHolder jarHolder = objectHolderMap.get(username).getJarHolder();
         String productName = jarHolder.getProductName();
         String productVersion = jarHolder.getProductVersion();
         String fileName = "LICENSE(" + productName + "-" + productVersion + ").TXT";
 
         File file = Paths.get(mountPath, fileName).toFile();
         if (file.exists()) {
-//            LicenseManagerUtils.deleteFolder(mountPath+fileName);
+
+            // Delete the folders after generating licenses text.
             LicenseManagerUtils.deleteFolder(mountPath + productName + "-" + productVersion + ".zip");
             LicenseManagerUtils.deleteFolder(mountPath + productName + "-" + productVersion);
-            objectHolderMap.remove(session_email);
+            objectHolderMap.remove(username);
             return Response.ok(file)
                     .header("Access-Control-Allow-Credentials", true)
                     .build();
@@ -379,23 +388,29 @@ public class MainService {
 
     @POST
     @Path("/addLicense")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @OPTIONS
-    public Response addLicenseForJars(@Context Request request, String stringPayload) {
+    public Response addLicenseForJars(@Context Request request,
+                                      @QueryParam("username") String username,
+                                      String stringPayload) {
 
-        JsonObject responseJson = new JsonObject();
-        JsonObject requestJson;
-        JsonArray componentsJson;
-        JsonArray librariesJson;
-        JsonParser jsonParser = new JsonParser();
         DBHandler dbHandler = null;
-        SessionObjectHolder sessionObjectHolder = objectHolderMap.get(session_email);
+        JsonObject responseJson = new JsonObject();
+        JsonParser jsonParser = new JsonParser();
+        List<NewLicenseEntry> newLicenseEntryComponentList = new ArrayList<>();
+        List<NewLicenseEntry> newLicenseEntryLibraryList = new ArrayList<>();
+
+        // Extract data from the request.
+        JsonObject requestJson = jsonParser.parse(stringPayload).getAsJsonObject();
+        JsonArray componentsJson = requestJson.getAsJsonArray("components");
+        JsonArray librariesJson = requestJson.getAsJsonArray("libraries");
+
+        SessionObjectHolder sessionObjectHolder = objectHolderMap.get(username);
         int productId = sessionObjectHolder.getProductId();
         try {
             dbHandler = new DBHandler();
-            requestJson = jsonParser.parse(stringPayload).getAsJsonObject();
-            componentsJson = requestJson.getAsJsonArray("components");
-            librariesJson = requestJson.getAsJsonArray("libraries");
+
+            // Insert new licenses for the components
             for (int i = 0; i < componentsJson.size(); i++) {
                 int index = componentsJson.get(i).getAsJsonObject().get("index").getAsInt();
                 String componentName = sessionObjectHolder.getLicenseMissingComponents().get(index).getJarFile()
@@ -407,41 +422,56 @@ public class MainService {
                 dbHandler.insertComponent(name, componentName, version);
                 dbHandler.insertProductComponent(componentName, productId);
                 dbHandler.insertComponentLicense(componentName, licenseKey);
+                NewLicenseEntry newEntry = new NewLicenseEntry(componentName, name, version, licenseKey);
+                newLicenseEntryComponentList.add(newEntry);
             }
 
+            // Insert new licenses for the libraries.
             for (int i = 0; i < librariesJson.size(); i++) {
-                int index = librariesJson.get(i).getAsJsonObject().get("index").getAsInt();
-                String libraryFileName = sessionObjectHolder.getLicenseMissingLibraries().get(index).getJarFile()
-                        .getName();
                 String componentKey = null;
                 Jar parent = null;
-                if (sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent() != null) {
-                    parent = sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent();
-                    componentKey = parent.getJarFile().getName();
-                }
+                int index = librariesJson.get(i).getAsJsonObject().get("index").getAsInt();
                 String name = librariesJson.get(i).getAsJsonObject().get("name").getAsString();
                 String version = librariesJson.get(i).getAsJsonObject().get("version").getAsString();
                 String type = librariesJson.get(i).getAsJsonObject().get("type").getAsString();
                 int licenseId = librariesJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
-                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
 
+                String libraryFileName = sessionObjectHolder.getLicenseMissingLibraries().get(index).getJarFile()
+                        .getName();
+                if (sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent() != null) {
+                    parent = sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent();
+                    componentKey = parent.getJarFile().getName();
+                }
+                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
                 int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
                 dbHandler.insertLibraryLicense(licenseKey, Integer.toString(libId));
-
                 if (parent != null && parent.getType().equals(Constants.JAR_TYPE_WSO2)) {
                     dbHandler.insertComponentLibrary(componentKey, libId);
                 } else {
                     dbHandler.insertProductLibrary(libId, productId);
                 }
+                NewLicenseEntry newEntry = new NewLicenseEntry(libraryFileName, name, version, licenseKey);
+                newLicenseEntryLibraryList.add(newEntry);
 
             }
+
+            // If there are new licenses added successfully, send a mail to the admin.
+            if(newLicenseEntryComponentList.size()>0 || newLicenseEntryLibraryList.size()>0){
+                LicenseManagerUtils.sendEmail(username,newLicenseEntryComponentList,newLicenseEntryLibraryList);
+            }
+
             responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Done");
 
         } catch (DataSetException | SQLException | ClassNotFoundException e) {
             responseJson.addProperty("responseType", Constants.ERROR);
-            responseJson.addProperty("responseMessage", "Failed");
+            responseJson.addProperty("responseMessage", "Failed to add licenses. " +
+                    "Please contact application admin");
             log.error("Failed to add licenses." + e.getMessage(), e);
+        } catch (MessagingException e) {
+            responseJson.addProperty("responseType", Constants.SUCCESS);
+            responseJson.addProperty("responseMessage", "Failed to send email to the admin.");
+            log.error("Error while sending email to application admins. "+ e.getMessage(), e);
         } finally {
             if (dbHandler != null) {
                 try {

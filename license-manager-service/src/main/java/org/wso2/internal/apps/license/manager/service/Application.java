@@ -18,6 +18,7 @@
 
 package org.wso2.internal.apps.license.manager.service;
 
+import org.wso2.internal.apps.license.manager.api.AuthInterceptor;
 import org.wso2.internal.apps.license.manager.api.CorsInterceptor;
 import org.wso2.msf4j.MicroservicesRunner;
 
@@ -30,6 +31,7 @@ public class Application {
     public static void main(String[] args) {
         new MicroservicesRunner(9091)
                 .addGlobalRequestInterceptor(new CorsInterceptor())
+                .addGlobalRequestInterceptor(new AuthInterceptor())
                 .deploy(new MainService())
                 .start();
     }
