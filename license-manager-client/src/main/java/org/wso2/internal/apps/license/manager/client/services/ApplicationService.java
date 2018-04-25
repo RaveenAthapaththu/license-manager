@@ -35,8 +35,8 @@ public class ApplicationService extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
-//        String username = String.valueOf(req.getSession().getAttribute("user"));
-        String username = "pamodawimalasiri@wso2.com";
+        String username = String.valueOf(req.getSession().getAttribute("user"));
+//        String username = "pamodawimalasiri@wso2.com";
         response.setContentType("application/json");
         PrintWriter out = response.getWriter();
         JsonObject userDetails = new JsonObject();

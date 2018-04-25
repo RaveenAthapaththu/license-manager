@@ -29,7 +29,7 @@ import org.wso2.msf4j.MicroservicesRunner;
  */
 public class Application {
     public static void main(String[] args) {
-        new MicroservicesRunner(9091)
+        new MicroservicesRunner(9094)
                 .addGlobalRequestInterceptor(new CorsInterceptor())
                 .addGlobalRequestInterceptor(new AuthInterceptor())
                 .deploy(new MainService())

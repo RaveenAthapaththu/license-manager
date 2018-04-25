@@ -106,7 +106,7 @@ public class ProductJarManager {
             int libraryId = dbHandler.selectLibraryId(name, version, libraryType);
             if (libraryId != -1) {
                 boolean isLicenseExists = dbHandler.isLibraryLicenseExists(libraryId);
-                // If a jar has a parent and i the parent is "wso2", add parent and library to the
+                // If a jar has a parent and if the parent is "wso2", add parent and library to the
                 // LM_COMPONENT_LIBRARY table.
                 if (mj.getParent() != null && mj.getParent().getType().equals(Constants.JAR_TYPE_WSO2)) {
                     if (dbHandler.isComponentExists(mj.getParent().getJarFile().getName())) {

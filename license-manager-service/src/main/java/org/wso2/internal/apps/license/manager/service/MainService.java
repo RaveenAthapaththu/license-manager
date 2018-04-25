@@ -36,7 +36,6 @@ import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.DBHandler;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.msf4j.Request;
-import org.wso2.msf4j.Session;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.io.File;
@@ -49,7 +48,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.mail.MessagingException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -57,12 +55,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-//import java.util.Arrays;
-//import java.util.logging.Logger;
-
-//import org.wso2.internal.apps.license.manager.conf.Configuration;
-//import org.wso2.internal.apps.license.manager.conf.ConfigurationReader;
 
 /**
  * This is the Microservice resource class.
@@ -114,12 +106,13 @@ public class MainService {
     @Path("/getPacks")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listUploadedPacks() {
-
+        log.info("api call is initiated. \n");
         ArrayList<String> listOfPacks = new ArrayList<>();
         JsonObject responseJson = new JsonObject();
         JsonArray responseData = new JsonArray();
 
         String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
+        log.info(pathToStorage);
 
         File folder = new File(pathToStorage);
         File[] listOfFiles = folder.listFiles();
@@ -170,7 +163,7 @@ public class MainService {
         try {
             JarHolder jarHolder = LicenseManagerUtils.checkJars(filePath);
             userObjectHolder.setJarHolder(jarHolder);
-            objectHolderMap.put(username, userObjectHolder);
+//            objectHolderMap.put(username, userObjectHolder);
             log.info("Jar extraction complete.");
             List<Jar> errorJarList = jarHolder.getErrorJarList();
 
@@ -277,7 +270,7 @@ public class MainService {
     @GET
     @Path("/getLicense")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getLicenseResource(@Context Request request,@QueryParam("username") String username) {
+    public Response getLicenseResource(@Context Request request, @QueryParam("username") String username) {
 
         JsonObject responseJson = new JsonObject();
         String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
@@ -402,8 +395,8 @@ public class MainService {
             }
 
             // If there are new licenses added successfully, send a mail to the admin.
-            if(newLicenseEntryComponentList.size()>0 || newLicenseEntryLibraryList.size()>0){
-                LicenseManagerUtils.sendEmail(username,newLicenseEntryComponentList,newLicenseEntryLibraryList);
+            if (newLicenseEntryComponentList.size() > 0 || newLicenseEntryLibraryList.size() > 0) {
+                LicenseManagerUtils.sendEmail(username, newLicenseEntryComponentList, newLicenseEntryLibraryList);
             }
 
             responseJson.addProperty("responseType", Constants.SUCCESS);
@@ -417,7 +410,7 @@ public class MainService {
         } catch (MessagingException e) {
             responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Failed to send email to the admin.");
-            log.error("Error while sending email to application admins. "+ e.getMessage(), e);
+            log.error("Error while sending email to application admins. " + e.getMessage(), e);
         } finally {
             if (dbHandler != null) {
                 try {

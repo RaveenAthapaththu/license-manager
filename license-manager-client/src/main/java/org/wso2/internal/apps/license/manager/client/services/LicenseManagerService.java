@@ -36,17 +36,15 @@ import javax.ws.rs.core.MediaType;
 public class LicenseManagerService extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse response) throws IOException {
-//        String username = String.valueOf(req.getSession().getAttribute("user"));
-        String username = "pamoda@wso2.com";
-
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String username = String.valueOf(request.getSession().getAttribute("user"));
 
         try {
-            if (req.getPathInfo().equals("/downloadLicense")) {
+            if (request.getPathInfo().equals("/downloadLicense")) {
                 response.setContentType(MediaType.TEXT_HTML);
                 response.setHeader("Content-Disposition",
                         "attachment;filename=LICENSE.txt");
-                InputStream is = ServiceExecuter.executeDownloadService(req.getPathInfo(), username);
+                InputStream is = ServiceExecuter.executeDownloadService(request.getPathInfo(), username);
 
                 int read;
                 byte[] bytes = new byte[1024];
@@ -62,7 +60,7 @@ public class LicenseManagerService extends HttpServlet {
             } else {
                 response.setContentType(MediaType.APPLICATION_JSON);
                 PrintWriter out = response.getWriter();
-                out.print(ServiceExecuter.executeGetService(req.getPathInfo(), username));
+                out.print(ServiceExecuter.executeGetService(request.getPathInfo(), username));
             }
         } catch (JSONException | URISyntaxException e) {
             e.printStackTrace();
@@ -71,13 +69,12 @@ public class LicenseManagerService extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
-//        String username = String.valueOf(req.getSession().getAttribute("user"));
-        String username = "pamoda@wso2.com";
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String username = String.valueOf(request.getSession().getAttribute("user"));
         response.setContentType("application/json");
         PrintWriter out = response.getWriter();
         try {
-            out.print(ServiceExecuter.executePostService(req.getPathInfo(), req.getReader().readLine(), username));
+            out.print(ServiceExecuter.executePostService(request.getPathInfo(), request.getReader().readLine(), username));
         } catch (JSONException | URISyntaxException e) {
             e.printStackTrace();
         }

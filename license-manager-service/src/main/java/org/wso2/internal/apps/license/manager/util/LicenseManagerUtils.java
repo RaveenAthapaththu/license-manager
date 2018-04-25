@@ -26,15 +26,19 @@ import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
@@ -117,6 +121,17 @@ public class LicenseManagerUtils {
         return jh;
     }
 
+    public static boolean checkInnerJars(String filePath) throws IOException {
+        boolean containsJars = false;
+        ZipInputStream zip = new ZipInputStream(new FileInputStream(filePath));
+        for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
+            if (entry.getName().endsWith(".jar") || entry.getName().endsWith(".mar")) {
+                containsJars = true;
+            }
+        }
+        return containsJars;
+    }
+
     public static void sendEmail(String addedBy, List<NewLicenseEntry> components,List<NewLicenseEntry> libraries)
             throws MessagingException {
 
@@ -152,7 +167,7 @@ public class LicenseManagerUtils {
     }
 
     private static String createHtmlBody(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry> libraries){
-        String finalHtml="";
+        String finalHtml;
         String htmlComponents="";
         String htmlLibraries="";
         if(components.size()>0){
@@ -203,7 +218,7 @@ public class LicenseManagerUtils {
                 String license = libraries.get(i).getLicenseKey();
                 Boolean isEven = i % 2 == 0;
 
-                if (!isEven || i==0) {
+                if (isEven || i==0) {
                     htmlLibraries = htmlLibraries + "<tr style=\"background-color: #dddddd;\"> \n";
                 } else {
                     htmlLibraries = htmlLibraries + "<tr style=\"background-color: #ffffff;\"> \n";

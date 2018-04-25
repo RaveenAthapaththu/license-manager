@@ -25,7 +25,6 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
 import org.wso2.internal.apps.license.manager.client.msf4jhttp.PropertyReader;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -49,9 +48,9 @@ import javax.servlet.http.HttpServletResponse;
  * This class is for handling sso configuration.
  */
 public class JWTAction implements Filter {
+
     private static final Logger logger = Logger.getLogger(JWTAction.class);
     private static final PropertyReader propertyReader = new PropertyReader();
-
 
     /**
      * This method is for get public key
@@ -63,7 +62,8 @@ public class JWTAction implements Filter {
      * @throws NoSuchAlgorithmException cause by other underlying exceptions(KeyStoreException)
      */
 
-    private static PublicKey getPublicKey() throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+    private static PublicKey getPublicKey() throws IOException, KeyStoreException, CertificateException,
+            NoSuchAlgorithmException {
 
         InputStream file = Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream(propertyReader.getSsoKeyStoreName());
@@ -76,7 +76,6 @@ public class JWTAction implements Filter {
     public void init(FilterConfig filterConfig) {
 
     }
-
 
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
                          FilterChain filterChain) throws IOException {

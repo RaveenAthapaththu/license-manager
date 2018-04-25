@@ -24,6 +24,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
@@ -34,6 +35,7 @@ import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.wso2.internal.apps.license.manager.client.msf4jhttp.PropertyReader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,19 +47,14 @@ import javax.ws.rs.core.MediaType;
  */
 public class ServiceExecuter {
 
-    public static void test() {
-
-        System.out.println("hello");
-    }
-
     public static JSONObject executeGetService(String endpoint, String username) throws IOException, JSONException,
             URISyntaxException {
-
-        String url = "http://localhost:9091/" + endpoint;
+        PropertyReader properties = new PropertyReader();
+        String url = properties.getBackendUrl()+ endpoint;
 
         // Setting up authentication
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("licensemanager",
-                "licensemanager");
+        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(properties.getBackendUsername(),
+                properties.getBackendPassword());
         CredentialsProvider provider = new BasicCredentialsProvider();
         provider.setCredentials(AuthScope.ANY, credentials);
 
@@ -86,23 +83,30 @@ public class ServiceExecuter {
     public static JSONObject executePostService(String endpoint, String payload, String username) throws IOException,
             JSONException, URISyntaxException {
 
-        String url = "http://localhost:9091" + endpoint;
+        PropertyReader properties = new PropertyReader();
+        String url = properties.getBackendUrl()+ endpoint;
 
         // Setting up authentication
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("licensemanager",
-                "licensemanager");
+        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(properties.getBackendUsername(),
+                properties.getBackendPassword());
         CredentialsProvider provider = new BasicCredentialsProvider();
         provider.setCredentials(AuthScope.ANY, credentials);
 
         // Setting the HTTP request
         URIBuilder builder = new URIBuilder(url);
         builder.setParameter("username", username);
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setSocketTimeout(3000000)
+                .setConnectTimeout(3000000)
+                .setConnectionRequestTimeout(3000000)
+                .build();
         HttpPost request = new HttpPost(builder.build());
+        request.setConfig(requestConfig);
         request.setHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON);
         ObjectMapper mapper = new ObjectMapper();
         String requestBodyInString = mapper.writeValueAsString(payload);
         StringEntity requestBody = new StringEntity(requestBodyInString, "UTF-8");
-        requestBody.setContentType("application/json");
+        requestBody.setContentType(MediaType.APPLICATION_JSON);
         request.setEntity(requestBody);
 
         // Calling the micro service
@@ -126,11 +130,12 @@ public class ServiceExecuter {
             JSONException,
             URISyntaxException {
 
-        String url = "http://localhost:9091/" + endpoint;
+        PropertyReader properties = new PropertyReader();
+        String url = properties.getBackendUrl()+ endpoint;
 
         // Setting up authentication
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("licensemanager",
-                "licensemanager");
+        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(properties.getBackendUsername(),
+                properties.getBackendPassword());
         CredentialsProvider provider = new BasicCredentialsProvider();
         provider.setCredentials(AuthScope.ANY, credentials);
 

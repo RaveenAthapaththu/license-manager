@@ -160,33 +160,36 @@ public class JarHolder implements Serializable {
             if (!dest.endsWith(File.separator)) {
                 dest = dest + File.separator;
             }
-            File extraxtTo = new File(dest + toBeExtracted.getName());
-            extraxtTo.mkdir();
-            LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extraxtTo.getAbsolutePath());
+            File extraxtTo =null;
+            if(LicenseManagerUtils.checkInnerJars(toBeExtracted.getAbsolutePath())){
+
+                extraxtTo = new File(dest + toBeExtracted.getName());
+                extraxtTo.mkdir();
+                LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extraxtTo.getAbsolutePath());
+                Iterator<File> i = Op.onArray(extraxtTo.listFiles(zipFilter)).toList().get().iterator();
+                File nextFile;
+                while (i.hasNext()) {
+
+                    nextFile = i.next();
+                    zipStack.add(getDefaultJar(nextFile, jar));
+                }
+            }
             Manifest man = new JarFile(toBeExtracted).getManifest();
             if (man != null) {
                 currentJar = getActualJar(jar.getJarFile(), jar.getParent());
+
+                jar = currentJar;
+                jar.setExtractedFolder(extraxtTo);
+                jar.setType(getType(man, jar));
+                jar.setIsBundle(getIsBundle(man));
                 if (!currentJar.isValidName()) {
-                    jar = currentJar;
-                    jar.setExtractedFolder(extraxtTo);
-                    jar.setType(getType(man, jar));
-                    jar.setIsBundle(getIsBundle(man));
-                    errorJarList.add(jar);
+                    if(!errorJarList.contains(jar)){
+                        errorJarList.add(jar);
+                    }
                 } else {
-                    jar = currentJar;
-                    jar.setExtractedFolder(extraxtTo);
-                    jar.setType(getType(man, jar));
-                    jar.setIsBundle(getIsBundle(man));
                     jarList.add(jar);
                 }
 
-            }
-            Iterator<File> i = Op.onArray(extraxtTo.listFiles(zipFilter)).toList().get().iterator();
-            File nextFile;
-            while (i.hasNext()) {
-
-                nextFile = i.next();
-                zipStack.add(getDefaultJar(nextFile, jar));
             }
         }
     }

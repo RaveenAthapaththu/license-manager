@@ -19,6 +19,7 @@
 package org.wso2.internal.apps.license.manager.client.msf4jhttp;
 
 import org.apache.log4j.Logger;
+import org.wso2.internal.apps.license.manager.client.utils.Constants;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.util.Properties;
 public class PropertyReader {
 
     private final static Logger logger = Logger.getLogger(PropertyReader.class);
-    private final static String CONFIG_FILE = "config.properties";
+    private final static String configFileName = Constants.CONFIG_FILE_NAME;
     private String backendUrl;
     private String backendPassword;
     private String backendUsername;
@@ -42,7 +43,7 @@ public class PropertyReader {
 
 
     public PropertyReader() {
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE);
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(configFileName);
         loadConfigs(inputStream);
     }
 
@@ -56,13 +57,13 @@ public class PropertyReader {
         Properties prop = new Properties();
         try {
             prop.load(input);
-            this.backendUrl = prop.getProperty("backend_url");
-            this.backendPassword = prop.getProperty("backend_password");
-            this.backendUsername = prop.getProperty("backend_username");
-            this.ssoKeyStoreName = prop.getProperty("sso_keystore_file_name");
-            this.ssoKeyStorePassword = prop.getProperty("sso_keystore_password");
-            this.ssoCertAlias = prop.getProperty("sso_certificate_alias");
-            this.ssoRedirectUrl = prop.getProperty("sso_redirect_url");
+            this.backendUrl = prop.getProperty(Constants.BACKEND_URL);
+            this.backendUsername = prop.getProperty(Constants.BACKEND_USERNAME);
+            this.backendPassword = prop.getProperty(Constants.BACKEND_PASSWORD);
+            this.ssoKeyStoreName = prop.getProperty(Constants.KEYSTORE_FILE_NAME);
+            this.ssoKeyStorePassword = prop.getProperty(Constants.KEYSTORE_PASSWORD);
+            this.ssoCertAlias = prop.getProperty(Constants.CERTIFICATE_ALIAS);
+            this.ssoRedirectUrl = prop.getProperty(Constants.SSO_REDIRECT_URL);
 
 
         } catch (FileNotFoundException e) {
@@ -81,15 +82,15 @@ public class PropertyReader {
 
     }
 
-    String getBackendUrl() {
+    public String getBackendUrl() {
         return this.backendUrl;
     }
 
-    String getBackendUsername() {
+    public String getBackendUsername() {
         return this.backendUsername;
     }
 
-    String getBackendPassword() {
+    public String getBackendPassword() {
         return this.backendPassword;
     }
 
