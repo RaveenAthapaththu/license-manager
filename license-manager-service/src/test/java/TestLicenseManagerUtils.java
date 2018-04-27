@@ -37,4 +37,16 @@ public class TestLicenseManagerUtils {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void testExtractPack() {
+
+        try {
+            boolean jarsExists = LicenseManagerUtils.checkInnerJars("/home/pamoda/programming/backup/wso2is-analytics-5.4.0/repository" +
+                    "/components/plugins/org.wso2.carbon.tomcat.ext_4.4.20.jar");
+            System.out.println(jarsExists);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

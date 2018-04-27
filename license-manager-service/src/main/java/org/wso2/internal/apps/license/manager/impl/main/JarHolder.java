@@ -26,19 +26,18 @@ import org.apache.commons.lang.StringUtils;
 import org.op4j.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerRuntimeException;
 import org.wso2.internal.apps.license.manager.impl.filters.ZipFilter;
 import org.wso2.internal.apps.license.manager.impl.folderCrawler.Crawler;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.msf4j.MicroservicesRunner;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Stack;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -117,7 +116,7 @@ public class JarHolder implements Serializable {
         return productVersion;
     }
 
-    public void generateMap(String target) throws IOException {
+    public void generateMap(String target) throws IOException, LicenseManagerRuntimeException {
 
         String targetFolder = new File(target).getName();
         String dest = new File(target).getParent() + File.separator + "jars";
@@ -141,36 +140,34 @@ public class JarHolder implements Serializable {
         }
     }
 
-    private void extractJarsRecursively(String dest) throws IOException {
+    private void extractJarsRecursively(String dest) throws IOException, LicenseManagerRuntimeException {
 
-        log.info("Extracting JARs recursively");
         new File(dest).mkdir();
 
-        Stack<Jar> zipStack = new Stack<Jar>();
+        Stack<Jar> zipStack = new Stack<>();
 
         zipStack.addAll(jarList);
-        jarList = new ArrayList<>();
         ZipFilter zipFilter = new ZipFilter();
 
         while (!zipStack.empty()) {
             Jar jar = zipStack.pop();
-            Jar currentJar = jar;
+            Jar currentJar;
 
             File toBeExtracted = jar.getJarFile();
             if (!dest.endsWith(File.separator)) {
                 dest = dest + File.separator;
             }
-            File extraxtTo =null;
-            if(LicenseManagerUtils.checkInnerJars(toBeExtracted.getAbsolutePath())){
+            File extraxtTo = null;
+            if (LicenseManagerUtils.checkInnerJars(toBeExtracted.getAbsolutePath())) {
 
                 extraxtTo = new File(dest + toBeExtracted.getName());
                 extraxtTo.mkdir();
                 LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extraxtTo.getAbsolutePath());
-                Iterator<File> i = Op.onArray(extraxtTo.listFiles(zipFilter)).toList().get().iterator();
+                Iterator<File> iterator = Op.onArray(extraxtTo.listFiles(zipFilter)).toList().get().iterator();
                 File nextFile;
-                while (i.hasNext()) {
+                while (iterator.hasNext()) {
 
-                    nextFile = i.next();
+                    nextFile = iterator.next();
                     zipStack.add(getDefaultJar(nextFile, jar));
                 }
             }
@@ -183,9 +180,7 @@ public class JarHolder implements Serializable {
                 jar.setType(getType(man, jar));
                 jar.setIsBundle(getIsBundle(man));
                 if (!currentJar.isValidName()) {
-                    if(!errorJarList.contains(jar)){
-                        errorJarList.add(jar);
-                    }
+                    errorJarList.add(jar);
                 } else {
                     jarList.add(jar);
                 }
@@ -257,9 +252,6 @@ public class JarHolder implements Serializable {
 
         Attributes map = man.getMainAttributes();
         String bundleManifest = map.getValue("Bundle-ManifestVersion");
-        if (bundleManifest == null) {
-            return false;
-        }
-        return true;
+        return bundleManifest != null;
     }
 }

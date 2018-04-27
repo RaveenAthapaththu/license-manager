@@ -18,6 +18,7 @@
 
 import org.testng.annotations.Test;
 import org.wso2.internal.apps.license.manager.impl.models.NewLicenseEntry;
+import org.wso2.internal.apps.license.manager.util.EmailUtils;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 
 import java.util.ArrayList;
@@ -68,7 +69,7 @@ public class EmailTester {
 
 
         try {
-            LicenseManagerUtils.sendEmail("Pamoda Wimalasiri",components,lib);
+            EmailUtils.sendEmail("Pamoda Wimalasiri",components,lib);
         } catch (MessagingException e) {
             e.printStackTrace();
         }
