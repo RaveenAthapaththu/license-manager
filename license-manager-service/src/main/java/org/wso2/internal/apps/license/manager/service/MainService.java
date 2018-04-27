@@ -30,17 +30,18 @@ import com.jcraft.jsch.SftpException;
 import com.workingdogs.village.DataSetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerRuntimeException;
 import org.wso2.internal.apps.license.manager.impl.main.Jar;
 import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
 import org.wso2.internal.apps.license.manager.impl.main.LicenseFileGenerator;
 import org.wso2.internal.apps.license.manager.impl.main.ProductJarManager;
 import org.wso2.internal.apps.license.manager.impl.models.NewLicenseEntry;
 import org.wso2.internal.apps.license.manager.impl.models.SessionObjectHolder;
+import org.wso2.internal.apps.license.manager.impl.models.TaskProgress;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.DBHandler;
 import org.wso2.internal.apps.license.manager.util.EmailUtils;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
+import org.wso2.internal.apps.license.manager.util.ProgressTracker;
 import org.wso2.msf4j.Request;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
@@ -104,45 +105,6 @@ public class MainService {
 
             }
         }
-        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
-
-    @GET
-    @Path("/getLocalPacks")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response listLocallyUploadedPacks() {
-
-        log.info("api call is initiated. \n");
-        ArrayList<String> listOfPacks = new ArrayList<>();
-        JsonObject responseJson = new JsonObject();
-        JsonArray responseData = new JsonArray();
-
-        String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
-        log.info(pathToStorage);
-
-        File folder = new File(pathToStorage);
-        File[] listOfFiles = folder.listFiles();
-
-        if (listOfFiles != null) {
-            for (File file : listOfFiles) {
-                if (file.isFile() && file.getName().endsWith(".zip")) {
-                    listOfPacks.add(file.getName());
-                }
-            }
-        }
-
-        for (String listOfPack : listOfPacks) {
-            JsonObject ob = new JsonObject();
-            ob.addProperty("name", listOfPack);
-            responseData.add(ob);
-        }
-        responseJson.addProperty("responseType", Constants.SUCCESS);
-        responseJson.addProperty("responseMessage", "Done");
-        responseJson.add("responseData", responseData);
-
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
@@ -218,64 +180,6 @@ public class MainService {
                 .build();
     }
 
-    @GET
-    @Path("/extractPack")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response downloadPackFromFTP() {
-
-        String user = "licensemanager";
-        String password = ",Wp3TOf^-ITd2?4zUU2X";
-        String host = "ftp.support.wso2.com";
-        int port = 22;
-        Session session = null;
-        ChannelSftp sftpChannel = null;
-        JsonObject responseJson = new JsonObject();
-        JsonArray responseData = new JsonArray();
-        JSch jsch = new JSch();
-
-        try {
-            log.info("Download process started...");
-
-            session = jsch.getSession(user, host, port);
-            Hashtable<String, String> config = new Hashtable<>();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-            session.setPassword(password);
-            session.connect();
-
-            sftpChannel = (ChannelSftp) session.openChannel("sftp");
-            sftpChannel.connect();
-            String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
-            sftpChannel.get("/licensemanager/wso2ei-6.1.1.zip", pathToStorage);
-            String zipFilePath = pathToStorage + "wso2ei-6.1.1.zip";
-            String filePath = zipFilePath.substring(0, zipFilePath.lastIndexOf('.'));
-            File zipFile = new File(zipFilePath);
-            File dir = new File(filePath);
-            log.info("Pack unzipping started...");
-            LicenseManagerUtils.unzip(zipFile.getAbsolutePath(), dir.getAbsolutePath());
-            log.info("Pack unzipping complete.");
-            responseJson.addProperty("responseType", Constants.SUCCESS);
-            responseJson.addProperty("responseMessage", "Done");
-            responseJson.add("responseData", responseData);
-        } catch (JSchException | SftpException e) {
-            responseJson.addProperty("responseType", Constants.ERROR);
-            responseJson.addProperty("responseMessage", "Failed to get file from the server.");
-            log.error("Failed to connect with FTP server. " + e.getMessage(), e);
-        } catch (LicenseManagerRuntimeException e) {
-            e.printStackTrace();
-        } finally {
-            if (session != null) {
-                session.disconnect();
-            }
-            if (sftpChannel != null) {
-                sftpChannel.exit();
-            }
-        }
-        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
     @POST
     @Path("/extractJars")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -284,43 +188,10 @@ public class MainService {
                                 @QueryParam("username") String username,
                                 String stringPayload) {
 
+        TaskProgress taskProgress = LicenseManagerUtils.startPackExtractionProcess(username, stringPayload);
         JsonObject responseJson = new JsonObject();
-        JsonArray nameMissingJars = new JsonArray();
-        SessionObjectHolder userObjectHolder = new SessionObjectHolder();
-        String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
-        String zipFilePath = pathToStorage + stringPayload;
-        String filePath = zipFilePath.substring(0, zipFilePath.lastIndexOf('.'));
-        File zipFile = new File(zipFilePath);
-        File dir = new File(filePath);
-        try {
-            log.info("Pack unzipping started...");
-            LicenseManagerUtils.unzip(zipFile.getAbsolutePath(), dir.getAbsolutePath());
-            log.info("Pack unzipping complete.");
-            log.info("Jar extraction started...");
-            JarHolder jarHolder = LicenseManagerUtils.checkJars(filePath);
-            log.info("Jar extraction complete.");
-            userObjectHolder.setJarHolder(jarHolder);
-            objectHolderMap.put(username, userObjectHolder);
-            List<Jar> errorJarList = jarHolder.getErrorJarList();
-
-            // Convert the java List to a json object array.
-            for (int i = 0; i < errorJarList.size(); i++) {
-                JsonObject currentJar = new JsonObject();
-                currentJar.addProperty("index", i);
-                currentJar.addProperty("name", errorJarList.get(i).getProjectName());
-                currentJar.addProperty("version", errorJarList.get(i).getVersion());
-                nameMissingJars.add(currentJar);
-            }
-            responseJson.addProperty("responseType", Constants.SUCCESS);
-            responseJson.addProperty("responseMessage", "Done");
-            responseJson.add("responseData", nameMissingJars);
-
-        } catch (LicenseManagerRuntimeException e) {
-            responseJson.addProperty("responseType", Constants.ERROR);
-            responseJson.addProperty("responseMessage", "Internal Server Error. Failed to extract jars.");
-            log.error("Error while extracting jars. " + e.getMessage());
-        }
-
+        responseJson.addProperty("responseType", Constants.SUCCESS);
+        responseJson.addProperty("responseMessage", taskProgress.getMessage());
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
@@ -415,7 +286,7 @@ public class MainService {
         String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
         String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
         String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-        String fileUploadPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
+        String fileUploadPath = SystemVariableUtil.getValue(Constants.FILE_DOWNLOAD_PATH, null);
         String productName;
         String productVersion;
         try {
@@ -442,7 +313,7 @@ public class MainService {
     public Response getFile(@Context Request request,
                             @QueryParam("username") String username) {
 
-        String mountPath = SystemVariableUtil.getValue(Constants.FILE_UPLOAD_PATH, null);
+        String mountPath = SystemVariableUtil.getValue(Constants.FILE_DOWNLOAD_PATH, null);
         JarHolder jarHolder = objectHolderMap.get(username).getJarHolder();
         String productName = jarHolder.getProductName();
         String productVersion = jarHolder.getProductVersion();
@@ -565,29 +436,59 @@ public class MainService {
                 .build();
     }
 
-//    /**
-//     * Get the report progress.
-//     *
-//     * @param request   HTTP request object.
-//     * @param taskID    Unique task ID assigned at task startup.
-//     * @param username  Username of the user.
-//     * @return The API response
-//     */
-//    @GET
-//    @Path("/progress")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    public Response getTaskStatus(@Context Request request,
-//                                      @QueryParam("id") String taskID,
-//                                      @QueryParam("username") String username,
-//                                      String stringPayload) {
-////        final TaskProgress taskProgress = ProgressTracker.getTaskProgress(email, taskName, taskID);
-////
-////        APIResponse apiResponse = new APIResponse();
-////        apiResponse.setStatus(Constant.APIResponseStatus.TASK_ACTIVE);
-////        apiResponse.setMessage("Task found");
-////        apiResponse.setData(taskProgress);
-////        return new Gson().toJson(apiResponse);
-//    }
+    /**
+     * Get the report progress.
+     *
+     * @param request  HTTP request object.
+     * @param taskID   Unique task ID assigned at task startup.
+     * @param username Username of the user.
+     * @return The API response
+     */
+    @GET
+    @Path("/progress")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getTaskStatus(@Context Request request,
+                                  @QueryParam("id") String taskID,
+                                  @QueryParam("username") String username,
+                                  String stringPayload) {
+
+        TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
+        JsonObject responseJson = new JsonObject();
+        JsonArray nameMissingJars = new JsonArray();
+        switch (taskProgress.getStatus()) {
+            case Constants.COMPLETE:
+                ProgressTracker.deleteTaskProgress(username);
+                SessionObjectHolder userObjectHolder = new SessionObjectHolder();
+                JarHolder jarHolder = (JarHolder) taskProgress.getData();
+                userObjectHolder.setJarHolder(jarHolder);
+                objectHolderMap.put(username, userObjectHolder);
+                List<Jar> errorJarList = jarHolder.getErrorJarList();
+
+                // Convert the java List to a json object array.
+                for (int i = 0; i < errorJarList.size(); i++) {
+                    JsonObject currentJar = new JsonObject();
+                    currentJar.addProperty("index", i);
+                    currentJar.addProperty("name", errorJarList.get(i).getProjectName());
+                    currentJar.addProperty("version", errorJarList.get(i).getVersion());
+                    nameMissingJars.add(currentJar);
+                }
+                responseJson.addProperty("responseType", Constants.SUCCESS);
+                responseJson.addProperty("responseMessage", taskProgress.getMessage());
+                responseJson.add("responseData", nameMissingJars);
+                break;
+            case Constants.RUNNING:
+                responseJson.addProperty("responseType", Constants.SUCCESS);
+                responseJson.addProperty("responseMessage", taskProgress.getMessage());
+                break;
+            default:
+                responseJson.addProperty("responseType", Constants.ERROR);
+                responseJson.addProperty("responseMessage", taskProgress.getMessage());
+                break;
+        }
+        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
+                .header("Access-Control-Allow-Credentials", true)
+                .build();
+    }
 
     @GET
     @Path("/test")

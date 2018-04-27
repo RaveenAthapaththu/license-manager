@@ -17,8 +17,74 @@
  */
 package org.wso2.internal.apps.license.manager.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.wso2.internal.apps.license.manager.impl.models.TaskProgress;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 /**
- *
+ * Track the progress of long running tasks.
  */
 public class ProgressTracker {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgressTracker.class);
+    private static final ReadWriteLock progressTrackerLock = new ReentrantReadWriteLock();
+    // Stores the TaskProgress object mapped to the username.
+    private static Map<String, TaskProgress> taskProgressMap = new HashMap<>();
+
+    /**
+     * Create a new task and return it.
+     *
+     * @param username The email of the user who requested the task
+     * @return a new TaskProgress object.
+     */
+    public static TaskProgress createNewTaskProgress(String username) {
+
+        progressTrackerLock.writeLock().lock();
+        try {
+            TaskProgress taskProgress = new TaskProgress(username, UUID.randomUUID().toString(), Constants.RUNNING);
+            taskProgressMap.put(username, taskProgress);
+            return taskProgress;
+        } finally {
+            progressTrackerLock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Get an existing task. If such a task does not exist null will returned.
+     *
+     * @param username The email of the user who requested the task
+     * @return The task progress for the specified task
+     */
+    public static TaskProgress getTaskProgress(String username) {
+
+        TaskProgress taskProgress;
+        progressTrackerLock.readLock().lock();
+        try {
+            taskProgress = taskProgressMap.get(username);
+        } finally {
+            progressTrackerLock.readLock().unlock();
+        }
+        return taskProgress;
+    }
+
+    /**
+     * Delete a task progress being tracked.
+     *
+     * @param username    The email of the user who started the task
+     */
+    public static void deleteTaskProgress(String username) {
+
+        progressTrackerLock.writeLock().lock();
+        try {
+            taskProgressMap.remove(username);
+        } finally {
+            progressTrackerLock.writeLock().unlock();
+        }
+    }
 }

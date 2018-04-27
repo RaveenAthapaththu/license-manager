@@ -29,7 +29,7 @@ public class Constants {
     public static final String DATABASE_PASSWORD = "DATABASE_PASSWORD";
 
     // Environment variables for FTP server access.
-    public static final String FILE_UPLOAD_PATH = "LICENSE_MANAGER_FILE_UPLOAD_PATH";
+    public static final String FILE_DOWNLOAD_PATH = "LICENSE_MANAGER_FILE_UPLOAD_PATH";
     public static final String FTP_HOST = "LICENSE_MANAGER_FTP_HOST";
     public static final String FTP_PORT = "LICENSE_MANAGER_FTP_PORT";
     public static final String FTP_USERNAME = "LICENSE_MANAGER_FTP_USERNAME";
@@ -54,6 +54,11 @@ public class Constants {
     public static final String JAR_TYPE_BUNDLE = "bundle";
     public static final String JAR_TYPE_JAR_IN_BUNDLE = "jarinbundle";
     public static final String JAR_TYPE_JAR = "jar";
+
+    // Progress Status.
+    public static final String COMPLETE = "complete";
+    public static final String FAILED = "failed";
+    public static final String RUNNING = "running";
 
     public Constants() {
         // Do nothing.

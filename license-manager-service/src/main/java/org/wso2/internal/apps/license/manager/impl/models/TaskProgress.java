@@ -21,11 +21,19 @@ package org.wso2.internal.apps.license.manager.impl.models;
  * Java object to store the progress of a task.
  */
 public class TaskProgress {
+
     private String username;
     private String taskId;
     private String status;
     private String message;
     private Object data;
+
+    public TaskProgress(String username, String taskId, String status) {
+
+        this.username = username;
+        this.taskId = taskId;
+        this.status = status;
+    }
 
     public String getUsername() {
 
