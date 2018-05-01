@@ -17,8 +17,6 @@
  */
 package org.wso2.internal.apps.license.manager.util;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -40,7 +38,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.zip.ZipEntry;
@@ -116,7 +113,7 @@ public class LicenseManagerUtils {
 
     }
 
-    public static JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
+    private static JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
 
         if (StringUtils.isEmpty(file) || !new File(file).exists() || !new File(file).isDirectory()) {
             throw new LicenseManagerRuntimeException("Folder is not found in the location");
@@ -160,6 +157,7 @@ public class LicenseManagerUtils {
 
             @Override
             public void run() {
+
                 String ftpHost = SystemVariableUtil.getValue(Constants.FTP_HOST, null);
                 int ftpPort = Integer.valueOf(SystemVariableUtil.getValue(Constants.FTP_PORT, null));
                 String ftpUsername = SystemVariableUtil.getValue(Constants.FTP_USERNAME, null);
@@ -175,6 +173,8 @@ public class LicenseManagerUtils {
                         log.debug("Start downloading the" + packName + " from the FTP server " + ftpHost);
                     }
                     taskProgress.setMessage("Downloading the pack.");
+
+                    // Initiate SFTP connection.
                     session = jsch.getSession(ftpUsername, ftpHost, ftpPort);
                     Hashtable<String, String> config = new Hashtable<>();
                     config.put("StrictHostKeyChecking", "no");
@@ -183,11 +183,28 @@ public class LicenseManagerUtils {
                     session.connect();
                     sftpChannel = (ChannelSftp) session.openChannel("sftp");
                     sftpChannel.connect();
+
+                    // Download file from FTP server.
                     String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_DOWNLOAD_PATH, null);
                     sftpChannel.get(ftpFilePath + packName, pathToStorage);
                     if (log.isDebugEnabled()) {
                         log.debug("The file " + packName + " is successfully downloaded to location " + pathToStorage);
                     }
+
+//                    byte[] buffer = new byte[4096];
+//                    BufferedInputStream bis = new BufferedInputStream(sftpChannel.get(ftpFilePath + packName));
+//                    File newFile = new File(pathToStorage+packName);
+//                    OutputStream os = new FileOutputStream(newFile);
+//                    BufferedOutputStream bos = new BufferedOutputStream(os);
+//                    int readCount;
+//                    while ((readCount = bis.read(buffer)) > 0) {
+////                        System.out.println("Writing: ");
+//                        bos.write(buffer, 0, readCount);
+//                    }
+//                    bis.close();
+//                    bos.close();
+
+                    // Unzip the downloaded file.
                     String zipFilePath = pathToStorage + packName;
                     String filePath = zipFilePath.substring(0, zipFilePath.lastIndexOf('.'));
                     File zipFile = new File(zipFilePath);
@@ -196,30 +213,35 @@ public class LicenseManagerUtils {
                         log.debug("Start unzipping the file " + packName + "in the location " + pathToStorage);
                     }
                     taskProgress.setMessage("Unzipping the pack.");
-
                     LicenseManagerUtils.unzip(zipFile.getAbsolutePath(), dir.getAbsolutePath());
                     if (log.isDebugEnabled()) {
                         log.debug("The file " + packName + " is successfully unzipped to location " + pathToStorage);
                         log.debug("Start extracting jars from " + packName.substring(0, packName.lastIndexOf('.')));
 
                     }
+
+                    // Extract jars from the pack.
                     taskProgress.setMessage("Extracting jars.");
                     JarHolder jarHolder = LicenseManagerUtils.checkJars(filePath);
                     if (log.isDebugEnabled()) {
-                        log.debug("Jars are successfully extracted from " + packName.substring(0, packName.lastIndexOf('.')));
+                        log.debug("Jars are successfully extracted from " + packName.substring(0, packName
+                                .lastIndexOf('.')));
                     }
                     taskProgress.setMessage("Jar extraction complete");
                     taskProgress.setStatus(Constants.COMPLETE);
                     taskProgress.setData(jarHolder);
+
                 } catch (JSchException | SftpException e) {
                     taskProgress.setStatus(Constants.FAILED);
                     taskProgress.setMessage("Failed to connect with FTP server.");
                     log.error("Failed to connect with FTP server. " + e.getMessage(), e);
+
                 } catch (LicenseManagerRuntimeException e) {
                     taskProgress.setStatus(Constants.FAILED);
                     taskProgress.setMessage("Failed to extract jars from the pack.");
                     log.error("Error while extracting jars. " + e.getMessage(), e);
-                }finally {
+
+                } finally {
                     // Close the connections.
                     if (session != null) {
                         session.disconnect();

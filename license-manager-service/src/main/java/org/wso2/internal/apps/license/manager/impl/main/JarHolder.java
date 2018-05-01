@@ -16,10 +16,6 @@
  * under the License.
  */
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.wso2.internal.apps.license.manager.impl.main;
 
 import org.apache.commons.lang.StringUtils;
@@ -30,9 +26,9 @@ import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerRunti
 import org.wso2.internal.apps.license.manager.impl.filters.ZipFilter;
 import org.wso2.internal.apps.license.manager.impl.folderCrawler.Crawler;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
-import org.wso2.msf4j.MicroservicesRunner;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -42,54 +38,20 @@ import java.util.Stack;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author pubudu
  */
 public class JarHolder implements Serializable {
 
-    private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
+    private static final Logger log = LoggerFactory.getLogger(JarHolder.class);
     private List<Jar> jarList = new ArrayList<>();
     private List<Jar> errorJarList = new ArrayList<>();
     private String productName;
     private String productVersion;
     private Crawler crawler = new Crawler();
-
-    private static String getName(String name) {
-
-        if ("pdepublishing.jar".equals(name) || "pdepublishing-ant.jar".equals(name)) {
-            return name;
-        }
-
-        for (int i = 0; i < name.length(); i++) {
-            if ((name.charAt(i) == '-' | name.charAt(i) == '_')
-                    && (Character.isDigit(name.charAt(i + 1)) | name.charAt(i + 1) == 'S'
-                    | name.charAt(i + 1) == 'r')) {
-
-                return name.substring(0, i);
-
-            }
-        }
-        return null;
-    }
-
-    private static String getVersion(String name) {
-
-        name = name.replace(".jar", "");
-        name = name.replace(".mar", "");
-        if ("pdepublishing".equals(name) || "pdepublishing-ant".equals(name)) {
-            return "1.0.0.v20110511";
-        }
-
-        for (int i = 0; i < name.length(); i++) {
-            if ((name.charAt(i) == '-' | name.charAt(i) == '_')
-                    && (Character.isDigit(name.charAt(i + 1)) | name.charAt(i + 1) == 'S'
-                    | name.charAt(i + 1) == 'r')) {
-                return name.substring(i + 1, name.length());
-            }
-        }
-        return null;
-    }
 
     public List<Jar> getJarList() {
 
@@ -135,18 +97,20 @@ public class JarHolder implements Serializable {
 
         while (i.hasNext()) {
             File jarFile = i.next();
-            currentJar = getDefaultJar(jarFile, null);
+            currentJar = getJar(jarFile, null);
             jarList.add(currentJar);
         }
     }
 
-    private void extractJarsRecursively(String dest) throws IOException, LicenseManagerRuntimeException {
+    private void extractJarsRecursively(String dest) throws IOException,
+            LicenseManagerRuntimeException {
 
         new File(dest).mkdir();
 
         Stack<Jar> zipStack = new Stack<>();
 
         zipStack.addAll(jarList);
+        jarList = new ArrayList<>();
         ZipFilter zipFilter = new ZipFilter();
 
         while (!zipStack.empty()) {
@@ -157,26 +121,29 @@ public class JarHolder implements Serializable {
             if (!dest.endsWith(File.separator)) {
                 dest = dest + File.separator;
             }
-            File extraxtTo = null;
-            if (LicenseManagerUtils.checkInnerJars(toBeExtracted.getAbsolutePath())) {
+            File extractTo = null;
 
-                extraxtTo = new File(dest + toBeExtracted.getName());
-                extraxtTo.mkdir();
-                LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extraxtTo.getAbsolutePath());
-                Iterator<File> iterator = Op.onArray(extraxtTo.listFiles(zipFilter)).toList().get().iterator();
+            // If a jar contains jars inside, extract the parent jar.
+            if (checkInnerJars(toBeExtracted.getAbsolutePath())) {
+
+                extractTo = new File(dest + toBeExtracted.getName());
+                extractTo.mkdir();
+                LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extractTo.getAbsolutePath());
+                Iterator<File> i = Op.onArray(extractTo.listFiles(zipFilter)).toList().get().iterator();
                 File nextFile;
-                while (iterator.hasNext()) {
+                while (i.hasNext()) {
 
-                    nextFile = iterator.next();
-                    zipStack.add(getDefaultJar(nextFile, jar));
+                    nextFile = i.next();
+                    zipStack.add(getJar(nextFile, jar));
                 }
             }
+
+            // Get information from the Manifest file.
             Manifest man = new JarFile(toBeExtracted).getManifest();
             if (man != null) {
-                currentJar = getActualJar(jar.getJarFile(), jar.getParent());
-
+                currentJar = getJar(jar.getJarFile(), jar.getParent());
                 jar = currentJar;
-                jar.setExtractedFolder(extraxtTo);
+                jar.setExtractedFolder(extractTo);
                 jar.setType(getType(man, jar));
                 jar.setIsBundle(getIsBundle(man));
                 if (!currentJar.isValidName()) {
@@ -184,11 +151,68 @@ public class JarHolder implements Serializable {
                 } else {
                     jarList.add(jar);
                 }
-
             }
         }
     }
 
+    /**
+     * Extract the name of the jar from the file name.
+     *
+     * @param name  file name of the jar
+     * @return  name of the jar
+     */
+    private static String getName(String name) {
+
+        String extractedName = null;
+//        if ("pdepublishing.jar".equals(name) || "pdepublishing-ant.jar".equals(name)) {
+//            extractedName = name;
+//        }
+
+        for (int i = 0; i < name.length(); i++) {
+            if ((name.charAt(i) == '-' | name.charAt(i) == '_')
+                    && (Character.isDigit(name.charAt(i + 1)) | name.charAt(i + 1) == 'S'
+                    | name.charAt(i + 1) == 'r')) {
+
+                extractedName = name.substring(0, i);
+
+            }
+        }
+        return extractedName;
+    }
+
+    /**
+     * Extract the version of the jar from the file name.
+     *
+     * @param name  file name of the jar
+     * @return  version of the jar
+     */
+    private static String getVersion(String name) {
+
+        String extractedVersion = null;
+
+        name = name.replace(".jar", "");
+        name = name.replace(".mar", "");
+
+//        if ("pdepublishing".equals(name) || "pdepublishing-ant".equals(name)) {
+//            extractedVersion = "1.0.0.v20110511";
+//        }
+
+        for (int i = 0; i < name.length(); i++) {
+            if ((name.charAt(i) == '-' | name.charAt(i) == '_')
+                    && (Character.isDigit(name.charAt(i + 1)) | name.charAt(i + 1) == 'S'
+                    | name.charAt(i + 1) == 'r')) {
+                extractedVersion = name.substring(i + 1, name.length());
+            }
+        }
+        return extractedVersion;
+    }
+
+    /**
+     * Returns the type of the jar by evaluating the Manifest file.
+     * @param man   Manifest of the jar
+     * @param jar   jar for which the type is needed
+     * @return  type of the jar
+     */
     private String getType(Manifest man, Jar jar) {
 
         Attributes map = man.getMainAttributes();
@@ -202,32 +226,14 @@ public class JarHolder implements Serializable {
         }
     }
 
+    /**
+     * Set the values for the attributes of the Jar object.
+     *
+     * @param jarFile   jar file to create a Jar object
+     * @param parent    parent jar of the corresponding jar
+     * @return  Jar object
+     */
     private Jar getJar(File jarFile, Jar parent) {
-
-        Jar jar = new Jar();
-        String jarName = getName(jarFile.getName());
-        String jarVersion = getVersion(jarFile.getName());
-
-        jar.setJarFile(jarFile);
-        jar.setProjectName(jarName);
-        jar.setVersion(jarVersion);
-        jar.setParent(parent);
-        return jar;
-    }
-
-    private Jar getDefaultJar(File jarFile, Jar parent) {
-
-        Jar jar = new Jar();
-        String jarName = jarFile.getName();
-        String jarVersion = jarFile.getName();
-        jar.setJarFile(jarFile);
-        jar.setProjectName(jarName);
-        jar.setVersion(jarVersion);
-        jar.setParent(parent);
-        return jar;
-    }
-
-    private Jar getActualJar(File jarFile, Jar parent) {
 
         Jar jar = new Jar();
         String jarName = getName(jarFile.getName());
@@ -248,10 +254,35 @@ public class JarHolder implements Serializable {
         return jar;
     }
 
-    private boolean getIsBundle(Manifest man) {
+    /**
+     * Returns whether a given jar is a bundle or not
+     *
+     * @param manifest Manifest of the jar file
+     * @return true/false
+     */
+    private boolean getIsBundle(Manifest manifest) {
 
-        Attributes map = man.getMainAttributes();
+        Attributes map = manifest.getMainAttributes();
         String bundleManifest = map.getValue("Bundle-ManifestVersion");
         return bundleManifest != null;
+    }
+
+    /**
+     * Checks whether a jar file contains other jar files inside it.
+     *
+     * @param filePath  absolute path to the jar
+     * @return true/false
+     * @throws IOException if file input stream fails.
+     */
+    private boolean checkInnerJars(String filePath) throws IOException {
+
+        boolean containsJars = false;
+        ZipInputStream zip = new ZipInputStream(new FileInputStream(filePath));
+        for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
+            if (entry.getName().endsWith(".jar") || entry.getName().endsWith(".mar")) {
+                containsJars = true;
+            }
+        }
+        return containsJars;
     }
 }

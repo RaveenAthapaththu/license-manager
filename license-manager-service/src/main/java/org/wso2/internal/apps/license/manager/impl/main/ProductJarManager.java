@@ -16,10 +16,6 @@
  * under the License.
  */
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.wso2.internal.apps.license.manager.impl.main;
 
 import com.workingdogs.village.DataSetException;
@@ -45,8 +41,7 @@ public class ProductJarManager {
     private List<Jar> licenseMissingLibraries = new ArrayList<>();
     private int productId;
 
-    public ProductJarManager(JarHolder jarHolder) throws
-            ClassNotFoundException, SQLException {
+    public ProductJarManager(JarHolder jarHolder) throws ClassNotFoundException, SQLException {
 
         this.dbHandler = new DBHandler();
         this.jarHolder = jarHolder;
@@ -73,14 +68,12 @@ public class ProductJarManager {
             this.productId = dbHandler.getProductId(jarHolder.getProductName(), jarHolder.getProductVersion());
             for (Jar j : jarHolder.getJarList()) {
                 insert(j);
-
             }
         } finally {
             if (dbHandler != null) {
                 dbHandler.closeConnection();
             }
         }
-
     }
 
     private void insert(Jar mj) throws DataSetException, SQLException {
@@ -90,7 +83,6 @@ public class ProductJarManager {
         String fileName = mj.getJarFile().getName();
         String type = mj.getType();
         if (type.equals(Constants.JAR_TYPE_WSO2)) {
-
             if (!dbHandler.isComponentExists(fileName)) {
                 licenseMissingComponents.add(mj);
             } else if (dbHandler.isComponentExists(fileName) && !dbHandler.isComponentLicenseExists(fileName)) {
@@ -98,7 +90,6 @@ public class ProductJarManager {
             } else {
                 dbHandler.insertProductComponent(fileName, productId);
             }
-
         } else {
             String libraryType = (mj.getParent() == null) ?
                     ((mj.isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :

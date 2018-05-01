@@ -15,15 +15,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.wso2.internal.apps.license.manager.impl.tables;
 
 /**
- * 
  * @author pubudu
  */
 public class LM_PRODUCT {

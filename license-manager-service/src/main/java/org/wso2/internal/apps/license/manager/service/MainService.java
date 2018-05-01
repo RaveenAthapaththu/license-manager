@@ -214,6 +214,8 @@ public class MainService {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             JsonArray jsonArray = jsonObject.get("jars").getAsJsonArray();
             JarHolder jarHolder = objectHolderMap.get(username).getJarHolder();
+
+            // Define the name and the version from the user input.
             for (int i = 0; i < jsonArray.size(); i++) {
                 JsonObject jar = jsonArray.get(i).getAsJsonObject();
                 int index = jar.get("index").getAsInt();
@@ -440,7 +442,6 @@ public class MainService {
      * Get the report progress.
      *
      * @param request  HTTP request object.
-     * @param taskID   Unique task ID assigned at task startup.
      * @param username Username of the user.
      * @return The API response
      */
@@ -448,16 +449,15 @@ public class MainService {
     @Path("/progress")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTaskStatus(@Context Request request,
-                                  @QueryParam("id") String taskID,
-                                  @QueryParam("username") String username,
-                                  String stringPayload) {
+                                  @QueryParam("username") String username) {
 
         TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
         JsonObject responseJson = new JsonObject();
         JsonArray nameMissingJars = new JsonArray();
+
+        // Build the response based on the status of the task.
         switch (taskProgress.getStatus()) {
             case Constants.COMPLETE:
-                ProgressTracker.deleteTaskProgress(username);
                 SessionObjectHolder userObjectHolder = new SessionObjectHolder();
                 JarHolder jarHolder = (JarHolder) taskProgress.getData();
                 userObjectHolder.setJarHolder(jarHolder);
@@ -473,15 +473,21 @@ public class MainService {
                     nameMissingJars.add(currentJar);
                 }
                 responseJson.addProperty("responseType", Constants.SUCCESS);
+                responseJson.addProperty("responseStatus", Constants.COMPLETE);
                 responseJson.addProperty("responseMessage", taskProgress.getMessage());
                 responseJson.add("responseData", nameMissingJars);
+//                ProgressTracker.deleteTaskProgress(username);
                 break;
+
             case Constants.RUNNING:
                 responseJson.addProperty("responseType", Constants.SUCCESS);
+                responseJson.addProperty("responseStatus", Constants.RUNNING);
                 responseJson.addProperty("responseMessage", taskProgress.getMessage());
                 break;
+
             default:
                 responseJson.addProperty("responseType", Constants.ERROR);
+                responseJson.addProperty("responseStatus", Constants.FAILED);
                 responseJson.addProperty("responseMessage", taskProgress.getMessage());
                 break;
         }

@@ -16,16 +16,24 @@
  * under the License.
  */
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.wso2.internal.apps.license.manager.impl.models.TaskProgress;
 import org.wso2.internal.apps.license.manager.service.MainService;
+import org.wso2.internal.apps.license.manager.util.Constants;
+import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
+import org.wso2.internal.apps.license.manager.util.ProgressTracker;
 
 import javax.ws.rs.core.Response;
 
 /**
- * TODO: Class level comments
+ * Test the API method implementations
  */
-public class APIMethodTest {
+public class ApiMethodTest {
+
+    private static final Logger log = LoggerFactory.getLogger(ApiMethodTest.class);
 
     private MainService mainService = new MainService();
 
@@ -39,6 +47,19 @@ public class APIMethodTest {
     @Test
     public void testExtractPack() {
 
-//        mainService.downloadPackFromFTP();
+//        LicenseManagerUtils.startPackExtractionProcess("pamoda@wso2.com",
+//                "wso2ei-6.1.1.zip");
+//        boolean running = true;
+//        while (running) {
+//            TaskProgress taskProgress = ProgressTracker.getTaskProgress("pamoda@wso2.com");
+//            log.info(taskProgress.getStatus());
+//            System.out.println(taskProgress.getMessage());
+//            running = taskProgress.getStatus().equals(Constants.RUNNING);
+//            try {
+//                Thread.sleep(5000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
 }

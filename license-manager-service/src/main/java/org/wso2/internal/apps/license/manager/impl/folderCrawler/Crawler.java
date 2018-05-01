@@ -18,11 +18,6 @@
 
 package org.wso2.internal.apps.license.manager.impl.folderCrawler;
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 import org.op4j.Op;
 import org.wso2.internal.apps.license.manager.impl.filters.DirectoryFilter;
 

@@ -16,11 +16,6 @@
  * under the License.
  */
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package org.wso2.internal.apps.license.manager.impl.main;
 
 import java.io.File;
@@ -66,88 +61,94 @@ public class LicenseFileGenerator {
     }
 
     public void generateLicenceFile(String product, String version, String packPath) throws SQLException {
-            Statement stmt;
-            stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM " +
-                    "(SELECT " +
-                    "   LM_PRODUCT.PRODUCT_NAME" +
-                    "   ,LM_PRODUCT.PRODUCT_VERSION" +
-                    "   ,LM_COMPONENT.COMP_ID" +
-                    "   ,LM_COMPONENT.COMP_KEY" +
-                    "   ,LM_COMPONENT.COMP_TYPE" +
-                    "   ,LM_COMPONENT_LICENSE.LICENSE_KEY " +
-                    "   FROM " +
-                    "   (((LM_PRODUCT INNER JOIN LM_COMPONENT_PRODUCT ON LM_PRODUCT.PRODUCT_ID=LM_COMPONENT_PRODUCT.PRODUCT_ID)" +
-                    "INNER JOIN " +
-                    "   LM_COMPONENT ON LM_COMPONENT.COMP_KEY=LM_COMPONENT_PRODUCT.COMP_KEY)" +
-                    "INNER JOIN LM_COMPONENT_LICENSE ON LM_COMPONENT_LICENSE.COMP_KEY=LM_COMPONENT.COMP_KEY)" +
-                    "UNION " +
-                    "SELECT " +
-                    "   LM_PRODUCT.PRODUCT_NAME," +
-                    "   LM_PRODUCT.PRODUCT_VERSION," +
-                    "   LM_LIBRARY.LIB_ID," +
-                    "   LM_LIBRARY.LIB_FILE_NAME," +
-                    "   LM_LIBRARY.LIB_TYPE," +
-                    "   LM_LIBRARY_LICENSE.LICENSE_KEY " +
-                    "FROM ((((LM_PRODUCT INNER JOIN LM_COMPONENT_PRODUCT ON LM_PRODUCT.PRODUCT_ID=LM_COMPONENT_PRODUCT.PRODUCT_ID)" +
-                    "   INNER JOIN LM_COMPONENT_LIBRARY ON LM_COMPONENT_PRODUCT.COMP_KEY=LM_COMPONENT_LIBRARY.COMP_KEY)" +
-                    "INNER JOIN LM_LIBRARY ON LM_COMPONENT_LIBRARY.LIB_ID=LM_LIBRARY.LIB_ID)" +
-                    "INNER JOIN LM_LIBRARY_LICENSE ON LM_LIBRARY_LICENSE.LIB_ID=LM_LIBRARY.LIB_ID)" +
-                    "UNION " +
-                    "SELECT " +
-                    "   LM_PRODUCT.PRODUCT_NAME," +
-                    "   LM_PRODUCT.PRODUCT_VERSION," +
-                    "   LM_LIBRARY.LIB_ID," +
-                    "   LM_LIBRARY.LIB_FILE_NAME," +
-                    "   LM_LIBRARY.LIB_TYPE," +
-                    "   LM_LIBRARY_LICENSE.LICENSE_KEY " +
-                    "FROM (((LM_PRODUCT INNER JOIN LM_LIBRARY_PRODUCT ON LM_PRODUCT.PRODUCT_ID=LM_LIBRARY_PRODUCT.PRODUCT_ID)" +
-                    "INNER JOIN LM_LIBRARY ON LM_LIBRARY.LIB_ID=LM_LIBRARY_PRODUCT.LIB_ID)" +
-                    "INNER JOIN LM_LIBRARY_LICENSE ON LM_LIBRARY_LICENSE.LIB_ID=LM_LIBRARY.LIB_ID)" +
-                    "UNION " +
-                    "SELECT " +
-                    "   LM_PRODUCT.PRODUCT_NAME," +
-                    "   LM_PRODUCT.PRODUCT_VERSION," +
-                    "   LM_LIBRARY.LIB_ID," +
-                    "   LM_LIBRARY2.LIB_FILE_NAME," +
-                    "   LM_LIBRARY2.LIB_TYPE," +
-                    "   LM_LIBRARY_LICENSE.LICENSE_KEY " +
-                    "FROM (((((LM_PRODUCT INNER JOIN LM_LIBRARY_PRODUCT ON LM_PRODUCT.PRODUCT_ID=LM_LIBRARY_PRODUCT.PRODUCT_ID)" +
-                    "INNER JOIN LM_LIBRARY ON LM_LIBRARY.LIB_ID=LM_LIBRARY_PRODUCT.LIB_ID)" +
-                    "INNER JOIN LM_COMPONENT_LIBRARY ON LM_LIBRARY.LIB_FILE_NAME=LM_COMPONENT_LIBRARY.COMP_KEY)" +
-                    "INNER JOIN LM_LIBRARY AS LM_LIBRARY2 ON LM_COMPONENT_LIBRARY.LIB_ID=LM_LIBRARY2.LIB_ID)" +
-                    "INNER JOIN LM_LIBRARY_LICENSE ON LM_LIBRARY_LICENSE.LIB_ID=LM_COMPONENT_LIBRARY.LIB_ID))AS BS " +
-                    "WHERE PRODUCT_NAME='"+product+"' AND PRODUCT_VERSION='"+version+"' ORDER BY COMP_KEY");
-            Set<String> keys = new HashSet<String>();
 
-            String formatString=String.format("%-80s%-15s%-10s\n","Name","Type","License");
-            file+=formatString;
-            file+="---------------------------------------------------------------------------------------------------------\n";
-            while(rs.next()){
-                formatString = String.format("%-80s%-15s%-10s%-10s\n",
-                        rs.getString("COMP_KEY"),
-                        rs.getString("COMP_TYPE"),
-                        rs.getString("LICENSE_KEY"),
-                        rs.getInt("COMP_ID")+"");
-                file+=formatString;
-                keys.add(rs.getString("LICENSE_KEY"));
-            }
-            file+="\n\n\nThe license types used by the above libraries and their information is given below:\n\n";
-            for(Iterator<String> i = keys.iterator(); i.hasNext();){
-                rs = stmt.executeQuery("SELECT * FROM LM_LICENSE WHERE LICENSE_KEY='"+i.next()+"'");
-                rs.next();
-                formatString = String .format("%-15s%s\n%-15s%s\n",rs.getString("LICENSE_KEY"),rs.getString("LICENSE_NAME"),"",rs.getString("LICENSE_URL"));
-                file+=formatString;
-            }
-//            System.out.println(file);
-            try {
-                FileWriter fw = new FileWriter(packPath+File.separator+"LICENSE("+product+"-"+version+").TXT");
-                fw.write(file);
-                fw.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                Logger.getLogger(LicenseFileGenerator.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        Statement stmt;
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT * FROM " +
+                "(SELECT " +
+                "   LM_PRODUCT.PRODUCT_NAME" +
+                "   ,LM_PRODUCT.PRODUCT_VERSION" +
+                "   ,LM_COMPONENT.COMP_ID" +
+                "   ,LM_COMPONENT.COMP_KEY" +
+                "   ,LM_COMPONENT.COMP_TYPE" +
+                "   ,LM_COMPONENT_LICENSE.LICENSE_KEY " +
+                "   FROM " +
+                "   (((LM_PRODUCT INNER JOIN LM_COMPONENT_PRODUCT ON LM_PRODUCT.PRODUCT_ID=LM_COMPONENT_PRODUCT" +
+                ".PRODUCT_ID)" +
+                "INNER JOIN " +
+                "   LM_COMPONENT ON LM_COMPONENT.COMP_KEY=LM_COMPONENT_PRODUCT.COMP_KEY)" +
+                "INNER JOIN LM_COMPONENT_LICENSE ON LM_COMPONENT_LICENSE.COMP_KEY=LM_COMPONENT.COMP_KEY)" +
+                "UNION " +
+                "SELECT " +
+                "   LM_PRODUCT.PRODUCT_NAME," +
+                "   LM_PRODUCT.PRODUCT_VERSION," +
+                "   LM_LIBRARY.LIB_ID," +
+                "   LM_LIBRARY.LIB_FILE_NAME," +
+                "   LM_LIBRARY.LIB_TYPE," +
+                "   LM_LIBRARY_LICENSE.LICENSE_KEY " +
+                "FROM ((((LM_PRODUCT INNER JOIN LM_COMPONENT_PRODUCT ON LM_PRODUCT.PRODUCT_ID=LM_COMPONENT_PRODUCT" +
+                ".PRODUCT_ID)" +
+                "   INNER JOIN LM_COMPONENT_LIBRARY ON LM_COMPONENT_PRODUCT.COMP_KEY=LM_COMPONENT_LIBRARY.COMP_KEY)" +
+                "INNER JOIN LM_LIBRARY ON LM_COMPONENT_LIBRARY.LIB_ID=LM_LIBRARY.LIB_ID)" +
+                "INNER JOIN LM_LIBRARY_LICENSE ON LM_LIBRARY_LICENSE.LIB_ID=LM_LIBRARY.LIB_ID)" +
+                "UNION " +
+                "SELECT " +
+                "   LM_PRODUCT.PRODUCT_NAME," +
+                "   LM_PRODUCT.PRODUCT_VERSION," +
+                "   LM_LIBRARY.LIB_ID," +
+                "   LM_LIBRARY.LIB_FILE_NAME," +
+                "   LM_LIBRARY.LIB_TYPE," +
+                "   LM_LIBRARY_LICENSE.LICENSE_KEY " +
+                "FROM (((LM_PRODUCT INNER JOIN LM_LIBRARY_PRODUCT ON LM_PRODUCT.PRODUCT_ID=LM_LIBRARY_PRODUCT" +
+                ".PRODUCT_ID)" +
+                "INNER JOIN LM_LIBRARY ON LM_LIBRARY.LIB_ID=LM_LIBRARY_PRODUCT.LIB_ID)" +
+                "INNER JOIN LM_LIBRARY_LICENSE ON LM_LIBRARY_LICENSE.LIB_ID=LM_LIBRARY.LIB_ID)" +
+                "UNION " +
+                "SELECT " +
+                "   LM_PRODUCT.PRODUCT_NAME," +
+                "   LM_PRODUCT.PRODUCT_VERSION," +
+                "   LM_LIBRARY.LIB_ID," +
+                "   LM_LIBRARY2.LIB_FILE_NAME," +
+                "   LM_LIBRARY2.LIB_TYPE," +
+                "   LM_LIBRARY_LICENSE.LICENSE_KEY " +
+                "FROM (((((LM_PRODUCT INNER JOIN LM_LIBRARY_PRODUCT ON LM_PRODUCT.PRODUCT_ID=LM_LIBRARY_PRODUCT" +
+                ".PRODUCT_ID)" +
+                "INNER JOIN LM_LIBRARY ON LM_LIBRARY.LIB_ID=LM_LIBRARY_PRODUCT.LIB_ID)" +
+                "INNER JOIN LM_COMPONENT_LIBRARY ON LM_LIBRARY.LIB_FILE_NAME=LM_COMPONENT_LIBRARY.COMP_KEY)" +
+                "INNER JOIN LM_LIBRARY AS LM_LIBRARY2 ON LM_COMPONENT_LIBRARY.LIB_ID=LM_LIBRARY2.LIB_ID)" +
+                "INNER JOIN LM_LIBRARY_LICENSE ON LM_LIBRARY_LICENSE.LIB_ID=LM_COMPONENT_LIBRARY.LIB_ID))AS BS " +
+                "WHERE PRODUCT_NAME='" + product + "' AND PRODUCT_VERSION='" + version + "' ORDER BY COMP_KEY");
+        Set<String> keys = new HashSet<String>();
+
+        String formatString = String.format("%-80s%-15s%-10s\n", "Name", "Type", "License");
+        file += formatString;
+        file += "---------------------------------------------------------------------------------------------------------\n";
+        while (rs.next()) {
+            formatString = String.format("%-80s%-15s%-10s%-10s\n",
+                    rs.getString("COMP_KEY"),
+                    rs.getString("COMP_TYPE"),
+                    rs.getString("LICENSE_KEY"),
+                    rs.getInt("COMP_ID") + "");
+            file += formatString;
+            keys.add(rs.getString("LICENSE_KEY"));
         }
-
+        file += "\n\n\nThe license types used by the above libraries and their information is given below:\n\n";
+        for (Iterator<String> i = keys.iterator(); i.hasNext(); ) {
+            rs = stmt.executeQuery("SELECT * FROM LM_LICENSE WHERE LICENSE_KEY='" + i.next() + "'");
+            rs.next();
+            formatString = String.format("%-15s%s\n%-15s%s\n", rs.getString("LICENSE_KEY"), rs.getString
+                    ("LICENSE_NAME"), "", rs.getString("LICENSE_URL"));
+            file += formatString;
+        }
+//            System.out.println(file);
+        try {
+            FileWriter fw = new FileWriter(packPath + File.separator + "LICENSE(" + product + "-" + version + ").TXT");
+            fw.write(file);
+            fw.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            Logger.getLogger(LicenseFileGenerator.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
+
+}
