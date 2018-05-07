@@ -17,7 +17,7 @@
  */
 package org.wso2.internal.apps.license.manager.util;
 
-import org.wso2.internal.apps.license.manager.impl.models.NewLicenseEntry;
+import org.wso2.internal.apps.license.manager.models.NewLicenseEntry;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.util.List;

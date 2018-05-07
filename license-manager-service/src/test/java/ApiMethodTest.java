@@ -20,11 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.wso2.internal.apps.license.manager.impl.models.TaskProgress;
+import org.wso2.internal.apps.license.manager.models.TaskProgress;
 import org.wso2.internal.apps.license.manager.service.MainService;
-import org.wso2.internal.apps.license.manager.util.Constants;
-import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
-import org.wso2.internal.apps.license.manager.util.ProgressTracker;
 
 import javax.ws.rs.core.Response;
 

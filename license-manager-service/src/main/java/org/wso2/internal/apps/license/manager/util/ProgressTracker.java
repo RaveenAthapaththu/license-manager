@@ -19,7 +19,7 @@ package org.wso2.internal.apps.license.manager.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.impl.models.TaskProgress;
+import org.wso2.internal.apps.license.manager.models.TaskProgress;
 
 import java.util.HashMap;
 import java.util.Map;

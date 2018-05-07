@@ -1,6 +1,12 @@
 {
-  "main.js": "static/js/main.b0790df4.js",
-  "main.js.map": "static/js/main.b0790df4.js.map",
-  "static/media/logo-inverse.svg": "static/media/logo-inverse.bcd9f45b.svg",
-  "static/media/zip-file.png": "static/media/zip-file.ef21eacd.png"
+  "main.css": "static/css/main.afb2c8bf.css",
+  "main.css.map": "static/css/main.afb2c8bf.css.map",
+  "main.js": "static/js/main.b5375562.js",
+  "main.js.map": "static/js/main.b5375562.js.map",
+  "static/media/fontawesome-webfont.eot": "static/media/fontawesome-webfont.674f50d2.eot",
+  "static/media/fontawesome-webfont.svg?v=4.7.0": "static/media/fontawesome-webfont.912ec66d.svg",
+  "static/media/fontawesome-webfont.ttf?v=4.7.0": "static/media/fontawesome-webfont.b06871f2.ttf",
+  "static/media/fontawesome-webfont.woff2?v=4.7.0": "static/media/fontawesome-webfont.af7ae505.woff2",
+  "static/media/fontawesome-webfont.woff?v=4.7.0": "static/media/fontawesome-webfont.fee66e71.woff",
+  "static/media/logo-inverse.svg": "static/media/logo-inverse.946963c1.svg"
 }

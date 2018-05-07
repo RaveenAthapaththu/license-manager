@@ -122,19 +122,20 @@ public class DBHandler {
 
     public void insertComponent(String name, String fileName, String version) throws SQLException {
 
-        String insertComponent = "INSERT IGNORE INTO LM_COMPONENT"
-                + "(COMP_NAME, COMP_FILE_NAME, COMP_KEY, COMP_TYPE,COMP_VERSION) VALUES"
-                + "(?,?,?,?,?)";
-        PreparedStatement preparedStatement;
-        preparedStatement = con.prepareStatement(insertComponent);
-        preparedStatement.setString(1, name);
-        preparedStatement.setString(2, fileName);
-        preparedStatement.setString(3, fileName);
-        preparedStatement.setString(4, "bundle");
-        preparedStatement.setString(5, version);
+        if(!isComponentExists(fileName)){
+            String insertComponent = "INSERT INTO LM_COMPONENT"
+                    + "(COMP_NAME, COMP_FILE_NAME, COMP_KEY, COMP_TYPE,COMP_VERSION) VALUES"
+                    + "(?,?,?,?,?)";
+            PreparedStatement preparedStatement;
+            preparedStatement = con.prepareStatement(insertComponent);
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, fileName);
+            preparedStatement.setString(3, fileName);
+            preparedStatement.setString(4, "bundle");
+            preparedStatement.setString(5, version);
 
-        preparedStatement.executeUpdate();
-
+            preparedStatement.executeUpdate();
+        }
     }
 
     private int insertLibrary(String name, String fileName, String version, String type) throws DataSetException,

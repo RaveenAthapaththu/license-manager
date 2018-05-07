@@ -33,4 +33,6 @@ public class Constants {
     public static final String CERTIFICATE_ALIAS = "sso_certificate_alias";
     public static final String SSO_REDIRECT_URL = "sso_redirect_url";
 
+    public static final String DOWNLOAD_ENDPOINT = "/license/textToDownload";
+
 }

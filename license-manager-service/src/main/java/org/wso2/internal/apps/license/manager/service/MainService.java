@@ -30,13 +30,13 @@ import com.jcraft.jsch.SftpException;
 import com.workingdogs.village.DataSetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.impl.main.Jar;
-import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
-import org.wso2.internal.apps.license.manager.impl.main.LicenseFileGenerator;
-import org.wso2.internal.apps.license.manager.impl.main.ProductJarManager;
-import org.wso2.internal.apps.license.manager.impl.models.NewLicenseEntry;
-import org.wso2.internal.apps.license.manager.impl.models.SessionObjectHolder;
-import org.wso2.internal.apps.license.manager.impl.models.TaskProgress;
+import org.wso2.internal.apps.license.manager.models.Jar;
+import org.wso2.internal.apps.license.manager.impl.JarHolder;
+import org.wso2.internal.apps.license.manager.impl.LicenseFileGenerator;
+import org.wso2.internal.apps.license.manager.impl.ProductJarManager;
+import org.wso2.internal.apps.license.manager.models.NewLicenseEntry;
+import org.wso2.internal.apps.license.manager.models.SessionObjectHolder;
+import org.wso2.internal.apps.license.manager.models.TaskProgress;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.DBHandler;
 import org.wso2.internal.apps.license.manager.util.EmailUtils;
@@ -65,11 +65,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
- * This is the Microservice resource class.
- * See <a href="https://github.com/wso2/msf4j#getting-started">https://github.com/wso2/msf4j#getting-started</a>
- * for the usage of annotations.
- *
- * @since 1.0-SNAPSHOT
+ * Main Service class which contains all the micro service endpoints.
  */
 @Path("/")
 public class MainService {
@@ -77,8 +73,13 @@ public class MainService {
     private static final Logger log = LoggerFactory.getLogger(MainService.class);
     private ConcurrentHashMap<String, SessionObjectHolder> objectHolderMap = new ConcurrentHashMap<>();
 
+    /**
+     * Returns the list of available set of licenses in the database.
+     * @param request   Http request.
+     * @return response with licenses.
+     */
     @GET
-    @Path("/selectLicense")
+    @Path("/license/list")
     @Produces(MediaType.APPLICATION_JSON)
     public Response selectLicenseResource(@Context Request request) {
 
@@ -93,7 +94,7 @@ public class MainService {
         } catch (SQLException | ClassNotFoundException | DataSetException e) {
 
             responseJson.addProperty("responseType", Constants.ERROR);
-            responseJson.addProperty("responseMessage", "Failed to retrieve data from the database.");
+            responseJson.addProperty("responseMessage", "Failed to retrieve data from the database");
             log.error("Failed to retrieve data from the database. " + e.getMessage(), e);
         } finally {
             if (dbHandler != null) {
@@ -116,7 +117,7 @@ public class MainService {
      * @return API response
      */
     @GET
-    @Path("/getPacks")
+    @Path("/pack/list")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listUploadedPacks() {
 
@@ -163,7 +164,7 @@ public class MainService {
 
         } catch (JSchException | SftpException e) {
             responseJson.addProperty("responseType", Constants.ERROR);
-            responseJson.addProperty("responseMessage", "Failed to connect with FTP server.");
+            responseJson.addProperty("responseMessage", "Failed to connect with FTP server");
             log.error("Failed to connect with FTP server. " + e.getMessage(), e);
 
         } finally {
@@ -181,16 +182,17 @@ public class MainService {
     }
 
     @POST
-    @Path("/extractJars")
+    @Path("/pack/jars")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response extractJars(@Context Request request,
                                 @QueryParam("username") String username,
-                                String stringPayload) {
+                                String selectedPack) {
 
-        TaskProgress taskProgress = LicenseManagerUtils.startPackExtractionProcess(username, stringPayload);
+        TaskProgress taskProgress = LicenseManagerUtils.startPackExtractionProcess(username, selectedPack);
         JsonObject responseJson = new JsonObject();
         responseJson.addProperty("responseType", Constants.SUCCESS);
+        responseJson.addProperty("responseStatus", Constants.RUNNING);
         responseJson.addProperty("responseMessage", taskProgress.getMessage());
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
@@ -198,7 +200,8 @@ public class MainService {
     }
 
     @POST
-    @Path("/enterJars")
+//    @Path("/enterJars")
+    @Path("/pack/nameDefinedJars")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response enterJarsResource(@Context Request request,
@@ -268,7 +271,7 @@ public class MainService {
             responseJson.add("library", libraryJsonArray);
         } catch (SQLException | ClassNotFoundException | DataSetException e) {
             responseJson.addProperty("responseType", Constants.ERROR);
-            responseJson.addProperty("responseMessage", "Internal Server Error. Can not load data.");
+            responseJson.addProperty("responseMessage", "Failed to load data");
             log.error("Failed to retrieve data from the database. " + e.getMessage(), e);
             e.printStackTrace();
         }
@@ -277,11 +280,11 @@ public class MainService {
                 .build();
     }
 
-    @GET
-    @Path("/getLicense")
+    @POST
+    @Path("/license/text")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getLicenseResource(@Context Request request,
-                                       @QueryParam("username") String username) {
+    public Response generateLicenseText(@Context Request request,
+                                        @QueryParam("username") String username) {
 
         JsonObject responseJson = new JsonObject();
         String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
@@ -311,9 +314,10 @@ public class MainService {
     }
 
     @GET
-    @Path("/downloadLicense")
-    public Response getFile(@Context Request request,
-                            @QueryParam("username") String username) {
+//    @Path("/downloadLicense")
+    @Path("/license/textToDownload")
+    public Response getLicenseTextFile(@Context Request request,
+                                       @QueryParam("username") String username) {
 
         String mountPath = SystemVariableUtil.getValue(Constants.FILE_DOWNLOAD_PATH, null);
         JarHolder jarHolder = objectHolderMap.get(username).getJarHolder();
@@ -338,7 +342,8 @@ public class MainService {
     }
 
     @POST
-    @Path("/addLicense")
+//    @Path("/addLicense")
+    @Path("license/newLicenses")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addLicenseForJars(@Context Request request,
@@ -417,10 +422,10 @@ public class MainService {
             responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", "Failed to add licenses. " +
                     "Please contact application admin");
-            log.error("Failed to add licenses." + e.getMessage(), e);
+            log.error("Failed to add licenses. " + e.getMessage(), e);
         } catch (MessagingException e) {
             responseJson.addProperty("responseType", Constants.SUCCESS);
-            responseJson.addProperty("responseMessage", "Failed to send email to the admin.");
+            responseJson.addProperty("responseMessage", "Failed to send email to the admin");
             log.error("Error while sending email to application admins. " + e.getMessage(), e);
         } finally {
             if (dbHandler != null) {

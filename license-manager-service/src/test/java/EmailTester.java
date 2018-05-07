@@ -17,9 +17,8 @@
  */
 
 import org.testng.annotations.Test;
-import org.wso2.internal.apps.license.manager.impl.models.NewLicenseEntry;
+import org.wso2.internal.apps.license.manager.models.NewLicenseEntry;
 import org.wso2.internal.apps.license.manager.util.EmailUtils;
-import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 
 import java.util.ArrayList;
 import java.util.List;

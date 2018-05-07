@@ -18,6 +18,7 @@
 package org.wso2.internal.apps.license.manager.client.services;
 
 import org.json.JSONException;
+import org.wso2.internal.apps.license.manager.client.utils.Constants;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +41,7 @@ public class LicenseManagerService extends HttpServlet {
         String username = String.valueOf(request.getSession().getAttribute("user"));
 
         try {
-            if (request.getPathInfo().equals("/downloadLicense")) {
+            if (request.getPathInfo().equals(Constants.DOWNLOAD_ENDPOINT)) {
                 response.setContentType(MediaType.TEXT_HTML);
                 response.setHeader("Content-Disposition",
                         "attachment;filename=LICENSE.txt");

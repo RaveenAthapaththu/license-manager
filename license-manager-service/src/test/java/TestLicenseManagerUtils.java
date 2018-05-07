@@ -17,6 +17,8 @@
  */
 
 import org.testng.annotations.Test;
+import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
+import org.wso2.internal.apps.license.manager.impl.JarHolder;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 
 import java.io.IOException;
@@ -46,6 +48,16 @@ public class TestLicenseManagerUtils {
                     "/components/plugins/org.wso2.carbon.tomcat.ext_4.4.20.jar");
             System.out.println(jarsExists);
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    @Test
+    public void testExtractJars() {
+
+        try {
+            JarHolder jarHolder = LicenseManagerUtils.checkJars("/home/pamoda/programming/backup/wso2test-1.2.1");
+            System.out.println(jarHolder);
+        } catch (LicenseManagerRuntimeException e) {
             e.printStackTrace();
         }
     }

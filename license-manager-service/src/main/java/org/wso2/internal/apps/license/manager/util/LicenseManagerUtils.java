@@ -26,9 +26,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.impl.exception.LicenseManagerRuntimeException;
-import org.wso2.internal.apps.license.manager.impl.main.JarHolder;
-import org.wso2.internal.apps.license.manager.impl.models.TaskProgress;
+import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
+import org.wso2.internal.apps.license.manager.impl.JarHolder;
+import org.wso2.internal.apps.license.manager.models.TaskProgress;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.io.BufferedOutputStream;
@@ -113,7 +113,7 @@ public class LicenseManagerUtils {
 
     }
 
-    private static JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
+    public static JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
 
         if (StringUtils.isEmpty(file) || !new File(file).exists() || !new File(file).isDirectory()) {
             throw new LicenseManagerRuntimeException("Folder is not found in the location");
@@ -150,7 +150,7 @@ public class LicenseManagerUtils {
     public static TaskProgress startPackExtractionProcess(String username, String packName) {
 
         final TaskProgress taskProgress = ProgressTracker.createNewTaskProgress(username);
-        taskProgress.setMessage("Pack extraction process started. Please wait until finished. ");
+        taskProgress.setMessage("Pack extraction process started");
 
         // Starting a new thread to extract the pack
         new Thread(new Runnable() {
@@ -172,7 +172,7 @@ public class LicenseManagerUtils {
                     if (log.isDebugEnabled()) {
                         log.debug("Start downloading the" + packName + " from the FTP server " + ftpHost);
                     }
-                    taskProgress.setMessage("Downloading the pack.");
+                    taskProgress.setMessage("Downloading the pack");
 
                     // Initiate SFTP connection.
                     session = jsch.getSession(ftpUsername, ftpHost, ftpPort);
@@ -191,19 +191,6 @@ public class LicenseManagerUtils {
                         log.debug("The file " + packName + " is successfully downloaded to location " + pathToStorage);
                     }
 
-//                    byte[] buffer = new byte[4096];
-//                    BufferedInputStream bis = new BufferedInputStream(sftpChannel.get(ftpFilePath + packName));
-//                    File newFile = new File(pathToStorage+packName);
-//                    OutputStream os = new FileOutputStream(newFile);
-//                    BufferedOutputStream bos = new BufferedOutputStream(os);
-//                    int readCount;
-//                    while ((readCount = bis.read(buffer)) > 0) {
-////                        System.out.println("Writing: ");
-//                        bos.write(buffer, 0, readCount);
-//                    }
-//                    bis.close();
-//                    bos.close();
-
                     // Unzip the downloaded file.
                     String zipFilePath = pathToStorage + packName;
                     String filePath = zipFilePath.substring(0, zipFilePath.lastIndexOf('.'));
@@ -212,7 +199,7 @@ public class LicenseManagerUtils {
                     if (log.isDebugEnabled()) {
                         log.debug("Start unzipping the file " + packName + "in the location " + pathToStorage);
                     }
-                    taskProgress.setMessage("Unzipping the pack.");
+                    taskProgress.setMessage("Unzipping the pack");
                     LicenseManagerUtils.unzip(zipFile.getAbsolutePath(), dir.getAbsolutePath());
                     if (log.isDebugEnabled()) {
                         log.debug("The file " + packName + " is successfully unzipped to location " + pathToStorage);
@@ -221,7 +208,7 @@ public class LicenseManagerUtils {
                     }
 
                     // Extract jars from the pack.
-                    taskProgress.setMessage("Extracting jars.");
+                    taskProgress.setMessage("Extracting jars");
                     JarHolder jarHolder = LicenseManagerUtils.checkJars(filePath);
                     if (log.isDebugEnabled()) {
                         log.debug("Jars are successfully extracted from " + packName.substring(0, packName
@@ -233,12 +220,12 @@ public class LicenseManagerUtils {
 
                 } catch (JSchException | SftpException e) {
                     taskProgress.setStatus(Constants.FAILED);
-                    taskProgress.setMessage("Failed to connect with FTP server.");
+                    taskProgress.setMessage("Failed to connect with FTP server");
                     log.error("Failed to connect with FTP server. " + e.getMessage(), e);
 
                 } catch (LicenseManagerRuntimeException e) {
                     taskProgress.setStatus(Constants.FAILED);
-                    taskProgress.setMessage("Failed to extract jars from the pack.");
+                    taskProgress.setMessage("Failed to extract jars from the pack");
                     log.error("Error while extracting jars. " + e.getMessage(), e);
 
                 } finally {
