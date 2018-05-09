@@ -254,8 +254,8 @@ public class JarHolder implements Serializable {
 
         if (StringUtils.isEmpty(jarName) || StringUtils.isEmpty(jarVersion)) {
             jar.setValidName(false);
-            jar.setProjectName(jarFile.getName());
-            jar.setVersion(jarFile.getName());
+            jar.setProjectName(getDefaultName(jarFile.getName()));
+            jar.setVersion("1.0.0");
         } else {
             jar.setValidName(true);
             jar.setProjectName(jarName);
@@ -301,5 +301,13 @@ public class JarHolder implements Serializable {
             throw new LicenseManagerRuntimeException("Failed to check the inner jars. ",e);
         }
         return containsJars;
+    }
+
+    private String getDefaultName(String filename){
+        if (filename.endsWith(".jar") || filename.endsWith(".mar")){
+            filename = filename.replace(".jar", "");
+            filename = filename.replace(".mar", "");
+        }
+        return filename;
     }
 }
