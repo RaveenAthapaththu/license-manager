@@ -25,7 +25,7 @@ import org.wso2.msf4j.util.SystemVariableUtil;
 import java.util.Objects;
 
 /**
- * Used for authenticating the microservice with Basic Auth via username and password.
+ * Authenticating the micro service with Basic Auth via username and password.
  */
 public class AuthInterceptor extends AbstractBasicAuthSecurityInterceptor {
 

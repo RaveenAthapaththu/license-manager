@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
 import org.wso2.internal.apps.license.manager.impl.JarHolder;
+import org.wso2.internal.apps.license.manager.models.Jar;
 import org.wso2.internal.apps.license.manager.models.TaskProgress;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
@@ -38,8 +39,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -52,7 +57,7 @@ public class LicenseManagerUtils {
     private static final Logger log = LoggerFactory.getLogger(LicenseManagerUtils.class);
 
     /**
-     * static function to unzip a file to a given location.
+     * Static function to unzip a file to a given location.
      *
      * @param infile    the location of the zipped file.
      * @param outFolder location where the file should be unzipped.
@@ -94,41 +99,44 @@ public class LicenseManagerUtils {
         out.close();
     }
 
+    /**
+     * Delete folders.
+     *
+     * @param filePath path to the folder.
+     */
     public static void deleteFolder(String filePath) {
 
         File file = new File(filePath);
         if (file.isDirectory()) {
             try {
                 FileUtils.deleteDirectory(file);
-                System.out.println("License Generated pack is deleted");
             } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println("Problem occurs when deleting the pack : " + filePath);
-
+                log.error("Error while deleting the folder. " + e.getMessage(), e);
             }
         } else if (file.isFile()) {
             file.delete();
-
         }
-
     }
 
+    /**
+     * Recursively check the jars of a pack and creates a new JarHolder object.
+     *
+     * @param file path to the pack
+     * @return JarHolder contains the details of jars.
+     * @throws LicenseManagerRuntimeException if the jar extraction fails.
+     */
     public static JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
 
         if (StringUtils.isEmpty(file) || !new File(file).exists() || !new File(file).isDirectory()) {
             throw new LicenseManagerRuntimeException("Folder is not found in the location");
         }
         JarHolder jh = new JarHolder();
-        try {
-            jh.generateMap(file);
-        } catch (IOException e) {
-            throw new LicenseManagerRuntimeException("Folder is not found in the location", e);
-        }
+        jh.extractJarsRecursively(file);
         return jh;
     }
 
     /**
-     * check whether there are jars existing inside a jar.
+     * Check whether there are jars existing inside a jar.
      *
      * @param filePath file location of the jar.
      * @return true/false whether inner jars exists or not.
@@ -147,6 +155,13 @@ public class LicenseManagerUtils {
         return containsJars;
     }
 
+    /**
+     * Start the jar extraction process of a pack in a new thread.
+     *
+     * @param username username of the task executor.
+     * @param packName pack to be extracted.
+     * @return TaskProgress
+     */
     public static TaskProgress startPackExtractionProcess(String username, String packName) {
 
         final TaskProgress taskProgress = ProgressTracker.createNewTaskProgress(username);
@@ -237,11 +252,26 @@ public class LicenseManagerUtils {
                         sftpChannel.exit();
                     }
                 }
-
             }
         }).start();
-
         return taskProgress;
+    }
+
+    public static List<Jar> removeDuplicates(List<Jar> nameMissingJars){
+        List<Jar> nameMissingUniqueJars = new ArrayList<>();
+        for (Jar jar : nameMissingJars) {
+            boolean newJar = true;
+            for(Jar uniqueJar : nameMissingUniqueJars){
+                if(jar.getProjectName().equals(uniqueJar.getProjectName())){
+                    newJar = false;
+                }
+            }
+            if(newJar){
+                nameMissingUniqueJars.add(jar);
+            }
+        }
+//        Set<Jar> set = new HashSet<>(nameMissingJars);
+        return nameMissingUniqueJars;
     }
 
 }

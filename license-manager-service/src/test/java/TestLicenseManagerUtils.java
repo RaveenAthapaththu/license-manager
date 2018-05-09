@@ -30,35 +30,46 @@ public class TestLicenseManagerUtils {
 
     @Test
     public void testCheckInnerJars() {
-
-        try {
-            boolean jarsExists = LicenseManagerUtils.checkInnerJars("/home/pamoda/programming/backup/wso2is-analytics-5.4.0/repository" +
-                    "/components/plugins/org.wso2.carbon.tomcat.ext_4.4.20.jar");
-            System.out.println(jarsExists);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//
+//        try {
+//            boolean jarsExists = LicenseManagerUtils.checkInnerJars("/home/pamoda/programming/backup/wso2is-analytics-5.4.0/repository" +
+//                    "/components/plugins/org.wso2.carbon.tomcat.ext_4.4.20.jar");
+//            System.out.println(jarsExists);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Test
     public void testExtractPack() {
-
-        try {
-            boolean jarsExists = LicenseManagerUtils.checkInnerJars("/home/pamoda/programming/backup/wso2is-analytics-5.4.0/repository" +
-                    "/components/plugins/org.wso2.carbon.tomcat.ext_4.4.20.jar");
-            System.out.println(jarsExists);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//
+//        try {
+//            boolean jarsExists = LicenseManagerUtils.checkInnerJars("/home/pamoda/programming/backup/wso2is-analytics-5.4.0/repository" +
+//                    "/components/plugins/org.wso2.carbon.tomcat.ext_4.4.20.jar");
+//            System.out.println(jarsExists);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
     @Test
     public void testExtractJars() {
 
-        try {
-            JarHolder jarHolder = LicenseManagerUtils.checkJars("/home/pamoda/programming/backup/wso2test-1.2.1");
-            System.out.println(jarHolder);
-        } catch (LicenseManagerRuntimeException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            JarHolder jarHolder = LicenseManagerUtils.checkJars("/home/pamoda/testing.../wso2test-1.2.1");
+//            System.out.println(jarHolder);
+//        } catch (LicenseManagerRuntimeException e) {
+//            e.printStackTrace();
+//        }
+    }
+    @Test
+    public void testRemoveDuplicates() {
+
+//        try {
+//            JarHolder jarHolder = LicenseManagerUtils.checkJars("/home/pamoda/testing.../wso2ei-6.1.1");
+//            System.out.println(jarHolder.getErrorJarList());
+//            System.out.println(LicenseManagerUtils.removeDuplicates(jarHolder.getErrorJarList()));
+//        } catch (LicenseManagerRuntimeException e) {
+//            e.printStackTrace();
+//        }
     }
 }

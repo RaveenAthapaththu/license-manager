@@ -23,7 +23,7 @@ import org.wso2.msf4j.Response;
 import org.wso2.msf4j.interceptor.RequestInterceptor;
 
 /**
- * Used for applying header for allowing cross origin requests.
+ * Applying header for allowing cross origin requests.
  */
 public class CorsInterceptor implements RequestInterceptor {
 

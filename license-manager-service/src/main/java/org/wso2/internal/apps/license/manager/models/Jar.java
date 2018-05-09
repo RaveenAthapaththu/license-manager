@@ -22,7 +22,7 @@ import java.io.File;
 import java.io.Serializable;
 
 /**
- * @author pubudu
+ * Java object containing jar details.
  */
 public class Jar{
 

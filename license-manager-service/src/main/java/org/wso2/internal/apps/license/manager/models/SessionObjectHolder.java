@@ -22,7 +22,7 @@ import org.wso2.internal.apps.license.manager.impl.JarHolder;
 import java.util.List;
 
 /**
- * Java object to contain the objects required for the license generation per a session
+ * Java object to contain the objects required for the license generation per a session.
  */
 public class SessionObjectHolder {
 

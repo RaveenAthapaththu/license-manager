@@ -35,11 +35,13 @@ import javax.mail.internet.MimeMessage;
  * Email sending related utilities.
  */
 public class EmailUtils {
+
     /**
      * send the email to the admin with the newly added licenses and libraries.
-     * @param addedBy       person who added the new licenses.
-     * @param components    the newly added components.
-     * @param libraries     the newly added libraries.
+     *
+     * @param addedBy    person who added the new licenses.
+     * @param components the newly added components.
+     * @param libraries  the newly added libraries.
      * @throws MessagingException if the email couldn't be sent throws the exception.
      */
     public static void sendEmail(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry> libraries)
@@ -48,7 +50,7 @@ public class EmailUtils {
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.socketFactory.port", "465");
-        props.put("mail.smtp.socketFactory.class","javax.net.ssl.SSLSocketFactory");
+        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.port", "465");
 
@@ -59,11 +61,12 @@ public class EmailUtils {
         Session session = Session.getDefaultInstance(props,
                 new Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
+
                         return new PasswordAuthentication(username, password);
                     }
                 });
 
-        String body = createHtmlBody(addedBy,components,libraries);
+        String body = createHtmlBody(addedBy, components, libraries);
         Message message = new MimeMessage(session);
         message.setFrom(new InternetAddress(username));
         InternetAddress[] adminEmails = InternetAddress.parse(adminEmailsAsString, true);
@@ -76,80 +79,19 @@ public class EmailUtils {
 
     /**
      * Create the html body of the email.
-     * @param addedBy person who added the new licenses.
-     * @param components    the newly added components.
-     * @param libraries     the newly added libraries.
+     *
+     * @param addedBy    person who added the new licenses.
+     * @param components the newly added components.
+     * @param libraries  the newly added libraries.
      * @return html body as a string
      */
-    private static String createHtmlBody(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry> libraries){
+    private static String createHtmlBody(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry> libraries) {
+
         String finalHtml;
-        String htmlComponents="";
-        String htmlLibraries="";
-        if(components.size()>0){
-            htmlComponents +=
-                    "<h3>Components</h3>\n" +
-                            "<table>\n" +
-                            "  <tr>\n" +
-                            "    <th>File Name</th>\n" +
-                            "    <th>Name</th>\n" +
-                            "    <th>Version</th>\n" +
-                            "    <th>License</th>\n" +
-                            "  </tr>\n";
-            for (int i = 0; i < components.size(); i++) {
-                String name = components.get(i).getName();
-                String fileName = components.get(i).getFileName();
-                String version = components.get(i).getVersion();
-                String license = components.get(i).getLicenseKey();
-                Boolean isEven = i % 2 == 0;
+        String htmlComponents = createTableBody(components, "Components");
+        String htmlLibraries = createTableBody(libraries, "Libraries");
 
-                if (isEven || i==0) {
-                    htmlComponents = htmlComponents + "<tr style=\"background-color: #dddddd;\"> \n";
-                } else {
-                    htmlComponents = htmlComponents + "<tr style=\"background-color: #ffffff;\"> \n";
-                }
-                htmlComponents = htmlComponents +
-                        "<td>" + fileName + "</td>\n" +
-                        "<td>" + name + "</td>\n" +
-                        "<td>" + version + "</td>\n" +
-                        "<td>" + license + "</td>\n" +
-                        "</tr>";
-            }
-            htmlComponents +="</table>\n";
-        }
-        if(libraries.size()>0){
-            htmlLibraries +=
-                    "<h3>Libraries</h3>\n" +
-                            "<table>\n" +
-                            "  <tr>\n" +
-                            "    <th>File Name</th>\n" +
-                            "    <th>Name</th>\n" +
-                            "    <th>Version</th>\n" +
-                            "    <th>License</th>\n" +
-                            "  </tr>\n";
-            for (int i = 0; i < libraries.size(); i++) {
-                String name = libraries.get(i).getName();
-                String fileName = libraries.get(i).getFileName();
-                String version = libraries.get(i).getVersion();
-                String license = libraries.get(i).getLicenseKey();
-                Boolean isEven = i % 2 == 0;
-
-                if (isEven || i==0) {
-                    htmlLibraries = htmlLibraries + "<tr style=\"background-color: #dddddd;\"> \n";
-                } else {
-                    htmlLibraries = htmlLibraries + "<tr style=\"background-color: #ffffff;\"> \n";
-                }
-                htmlLibraries = htmlLibraries +
-                        "<td>" + fileName + "</td>\n" +
-                        "<td>" + name + "</td>\n" +
-                        "<td>" + version + "</td>\n" +
-                        "<td>" + license + "</td>\n" +
-                        "</tr>";
-            }
-            htmlLibraries +="</table>\n";
-
-        }
-        finalHtml = "Hi," +
-                "\n \n Following new licenses were added by " + addedBy + "." +
+        finalHtml = "\n \n Following new licenses were added by " + addedBy + "." +
                 "<html>\n" +
                 "<head>\n" +
                 "<style>\n" +
@@ -177,4 +119,42 @@ public class EmailUtils {
                 "</html>\n";
         return finalHtml;
     }
+
+    private static String createTableBody(List<NewLicenseEntry> entries, String heading) {
+
+        String tableBody = "";
+        if (entries.size() > 0) {
+            tableBody +=
+                    "<h3>" + heading + "</h3>\n" +
+                            "<table>\n" +
+                            "  <tr>\n" +
+                            "    <th>File Name</th>\n" +
+                            "    <th>Name</th>\n" +
+                            "    <th>Version</th>\n" +
+                            "    <th>License</th>\n" +
+                            "  </tr>\n";
+            for (int i = 0; i < entries.size(); i++) {
+                String name = entries.get(i).getName();
+                String fileName = entries.get(i).getFileName();
+                String version = entries.get(i).getVersion();
+                String license = entries.get(i).getLicenseKey();
+                Boolean isEven = i % 2 == 0;
+
+                if (isEven || i == 0) {
+                    tableBody = tableBody + "<tr style=\"background-color: #dddddd;\"> \n";
+                } else {
+                    tableBody = tableBody + "<tr style=\"background-color: #ffffff;\"> \n";
+                }
+                tableBody = tableBody +
+                        "<td>" + fileName + "</td>\n" +
+                        "<td>" + name + "</td>\n" +
+                        "<td>" + version + "</td>\n" +
+                        "<td>" + license + "</td>\n" +
+                        "</tr>";
+            }
+            tableBody += "</table>\n";
+        }
+        return tableBody;
+    }
+
 }
