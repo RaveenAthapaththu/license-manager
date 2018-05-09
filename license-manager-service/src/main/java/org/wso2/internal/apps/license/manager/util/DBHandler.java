@@ -122,7 +122,7 @@ public class DBHandler {
 
     public void insertComponent(String name, String fileName, String version) throws SQLException {
 
-        if(!isComponentExists(fileName)){
+        if (!isComponentExists(fileName)) {
             String insertComponent = "INSERT INTO LM_COMPONENT"
                     + "(COMP_NAME, COMP_FILE_NAME, COMP_KEY, COMP_TYPE,COMP_VERSION) VALUES"
                     + "(?,?,?,?,?)";
@@ -380,6 +380,34 @@ public class DBHandler {
         tds.fetchRecords();
         return tds.size() != 0;
 
+    }
+
+    public String getComponentLicenseForAnyVersion(String name) throws SQLException {
+
+        String query;
+        String licenseKey = "NEW";
+        query = "SELECT LICENSE_KEY FROM LM_COMPONENT_LICENSE WHERE COMP_KEY = (SELECT COMP_KEY FROM LM_COMPONENT WHERE COMP_NAME=? LIMIT 1)";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setString(1, name);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            licenseKey = rs.getString("LICENSE_KEY");
+        }
+        return licenseKey;
+    }
+
+    public String getLibraryLicenseForAnyVersion(String name) throws SQLException {
+
+        String query;
+        String licenseKey = "NEW";
+        query = "SELECT LICENSE_KEY FROM LM_LIBRARY_LICENSE WHERE LIB_ID = (SELECT LIB_ID FROM LM_LIBRARY WHERE LIB_NAME=? LIMIT 1)";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setString(1, name);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            licenseKey = rs.getString("LICENSE_KEY");
+        }
+        return licenseKey;
     }
 
 }
