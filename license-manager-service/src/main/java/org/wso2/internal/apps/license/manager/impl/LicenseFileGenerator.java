@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * @author pubudu
+ * Generates the license text for a given product and version.
  */
 public class LicenseFileGenerator {
 
@@ -127,8 +127,7 @@ public class LicenseFileGenerator {
             formatString = String.format("%-80s%-15s%-10s%-10s\n",
                     rs.getString("COMP_KEY"),
                     rs.getString("COMP_TYPE"),
-                    rs.getString("LICENSE_KEY"),
-                    rs.getInt("COMP_ID") + "");
+                    rs.getString("LICENSE_KEY") + "");
             file += formatString;
             keys.add(rs.getString("LICENSE_KEY"));
         }
