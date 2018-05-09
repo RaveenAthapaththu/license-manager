@@ -18,7 +18,7 @@
 package org.wso2.internal.apps.license.manager.models;
 
 /**
- * Java object to contain the details of new entry of licenses for components/libraries
+ * Java object to contain the details of new entry of licenses for components/libraries.
  */
 public class NewLicenseEntry {
     private String fileName;
