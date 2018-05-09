@@ -34,6 +34,7 @@ import org.wso2.internal.apps.license.manager.models.Jar;
 import org.wso2.internal.apps.license.manager.impl.JarHolder;
 import org.wso2.internal.apps.license.manager.impl.LicenseFileGenerator;
 import org.wso2.internal.apps.license.manager.impl.ProductJarManager;
+import org.wso2.internal.apps.license.manager.models.LicenseMissingJar;
 import org.wso2.internal.apps.license.manager.models.NewLicenseEntry;
 import org.wso2.internal.apps.license.manager.models.SessionObjectHolder;
 import org.wso2.internal.apps.license.manager.models.TaskProgress;
@@ -234,8 +235,8 @@ public class MainService {
 
             ProductJarManager productJarManager = new ProductJarManager(jarHolder);
             productJarManager.enterJarsIntoDB();
-            List<Jar> componentList = productJarManager.getLicenseMissingComponents();
-            List<Jar> libraryList = productJarManager.getLicenseMissingLibraries();
+            List<LicenseMissingJar> componentList = productJarManager.getLicenseMissingComponents();
+            List<LicenseMissingJar> libraryList = productJarManager.getLicenseMissingLibraries();
             objectHolderMap.get(username).setLicenseMissingComponents(componentList);
             objectHolderMap.get(username).setLicenseMissingLibraries(libraryList);
             objectHolderMap.get(username).setProductId(productJarManager.getProductId());
@@ -245,23 +246,25 @@ public class MainService {
             for (int i = 0; i < componentList.size(); i++) {
                 JsonObject component = new JsonObject();
                 component.addProperty("index", i);
-                component.addProperty("name", componentList.get(i).getProjectName());
-                component.addProperty("version", componentList.get(i).getVersion());
-                component.addProperty("type", componentList.get(i).getType());
-                component.addProperty("licenseId", licenseId);
+                component.addProperty("name", componentList.get(i).getJar().getProjectName());
+                component.addProperty("version", componentList.get(i).getJar().getVersion());
+                component.addProperty("type", componentList.get(i).getJar().getType());
+                component.addProperty("previousLicense", componentList.get(i).getLicenseKey());
+                component.addProperty("licenseKey", componentList.get(i).getLicenseKey());
                 componentJsonArray.add(component);
             }
 
             for (int i = 0; i < libraryList.size(); i++) {
                 JsonObject library = new JsonObject();
-                String libraryType = (libraryList.get(i).getParent() == null) ?
-                        ((libraryList.get(i).isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :
+                String libraryType = (libraryList.get(i).getJar().getParent() == null) ?
+                        ((libraryList.get(i).getJar().isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :
                         Constants.JAR_TYPE_JAR_IN_BUNDLE;
                 library.addProperty("index", i);
-                library.addProperty("name", libraryList.get(i).getProjectName());
-                library.addProperty("version", libraryList.get(i).getVersion());
+                library.addProperty("name", libraryList.get(i).getJar().getProjectName());
+                library.addProperty("version", libraryList.get(i).getJar().getVersion());
                 library.addProperty("type", libraryType);
-                library.addProperty("licenseId", licenseId);
+                library.addProperty("previousLicense", libraryList.get(i).getLicenseKey());
+                library.addProperty("licenseKey", libraryList.get(i).getLicenseKey());
                 libraryJsonArray.add(library);
             }
 
@@ -369,12 +372,12 @@ public class MainService {
             // Insert new licenses for the components.
             for (int i = 0; i < componentsJson.size(); i++) {
                 int index = componentsJson.get(i).getAsJsonObject().get("index").getAsInt();
-                String componentName = sessionObjectHolder.getLicenseMissingComponents().get(index).getJarFile()
+                String componentName = sessionObjectHolder.getLicenseMissingComponents().get(index).getJar().getJarFile()
                         .getName();
                 String name = componentsJson.get(i).getAsJsonObject().get("name").getAsString();
                 String version = componentsJson.get(i).getAsJsonObject().get("version").getAsString();
-                int licenseId = componentsJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
-                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
+                String licenseKey = componentsJson.get(i).getAsJsonObject().get("licenseKey").getAsString();
+//                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
                 dbHandler.insertComponent(name, componentName, version);
                 dbHandler.insertProductComponent(componentName, productId);
                 dbHandler.insertComponentLicense(componentName, licenseKey);
@@ -390,15 +393,16 @@ public class MainService {
                 String name = librariesJson.get(i).getAsJsonObject().get("name").getAsString();
                 String version = librariesJson.get(i).getAsJsonObject().get("version").getAsString();
                 String type = librariesJson.get(i).getAsJsonObject().get("type").getAsString();
-                int licenseId = librariesJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
+//                int licenseId = librariesJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
+//                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
+                String licenseKey = librariesJson.get(i).getAsJsonObject().get("licenseKey").getAsString();
 
-                String libraryFileName = sessionObjectHolder.getLicenseMissingLibraries().get(index).getJarFile()
+                String libraryFileName = sessionObjectHolder.getLicenseMissingLibraries().get(index).getJar().getJarFile()
                         .getName();
-                if (sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent() != null) {
-                    parent = sessionObjectHolder.getLicenseMissingLibraries().get(index).getParent();
+                if (sessionObjectHolder.getLicenseMissingLibraries().get(index).getJar().getParent() != null) {
+                    parent = sessionObjectHolder.getLicenseMissingLibraries().get(index).getJar().getParent();
                     componentKey = parent.getJarFile().getName();
                 }
-                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
                 int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
                 dbHandler.insertLibraryLicense(licenseKey, Integer.toString(libId));
                 if (parent != null && parent.getType().equals(Constants.JAR_TYPE_WSO2)) {
@@ -473,6 +477,7 @@ public class MainService {
                 for (int i = 0; i < errorJarList.size(); i++) {
                     JsonObject currentJar = new JsonObject();
                     currentJar.addProperty("index", i);
+                    currentJar.addProperty("jarFileName",errorJarList.get(i).getJarFile().getName());
                     currentJar.addProperty("name", errorJarList.get(i).getProjectName());
                     currentJar.addProperty("version", errorJarList.get(i).getVersion());
                     nameMissingJars.add(currentJar);
