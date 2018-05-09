@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
+import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -43,7 +44,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * @author pubudu
+ * Java object to store the jar details of a pack.
  */
 public class JarHolder implements Serializable {
 
@@ -79,16 +80,27 @@ public class JarHolder implements Serializable {
         return productVersion;
     }
 
-    public void generateMap(String target) throws IOException, LicenseManagerRuntimeException {
+    /**
+     * Recursively check all the jars in the product.
+     * @param product    path to the pack.
+     * @throws LicenseManagerRuntimeException   If file unzipping or extraction fails.
+     */
+    public void extractJarsRecursively(String product) throws LicenseManagerRuntimeException {
 
-        String targetFolder = new File(target).getName();
-        String dest = new File(target).getParent() + File.separator + "jars";
+        String targetFolder = new File(product).getName();
+        String uuid = UUID.randomUUID().toString();
+        String tempFolderToHoldJars = new File(product).getParent() + File.separator + uuid;
         productName = getName(targetFolder);
         productVersion = getVersion(targetFolder);
-        findDirectJars(target);
-        extractJarsRecursively(dest);
+        findDirectJars(product);
+        findAllJars(tempFolderToHoldJars);
+        LicenseManagerUtils.deleteFolder(tempFolderToHoldJars);
     }
 
+    /**
+     * Obtain the direct jars contained in the pack.
+     * @param path  path to the pack file
+     */
     private void findDirectJars(String path) {
 
         ZipFilter zipFilter = new ZipFilter();
@@ -103,10 +115,14 @@ public class JarHolder implements Serializable {
         }
     }
 
-    private void extractJarsRecursively(String dest) throws IOException,
-            LicenseManagerRuntimeException {
+    /**
+     * Find all the jars including inner jars which are inside another jar.
+     * @param tempFolderToHoldJars  File path to extract the jars.
+     * @throws LicenseManagerRuntimeException if the jar extraction fails.
+     */
+    private void findAllJars(String tempFolderToHoldJars) throws LicenseManagerRuntimeException {
 
-        new File(dest).mkdir();
+        new File(tempFolderToHoldJars).mkdir();
 
         Stack<Jar> zipStack = new Stack<>();
 
@@ -119,19 +135,24 @@ public class JarHolder implements Serializable {
             Jar currentJar;
 
             File toBeExtracted = jar.getJarFile();
-            if (!dest.endsWith(File.separator)) {
-                dest = dest + File.separator;
+            if (!tempFolderToHoldJars.endsWith(File.separator)) {
+                tempFolderToHoldJars = tempFolderToHoldJars + File.separator;
             }
-            File extractTo = null;
+            File extractTo;
 
             // Get information from the Manifest file.
-            Manifest man = new JarFile(toBeExtracted).getManifest();
-            if (man != null) {
+            Manifest manifest;
+            try {
+                manifest = new JarFile(toBeExtracted).getManifest();
+            } catch (IOException e) {
+                throw new LicenseManagerRuntimeException("Failed to get the Manifest of the jar.", e);
+            }
+            if (manifest != null) {
                 currentJar = getJar(jar.getJarFile(), jar.getParent());
                 jar = currentJar;
 //                jar.setExtractedFolder(extractTo);
-                jar.setType(getType(man, jar));
-                jar.setIsBundle(getIsBundle(man));
+                jar.setType(getType(manifest, jar));
+                jar.setIsBundle(getIsBundle(manifest));
                 if (!currentJar.isValidName()) {
                     errorJarList.add(jar);
                 } else {
@@ -141,7 +162,7 @@ public class JarHolder implements Serializable {
 
             // If a jar contains jars inside, extract the parent jar.
             if (checkInnerJars(toBeExtracted.getAbsolutePath())) {
-                extractTo = new File(dest + toBeExtracted.getName());
+                extractTo = new File(tempFolderToHoldJars + toBeExtracted.getName());
                 extractTo.mkdir();
                 LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extractTo.getAbsolutePath());
                 Iterator<File> i = Op.onArray(extractTo.listFiles(zipFilter)).toList().get().iterator();
@@ -163,9 +184,6 @@ public class JarHolder implements Serializable {
     private static String getName(String name) {
 
         String extractedName = null;
-//        if ("pdepublishing.jar".equals(name) || "pdepublishing-ant.jar".equals(name)) {
-//            extractedName = name;
-//        }
 
         for (int i = 0; i < name.length(); i++) {
             if ((name.charAt(i) == '-' | name.charAt(i) == '_')
@@ -191,10 +209,6 @@ public class JarHolder implements Serializable {
 
         name = name.replace(".jar", "");
         name = name.replace(".mar", "");
-
-//        if ("pdepublishing".equals(name) || "pdepublishing-ant".equals(name)) {
-//            extractedVersion = "1.0.0.v20110511";
-//        }
 
         for (int i = 0; i < name.length(); i++) {
             if ((name.charAt(i) == '-' | name.charAt(i) == '_')
@@ -271,16 +285,20 @@ public class JarHolder implements Serializable {
      *
      * @param filePath  absolute path to the jar
      * @return true/false
-     * @throws IOException if file input stream fails.
+     * @throws LicenseManagerRuntimeException if file input stream fails.
      */
-    private boolean checkInnerJars(String filePath) throws IOException {
+    private boolean checkInnerJars(String filePath) throws LicenseManagerRuntimeException {
 
         boolean containsJars = false;
-        ZipInputStream zip = new ZipInputStream(new FileInputStream(filePath));
-        for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
-            if (entry.getName().endsWith(".jar") || entry.getName().endsWith(".mar")) {
-                containsJars = true;
+        try {
+            ZipInputStream zip = new ZipInputStream(new FileInputStream(filePath));
+            for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
+                if (entry.getName().endsWith(".jar") || entry.getName().endsWith(".mar")) {
+                    containsJars = true;
+                }
             }
+        } catch (IOException e) {
+            throw new LicenseManagerRuntimeException("Failed to check the inner jars. ",e);
         }
         return containsJars;
     }
