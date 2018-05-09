@@ -28,8 +28,8 @@ public class SessionObjectHolder {
 
     private JarHolder jarHolder;
     private int productId;
-    private List<Jar> licenseMissingLibraries;
-    private List<Jar> licenseMissingComponents;
+    private List<LicenseMissingJar> licenseMissingLibraries;
+    private List<LicenseMissingJar> licenseMissingComponents;
 
     public JarHolder getJarHolder() {
 
@@ -41,22 +41,22 @@ public class SessionObjectHolder {
         this.jarHolder = jarHolder;
     }
 
-    public List<Jar> getLicenseMissingLibraries() {
+    public List<LicenseMissingJar> getLicenseMissingLibraries() {
 
         return licenseMissingLibraries;
     }
 
-    public void setLicenseMissingLibraries(List<Jar> licenseMissingLibraries) {
+    public void setLicenseMissingLibraries(List<LicenseMissingJar> licenseMissingLibraries) {
 
         this.licenseMissingLibraries = licenseMissingLibraries;
     }
 
-    public List<Jar> getLicenseMissingComponents() {
+    public List<LicenseMissingJar> getLicenseMissingComponents() {
 
         return licenseMissingComponents;
     }
 
-    public void setLicenseMissingComponents(List<Jar> licenseMissingComponents) {
+    public void setLicenseMissingComponents(List<LicenseMissingJar> licenseMissingComponents) {
 
         this.licenseMissingComponents = licenseMissingComponents;
     }

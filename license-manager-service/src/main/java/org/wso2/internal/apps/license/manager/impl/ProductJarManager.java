@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.impl.JarHolder;
 import org.wso2.internal.apps.license.manager.models.Jar;
+import org.wso2.internal.apps.license.manager.models.LicenseMissingJar;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.DBHandler;
 import org.wso2.msf4j.MicroservicesRunner;
@@ -39,8 +40,8 @@ public class ProductJarManager {
     private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
     private DBHandler dbHandler;
     private JarHolder jarHolder;
-    private List<Jar> licenseMissingComponents = new ArrayList<>();
-    private List<Jar> licenseMissingLibraries = new ArrayList<>();
+    private List<LicenseMissingJar> licenseMissingComponents = new ArrayList<>();
+    private List<LicenseMissingJar> licenseMissingLibraries = new ArrayList<>();
     private int productId;
 
     public ProductJarManager(JarHolder jarHolder) throws ClassNotFoundException, SQLException {
@@ -49,12 +50,12 @@ public class ProductJarManager {
         this.jarHolder = jarHolder;
     }
 
-    public List<Jar> getLicenseMissingComponents() {
+    public List<LicenseMissingJar> getLicenseMissingComponents() {
 
         return licenseMissingComponents;
     }
 
-    public List<Jar> getLicenseMissingLibraries() {
+    public List<LicenseMissingJar> getLicenseMissingLibraries() {
 
         return licenseMissingLibraries;
     }
@@ -86,9 +87,11 @@ public class ProductJarManager {
         String type = mj.getType();
         if (type.equals(Constants.JAR_TYPE_WSO2)) {
             if (!dbHandler.isComponentExists(fileName)) {
-                licenseMissingComponents.add(mj);
+                String licenseForAnyVersion = dbHandler.getComponetLicenseForAnyVersion(name);
+                licenseMissingComponents.add(new LicenseMissingJar(mj, licenseForAnyVersion));
             } else if (dbHandler.isComponentExists(fileName) && !dbHandler.isComponentLicenseExists(fileName)) {
-                licenseMissingComponents.add(mj);
+                String licenseForAnyVersion = dbHandler.getComponetLicenseForAnyVersion(name);
+                licenseMissingComponents.add(new LicenseMissingJar(mj, licenseForAnyVersion));
             } else {
                 dbHandler.insertProductComponent(fileName, productId);
             }
@@ -104,16 +107,20 @@ public class ProductJarManager {
                 if (mj.getParent() != null && mj.getParent().getType().equals(Constants.JAR_TYPE_WSO2)) {
                     if (dbHandler.isComponentExists(mj.getParent().getJarFile().getName())) {
                         dbHandler.insertComponentLibrary(mj.getParent().getJarFile().getName(), libraryId);
-                    } else
-                        licenseMissingLibraries.add(mj);
+                    } else {
+                        String licenseForAnyVersion = dbHandler.getLibraryLicenseForAnyVersion(name);
+                        licenseMissingLibraries.add(new LicenseMissingJar(mj, licenseForAnyVersion));
+                    }
                 } else {
                     dbHandler.insertProductLibrary(libraryId, productId);
                 }
                 if (!isLicenseExists) {
-                    licenseMissingLibraries.add(mj);
+                    String licenseForAnyVersion = dbHandler.getLibraryLicenseForAnyVersion(name);
+                    licenseMissingLibraries.add(new LicenseMissingJar(mj, licenseForAnyVersion));
                 }
             } else {
-                licenseMissingLibraries.add(mj);
+                String licenseForAnyVersion = dbHandler.getLibraryLicenseForAnyVersion(name);
+                licenseMissingLibraries.add(new LicenseMissingJar(mj, licenseForAnyVersion));
             }
         }
     }
