@@ -17,10 +17,10 @@
  */
 package org.wso2.internal.apps.license.manager.client.services;
 
+import org.apache.log4j.Logger;
 import org.json.JSONException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
+import org.wso2.internal.apps.license.manager.client.filters.JWTAction;
 import org.wso2.internal.apps.license.manager.client.utils.Constants;
 
 import java.io.IOException;
@@ -37,7 +37,7 @@ import javax.ws.rs.core.MediaType;
  */
 public class LicenseManagerService extends HttpServlet {
 
-    private static final Logger log = LoggerFactory.getLogger(LicenseManagerService.class);
+    private static final Logger log = Logger.getLogger(JWTAction.class);
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -94,5 +94,4 @@ public class LicenseManagerService extends HttpServlet {
             log.error("Failed to get the response from the backend service. " + e.getMessage(), e);
         }
     }
-
 }

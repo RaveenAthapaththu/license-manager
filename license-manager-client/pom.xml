@@ -11,86 +11,80 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>3.8.1</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
+            <version>${javax.servlet.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.minidev</groupId>
             <artifactId>json-smart</artifactId>
-            <version>2.3</version>
+            <version>${net.minidev.version}</version>
         </dependency>
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
-            <version>5.6</version>
+            <version>${nimbus.jose.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>14.0.1</version>
+            <version>${google.guava.version}</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
+            <version>${log4j.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.5</version>
+            <version>${apache.httpcomponents.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.3.1</version>
+            <version>${google.gson.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
-            <version>1.1.1</version>
+            <version>${javax.activation.version}</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.wso2.msf4j.sample</groupId>-->
-            <!--<artifactId>helloworld-jpa</artifactId>-->
-            <!--<version>1.1.0-SNAPSHOT</version>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20090211</version>
+            <version>${org.json.version}</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
-            <version>1.5.0</version>
+            <version>${codehaus.jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
-            <version>2.0</version>
+            <version>${javax.ws.rs.version}</version>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.9.10</version>
+            <version>${org.testng.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
-          <finalName>licenseManager</finalName>
+        <finalName>licenseManager</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
@@ -103,4 +97,22 @@
             </resource>
         </resources>
     </build>
+
+    <properties>
+        <junit.version>3.8.1</junit.version>
+        <javax.servlet.version>3.0.1</javax.servlet.version>
+        <net.minidev.version>2.3</net.minidev.version>
+        <nimbus.jose.version>5.6</nimbus.jose.version>
+        <google.guava.version>14.0.1</google.guava.version>
+        <log4j.version>1.2.17</log4j.version>
+        <apache.httpcomponents.version>4.5.5</apache.httpcomponents.version>
+        <google.gson.version>2.3.1</google.gson.version>
+        <javax.activation.version>1.1.1</javax.activation.version>
+        <org.json.version>20090211</org.json.version>
+        <codehaus.jackson.version>1.5.0</codehaus.jackson.version>
+        <javax.ws.rs.version>2.0</javax.ws.rs.version>
+        <org.testng.version>6.9.10</org.testng.version>
+        <maven.compiler.plugin.version>3.7.0</maven.compiler.plugin.version>
+    </properties>
+
 </project>

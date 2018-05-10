@@ -35,7 +35,7 @@ public class MicroserviceTest {
     @Test
     public void testService() throws IOException, JSONException {
 
-        System.out.println(ServiceExecuter.executePostService("//pack/jars", "wso2is-5.4.0.zip","pamodaaw@wso2.com"));
+//        System.out.println(ServiceExecuter.executePostService("//pack/jars", "wso2is-5.4.0.zip","pamodaaw@wso2.com"));
 //        System.out.println(ServiceExecuter.executePostService("/pack/nameDefinedJars", "{\"jars\":[\n" +
 //                "        {\"name\":\"patch.jar\", \"index\":0, \"version\":\"1.0.0\"},{\"name\":\"patch.jar\", " +
 //                "\"index\":1, \"version\":\"1.0.0\\\"\"}]}", "pamodaaw@wso2.com"));
@@ -46,6 +46,6 @@ public class MicroserviceTest {
 //
 //        System.out.println(ServiceExecuter.executePostService("/enterJars",
 //                "{asdf}"));
-            ServiceExecuter.executeGetService("/pack/list", "pamodaaw@wso2.com");
+//            ServiceExecuter.executeGetService("/pack/list", "pamodaaw@wso2.com");
     }
 }

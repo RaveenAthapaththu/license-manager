@@ -29,7 +29,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
-import org.wso2.internal.apps.license.manager.client.filters.JWTAction;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,13 +74,14 @@ public class ServiceUtils {
             keyStore.load(file, properties.getTrustStoreServicePassword().toCharArray());
             HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
             SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(keyStore, null).build();
-            SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
-            httpClientBuilder.setSSLSocketFactory(sslConnectionSocketFactory);
+            SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
+            httpClientBuilder.setSSLSocketFactory(sslSocketFactory);
             if (log.isDebugEnabled()) {
                 log.debug("A secure connection is established with the micro service. ");
             }
             return httpClientBuilder.setDefaultCredentialsProvider(provider).build();
-        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException | KeyManagementException e) {
+        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException |
+                KeyManagementException e) {
             throw new LicenseManagerException("Failed to initiate the connection. ", e);
         }
 
