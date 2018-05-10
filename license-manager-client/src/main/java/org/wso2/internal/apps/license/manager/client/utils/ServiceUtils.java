@@ -27,8 +27,9 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContexts;
+import org.apache.log4j.Logger;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
-import org.wso2.internal.apps.license.manager.client.msf4jhttp.PropertyReader;
+import org.wso2.internal.apps.license.manager.client.filters.JWTAction;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,8 +41,19 @@ import java.security.cert.CertificateException;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 
+/**
+ * Util functions which are required while executing the backend services for license manager.
+ */
 public class ServiceUtils {
 
+    private static final Logger log = Logger.getLogger(ServiceUtils.class);
+
+    /**
+     * Create a trusted http client to initiate a secure connection with micro services.
+     *
+     * @return closeableHttpClient
+     * @throws LicenseManagerException if the connection initiation fails
+     */
     public static CloseableHttpClient createTrustedHttpClient() throws LicenseManagerException {
 
         PropertyReader properties = new PropertyReader();
@@ -52,19 +64,22 @@ public class ServiceUtils {
         CredentialsProvider provider = new BasicCredentialsProvider();
         provider.setCredentials(AuthScope.ANY, credentials);
 
-        // Create a trusted Https client.
         HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
+
+        // Get the keystore file.
         InputStream file = Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream(properties.getTrustStoreServiceName());
         try {
+            // Make the trusted connection.
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(file, properties.getTrustStoreServicePassword().toCharArray());
-
-            HostnameVerifier allowAllHosts = new NoopHostnameVerifier(); //comment this
+            HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
             SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(keyStore, null).build();
-            SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts); //remove second parameter
+            SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
             httpClientBuilder.setSSLSocketFactory(sslConnectionSocketFactory);
-
+            if (log.isDebugEnabled()) {
+                log.debug("A secure connection is established with the micro service. ");
+            }
             return httpClientBuilder.setDefaultCredentialsProvider(provider).build();
         } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException | KeyManagementException e) {
             throw new LicenseManagerException("Failed to initiate the connection. ", e);

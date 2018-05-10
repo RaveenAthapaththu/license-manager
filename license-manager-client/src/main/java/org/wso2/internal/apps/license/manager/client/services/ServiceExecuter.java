@@ -32,7 +32,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
-import org.wso2.internal.apps.license.manager.client.msf4jhttp.PropertyReader;
+import org.wso2.internal.apps.license.manager.client.utils.PropertyReader;
 import org.wso2.internal.apps.license.manager.client.utils.ServiceUtils;
 
 import java.io.IOException;
@@ -148,7 +148,7 @@ public class ServiceExecuter {
      * @param endpoint endpoint of the service
      * @param username logged user
      * @return response from the backend/error object
-     * @throws JSONException if creating a json from the response entity fails.
+     * @throws LicenseManagerException if anything goes wrong while trying to connect with the micro service.
      */
     static InputStream executeDownloadService(String endpoint, String username) throws LicenseManagerException {
 
@@ -173,8 +173,7 @@ public class ServiceExecuter {
                 return null;
             }
         } catch (URISyntaxException | IOException e) {
-            log.error("Failed to get download the license text from the server. " + e.getMessage(), e);
-            throw new LicenseManagerException("Failed to download the file");
+            throw new LicenseManagerException("Failed to download the license text file");
         }
     }
 }

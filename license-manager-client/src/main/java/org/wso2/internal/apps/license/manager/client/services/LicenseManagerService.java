@@ -49,13 +49,11 @@ public class LicenseManagerService extends HttpServlet {
             // If the request is for downloading the license text file.
             if (request.getPathInfo().equals(Constants.DOWNLOAD_ENDPOINT)) {
                 response.setContentType(MediaType.TEXT_HTML);
-                response.setHeader("Content-Disposition",
-                        "attachment;filename=LICENSE.txt");
+                response.setHeader("Content-Disposition", "attachment;filename=LICENSE.txt");
                 InputStream is = ServiceExecuter.executeDownloadService(request.getPathInfo(), username);
                 int read;
                 byte[] bytes = new byte[1024];
                 OutputStream out = response.getOutputStream();
-
                 if (is != null) {
                     while ((read = is.read(bytes)) != -1) {
                         out.write(bytes, 0, read);
@@ -63,15 +61,21 @@ public class LicenseManagerService extends HttpServlet {
                 }
                 out.flush();
                 out.close();
+                if (log.isDebugEnabled()) {
+                    log.debug("Successfully downloaded license text.");
+                }
             } else {
                 response.setContentType(MediaType.APPLICATION_JSON);
                 PrintWriter out = response.getWriter();
                 out.print(ServiceExecuter.executeGetService(request.getPathInfo(), username));
+                if (log.isDebugEnabled()) {
+                    log.debug("A response is received for GET request sent to {MICROSERVICE}/" + request.getPathInfo()
+                            + " by " + username);
+                }
             }
         } catch (JSONException | LicenseManagerException e) {
             log.error("Failed to get the response from the backend service. " + e.getMessage(), e);
         }
-
     }
 
     @Override
@@ -82,6 +86,10 @@ public class LicenseManagerService extends HttpServlet {
         try {
             PrintWriter out = response.getWriter();
             out.print(ServiceExecuter.executePostService(request.getPathInfo(), request.getReader().readLine(), username));
+            if (log.isDebugEnabled()) {
+                log.debug("A response is received for POST request sent to {MICROSERVICE}/" + request.getPathInfo()
+                        + " by " + username);
+            }
         } catch (JSONException | IOException e) {
             log.error("Failed to get the response from the backend service. " + e.getMessage(), e);
         }

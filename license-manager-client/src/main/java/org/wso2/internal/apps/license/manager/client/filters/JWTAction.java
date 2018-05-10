@@ -23,7 +23,7 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
-import org.wso2.internal.apps.license.manager.client.msf4jhttp.PropertyReader;
+import org.wso2.internal.apps.license.manager.client.utils.PropertyReader;
 
 import java.io.IOException;
 import java.io.InputStream;

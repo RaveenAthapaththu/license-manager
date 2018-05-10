@@ -22,18 +22,18 @@ package org.wso2.internal.apps.license.manager.client.utils;
  */
 public class Constants {
 
-    // Constants for configuration details.
-    public static final String CONFIG_FILE_NAME = "config.properties";
+    // Constants for accessing configuration details.
+    static final String CONFIG_FILE_NAME = "config.properties";
 
-    public static final String BACKEND_URL = "backend_url";
-    public static final String BACKEND_USERNAME = "backend_username";
-    public static final String BACKEND_PASSWORD = "backend_password";
-    public static final String KEYSTORE_FILE_NAME = "sso_keystore_file_name";
-    public static final String KEYSTORE_PASSWORD = "sso_keystore_password";
-    public static final String CERTIFICATE_ALIAS = "sso_certificate_alias";
-    public static final String SSO_REDIRECT_URL = "sso_redirect_url";
-    public static final String TRUST_STORE_SERVICE_NAME = "trust_store_service_name";
-    public static final String TRUST_STORE_SERVICE_PASSWORD = "trust_store_service_password";
+    static final String BACKEND_URL = "backend_url";
+    static final String BACKEND_USERNAME = "backend_username";
+    static final String BACKEND_PASSWORD = "backend_password";
+    static final String KEYSTORE_FILE_NAME = "sso_keystore_file_name";
+    static final String KEYSTORE_PASSWORD = "sso_keystore_password";
+    static final String CERTIFICATE_ALIAS = "sso_certificate_alias";
+    static final String SSO_REDIRECT_URL = "sso_redirect_url";
+    static final String TRUST_STORE_SERVICE_NAME = "trust_store_service_name";
+    static final String TRUST_STORE_SERVICE_PASSWORD = "trust_store_service_password";
 
     public static final String DOWNLOAD_ENDPOINT = "/license/textToDownload";
 

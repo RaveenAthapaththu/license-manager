@@ -16,18 +16,17 @@
  * under the License.
  */
 
-package org.wso2.internal.apps.license.manager.client.msf4jhttp;
+package org.wso2.internal.apps.license.manager.client.utils;
 
 import org.apache.log4j.Logger;
-import org.wso2.internal.apps.license.manager.client.utils.Constants;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-/*
- * Read the properties of the application
+/**
+ * Read the properties file and obtain the the information.
  */
 public class PropertyReader {
 
@@ -90,12 +89,12 @@ public class PropertyReader {
         return this.backendUrl;
     }
 
-    public String getBackendUsername() {
+    String getBackendUsername() {
 
         return this.backendUsername;
     }
 
-    public String getBackendPassword() {
+    String getBackendPassword() {
 
         return this.backendPassword;
     }
@@ -120,7 +119,7 @@ public class PropertyReader {
         return this.ssoRedirectUrl;
     }
 
-    public String getTrustStoreServiceName() {
+    String getTrustStoreServiceName() {
 
         return trustStoreServiceName;
     }
@@ -130,7 +129,7 @@ public class PropertyReader {
         this.trustStoreServiceName = trustStoreServiceName;
     }
 
-    public String getTrustStoreServicePassword() {
+    String getTrustStoreServicePassword() {
 
         return trustStoreServicePassword;
     }
