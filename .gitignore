@@ -9,6 +9,9 @@ target
 .idea
 *.class
 
+# Ignore security resources
+license-manager-client/src/main/resources
+
 # Package Files #
 *.war
 *.ear
