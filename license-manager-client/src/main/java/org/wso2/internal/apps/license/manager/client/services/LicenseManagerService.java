@@ -18,14 +18,15 @@
 package org.wso2.internal.apps.license.manager.client.services;
 
 import org.json.JSONException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
 import org.wso2.internal.apps.license.manager.client.utils.Constants;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.URISyntaxException;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,17 +37,21 @@ import javax.ws.rs.core.MediaType;
  */
 public class LicenseManagerService extends HttpServlet {
 
+    private static final Logger log = LoggerFactory.getLogger(LicenseManagerService.class);
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
         String username = String.valueOf(request.getSession().getAttribute("user"));
 
         try {
+
+            // If the request is for downloading the license text file.
             if (request.getPathInfo().equals(Constants.DOWNLOAD_ENDPOINT)) {
                 response.setContentType(MediaType.TEXT_HTML);
                 response.setHeader("Content-Disposition",
                         "attachment;filename=LICENSE.txt");
                 InputStream is = ServiceExecuter.executeDownloadService(request.getPathInfo(), username);
-
                 int read;
                 byte[] bytes = new byte[1024];
                 OutputStream out = response.getOutputStream();
@@ -63,21 +68,22 @@ public class LicenseManagerService extends HttpServlet {
                 PrintWriter out = response.getWriter();
                 out.print(ServiceExecuter.executeGetService(request.getPathInfo(), username));
             }
-        } catch (JSONException | URISyntaxException e) {
-            e.printStackTrace();
+        } catch (JSONException | LicenseManagerException e) {
+            log.error("Failed to get the response from the backend service. " + e.getMessage(), e);
         }
 
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+
         String username = String.valueOf(request.getSession().getAttribute("user"));
         response.setContentType("application/json");
-        PrintWriter out = response.getWriter();
         try {
+            PrintWriter out = response.getWriter();
             out.print(ServiceExecuter.executePostService(request.getPathInfo(), request.getReader().readLine(), username));
-        } catch (JSONException | URISyntaxException e) {
-            e.printStackTrace();
+        } catch (JSONException | IOException e) {
+            log.error("Failed to get the response from the backend service. " + e.getMessage(), e);
         }
     }
 

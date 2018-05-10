@@ -40,13 +40,14 @@ public class PropertyReader {
     private String ssoKeyStorePassword;
     private String ssoCertAlias;
     private String ssoRedirectUrl;
-
+    private String trustStoreServiceName;
+    private String trustStoreServicePassword;
 
     public PropertyReader() {
+
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(configFileName);
         loadConfigs(inputStream);
     }
-
 
     /**
      * Load configs from the file
@@ -54,6 +55,7 @@ public class PropertyReader {
      * @param input - input stream of the file
      */
     private void loadConfigs(InputStream input) {
+
         Properties prop = new Properties();
         try {
             prop.load(input);
@@ -64,7 +66,8 @@ public class PropertyReader {
             this.ssoKeyStorePassword = prop.getProperty(Constants.KEYSTORE_PASSWORD);
             this.ssoCertAlias = prop.getProperty(Constants.CERTIFICATE_ALIAS);
             this.ssoRedirectUrl = prop.getProperty(Constants.SSO_REDIRECT_URL);
-
+            this.trustStoreServiceName = prop.getProperty(Constants.TRUST_STORE_SERVICE_NAME);
+            this.trustStoreServicePassword = prop.getProperty(Constants.TRUST_STORE_SERVICE_PASSWORD);
 
         } catch (FileNotFoundException e) {
             logger.error("The configuration file is not found");
@@ -83,31 +86,57 @@ public class PropertyReader {
     }
 
     public String getBackendUrl() {
+
         return this.backendUrl;
     }
 
     public String getBackendUsername() {
+
         return this.backendUsername;
     }
 
     public String getBackendPassword() {
+
         return this.backendPassword;
     }
 
     public String getSsoKeyStoreName() {
+
         return this.ssoKeyStoreName;
     }
 
     public String getSsoKeyStorePassword() {
+
         return this.ssoKeyStorePassword;
     }
 
     public String getSsoCertAlias() {
+
         return this.ssoCertAlias;
     }
 
     public String getSsoRedirectUrl() {
+
         return this.ssoRedirectUrl;
     }
 
+    public String getTrustStoreServiceName() {
+
+        return trustStoreServiceName;
+    }
+
+    public void setTrustStoreServiceName(String trustStoreServiceName) {
+
+        this.trustStoreServiceName = trustStoreServiceName;
+    }
+
+    public String getTrustStoreServicePassword() {
+
+        return trustStoreServicePassword;
+    }
+
+    public void setTrustStoreServicePassword(String trustStoreServicePassword) {
+
+        this.trustStoreServicePassword = trustStoreServicePassword;
+    }
 }

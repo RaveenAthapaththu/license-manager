@@ -17,25 +17,23 @@
  */
 package org.wso2.internal.apps.license.manager.client.services;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
 import org.wso2.internal.apps.license.manager.client.msf4jhttp.PropertyReader;
+import org.wso2.internal.apps.license.manager.client.utils.ServiceUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,115 +45,136 @@ import javax.ws.rs.core.MediaType;
  */
 public class ServiceExecuter {
 
-    public static JSONObject executeGetService(String endpoint, String username) throws IOException, JSONException,
-            URISyntaxException {
+    private static final Log log = LogFactory.getLog(ServiceExecuter.class);
+
+    /**
+     * Call the backend service for the GET requests.
+     *
+     * @param endpoint endpoint of the service
+     * @param username logged user
+     * @return response from the backend/error object
+     * @throws JSONException if creating a json from the response entity fails.
+     */
+    public static JSONObject executeGetService(String endpoint, String username) throws JSONException {
+
         PropertyReader properties = new PropertyReader();
-        String url = properties.getBackendUrl()+ endpoint;
-
-        // Setting up authentication
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(properties.getBackendUsername(),
-                properties.getBackendPassword());
-        CredentialsProvider provider = new BasicCredentialsProvider();
-        provider.setCredentials(AuthScope.ANY, credentials);
-
-        // Setting the HTTP request
-        URIBuilder builder = new URIBuilder(url);
-        builder.setParameter("username", username);
-        HttpGet request = new HttpGet(builder.build());
-
-        // Calling the micro service
-        HttpClient client = HttpClientBuilder.create()
-                .setDefaultCredentialsProvider(provider)
-                .build();
-        HttpResponse response = client.execute(request);
-
-        // Build json response
-        HttpEntity entity = response.getEntity();
+        String url = properties.getBackendUrl() + endpoint;
         JSONObject result = null;
-        if (entity != null) {
-            // parsing JSON
-            result = new JSONObject(EntityUtils.toString(entity));
 
+        try {
+            // Create the request.
+            URIBuilder builder = new URIBuilder(url);
+            builder.setParameter("username", username);
+            HttpGet request = new HttpGet(builder.build());
+
+            // Calling the micro service.
+            CloseableHttpClient httpClient = ServiceUtils.createTrustedHttpClient();
+            HttpResponse response = httpClient.execute(request);
+
+            // Build json response
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                // parsing JSON
+                result = new JSONObject(EntityUtils.toString(entity));
+            }
+        } catch (URISyntaxException | IOException | JSONException e) {
+            result = new JSONObject();
+            result.put("responseType", "Error");
+            result.put("responseMessage", "Failed to get response from server");
+            log.error("Failed to get response from server. " + e.getMessage(), e);
+        } catch (LicenseManagerException e) {
+            result = new JSONObject();
+            result.put("responseType", "Error");
+            result.put("responseMessage", e.getMessage());
+            log.error(e.getMessage(), e);
         }
         return result;
     }
 
-    public static JSONObject executePostService(String endpoint, String payload, String username) throws IOException,
-            JSONException, URISyntaxException {
+    /**
+     * Call the backend service for the POST requests.
+     *
+     * @param endpoint endpoint of the service
+     * @param payload  request body
+     * @param username logged user
+     * @return response from the backend/error object
+     * @throws JSONException if creating a json from the response entity fails.
+     */
+    public static JSONObject executePostService(String endpoint, String payload, String username) throws JSONException {
 
         PropertyReader properties = new PropertyReader();
-        String url = properties.getBackendUrl()+ endpoint;
-
-        // Setting up authentication
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(properties.getBackendUsername(),
-                properties.getBackendPassword());
-        CredentialsProvider provider = new BasicCredentialsProvider();
-        provider.setCredentials(AuthScope.ANY, credentials);
-
-        // Setting the HTTP request
-        URIBuilder builder = new URIBuilder(url);
-        builder.setParameter("username", username);
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setSocketTimeout(3000000)
-                .setConnectTimeout(3000000)
-                .setConnectionRequestTimeout(3000000)
-                .build();
-        HttpPost request = new HttpPost(builder.build());
-        request.setConfig(requestConfig);
-        request.setHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON);
-        ObjectMapper mapper = new ObjectMapper();
-        String requestBodyInString = mapper.writeValueAsString(payload);
-        StringEntity requestBody = new StringEntity(requestBodyInString, "UTF-8");
-        requestBody.setContentType(MediaType.APPLICATION_JSON);
-        request.setEntity(requestBody);
-
-        // Calling the micro service
-        HttpClient client = HttpClientBuilder.create()
-                .setDefaultCredentialsProvider(provider)
-                .build();
-        HttpResponse response = client.execute(request);
-
-        // Build json response
-        HttpEntity entity = response.getEntity();
+        String url = properties.getBackendUrl() + endpoint;
         JSONObject result = null;
-        if (entity != null) {
-            // parsing JSON
-            result = new JSONObject(EntityUtils.toString(entity));
 
+        try {
+            // Create the request.
+            URIBuilder builder = new URIBuilder(url);
+            builder.setParameter("username", username);
+            HttpPost request = new HttpPost(builder.build());
+            request.setHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON);
+            ObjectMapper mapper = new ObjectMapper();
+            String requestBodyInString = mapper.writeValueAsString(payload);
+            StringEntity requestBody = new StringEntity(requestBodyInString, "UTF-8");
+            requestBody.setContentType(MediaType.APPLICATION_JSON);
+            request.setEntity(requestBody);
+
+            // Calling the micro service
+            CloseableHttpClient httpClient = ServiceUtils.createTrustedHttpClient();
+            HttpResponse response = httpClient.execute(request);
+
+            // Build json response
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                // parsing JSON
+                result = new JSONObject(EntityUtils.toString(entity));
+            }
+        } catch (URISyntaxException | IOException | JSONException e) {
+            result = new JSONObject();
+            result.put("responseType", "Error");
+            result.put("responseMessage", "Failed to get response from server");
+            log.error("Failed to get response from server. " + e.getMessage(), e);
+        } catch (LicenseManagerException e) {
+            result = new JSONObject();
+            result.put("responseType", "Error");
+            result.put("responseMessage", e.getMessage());
+            log.error(e.getMessage(), e);
         }
         return result;
     }
 
-    public static InputStream executeDownloadService(String endpoint, String username) throws IOException,
-            JSONException,
-            URISyntaxException {
+    /**
+     * Call a backend service and download the License Text.
+     *
+     * @param endpoint endpoint of the service
+     * @param username logged user
+     * @return response from the backend/error object
+     * @throws JSONException if creating a json from the response entity fails.
+     */
+    static InputStream executeDownloadService(String endpoint, String username) throws LicenseManagerException {
 
         PropertyReader properties = new PropertyReader();
-        String url = properties.getBackendUrl()+ endpoint;
+        String url = properties.getBackendUrl() + endpoint;
+        try {
 
-        // Setting up authentication
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(properties.getBackendUsername(),
-                properties.getBackendPassword());
-        CredentialsProvider provider = new BasicCredentialsProvider();
-        provider.setCredentials(AuthScope.ANY, credentials);
+            // Setting the HTTP request
+            URIBuilder builder = new URIBuilder(url);
+            builder.setParameter("username", username);
+            HttpGet request = new HttpGet(builder.build());
 
-        // Setting the HTTP request
-        URIBuilder builder = new URIBuilder(url);
-        builder.setParameter("username", username);
-        HttpGet request = new HttpGet(builder.build());
+            // Calling the micro service
+            CloseableHttpClient client = ServiceUtils.createTrustedHttpClient();
+            HttpResponse response = client.execute(request);
 
-        // Calling the micro service
-        HttpClient client = HttpClientBuilder.create()
-                .setDefaultCredentialsProvider(provider)
-                .build();
-        HttpResponse response = client.execute(request);
-
-        // Build json response
-        HttpEntity entity = response.getEntity();
-        if (entity != null) {
-            return entity.getContent();
-        } else {
-            return null;
+            // Get the file from the response entity.
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                return entity.getContent();
+            } else {
+                return null;
+            }
+        } catch (URISyntaxException | IOException e) {
+            log.error("Failed to get download the license text from the server. " + e.getMessage(), e);
+            throw new LicenseManagerException("Failed to download the file");
         }
     }
 }

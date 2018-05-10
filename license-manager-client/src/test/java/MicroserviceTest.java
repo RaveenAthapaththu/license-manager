@@ -21,6 +21,11 @@ import org.testng.annotations.Test;
 import org.wso2.internal.apps.license.manager.client.services.ServiceExecuter;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 
 /**
  * Test the email sending
@@ -30,17 +35,17 @@ public class MicroserviceTest {
     @Test
     public void testService() throws IOException, JSONException {
 
-//        System.out.println(ServiceExecuter.executePostService("/extractJars", "wso2is-5.4.0.zip"));
-//        System.out.println(ServiceExecuter.executePostService("/enterJars", "{\"jars\":[\n" +
+        System.out.println(ServiceExecuter.executePostService("//pack/jars", "wso2is-5.4.0.zip","pamodaaw@wso2.com"));
+//        System.out.println(ServiceExecuter.executePostService("/pack/nameDefinedJars", "{\"jars\":[\n" +
 //                "        {\"name\":\"patch.jar\", \"index\":0, \"version\":\"1.0.0\"},{\"name\":\"patch.jar\", " +
-//                "\"index\":1, \"version\":\"1.0.0\\\"\"}]}"));
+//                "\"index\":1, \"version\":\"1.0.0\\\"\"}]}", "pamodaaw@wso2.com"));
     }
 
     @Test
-    public void testService2() throws IOException, JSONException {
+    public void testService2() throws JSONException {
 //
 //        System.out.println(ServiceExecuter.executePostService("/enterJars",
 //                "{asdf}"));
-
+            ServiceExecuter.executeGetService("/pack/list", "pamodaaw@wso2.com");
     }
 }

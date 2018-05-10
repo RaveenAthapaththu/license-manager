@@ -49,7 +49,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class JWTAction implements Filter {
 
-    private static final Logger logger = Logger.getLogger(JWTAction.class);
+    private static final Logger log = Logger.getLogger(JWTAction.class);
     private static final PropertyReader propertyReader = new PropertyReader();
 
     /**
@@ -61,7 +61,6 @@ public class JWTAction implements Filter {
      * @throws CertificateException     if unable to certify
      * @throws NoSuchAlgorithmException cause by other underlying exceptions(KeyStoreException)
      */
-
     private static PublicKey getPublicKey() throws IOException, KeyStoreException, CertificateException,
             NoSuchAlgorithmException {
 
@@ -74,7 +73,7 @@ public class JWTAction implements Filter {
     }
 
     public void init(FilterConfig filterConfig) {
-
+        // Do nothing
     }
 
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
@@ -87,8 +86,8 @@ public class JWTAction implements Filter {
         String ssoRedirectUrl = propertyReader.getSsoRedirectUrl();
 
         if (jwt == null || "".equals(jwt)) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Redirecting to {}");
+            if (log.isDebugEnabled()) {
+                log.debug("Redirecting to {}");
             }
             response.sendRedirect(ssoRedirectUrl);
             return;
@@ -103,25 +102,25 @@ public class JWTAction implements Filter {
             JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) getPublicKey());
 
             if (signedJWT.verify(verifier)) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("JWT validation success for token: {}");
+                if (log.isDebugEnabled()) {
+                    log.debug("JWT validation success for token: {}");
                 }
                 username = signedJWT.getJWTClaimsSet().getClaim("http://wso2.org/claims/emailaddress").toString();
                 roles = signedJWT.getJWTClaimsSet().getClaim("http://wso2.org/claims/role").toString();
-                if (logger.isDebugEnabled()) {
-                    logger.debug("User = {" + username + "} | Roles = " + roles);
+                if (log.isDebugEnabled()) {
+                    log.debug("User = {" + username + "} | Roles = " + roles);
                 }
             } else {
-                logger.error("JWT validation failed for token: {" + jwt + "}");
+                log.error("JWT validation failed for token: {" + jwt + "}");
                 response.sendRedirect(ssoRedirectUrl);
                 return;
             }
         } catch (ParseException e) {
-            logger.error("Parsing JWT token failed");
+            log.error("Parsing JWT token failed");
         } catch (JOSEException e) {
-            logger.error("Verification of jwt failed");
+            log.error("Verification of jwt failed");
         } catch (Exception e) {
-            logger.error("Failed to validate the jwt {" + jwt + "}");
+            log.error("Failed to validate the jwt {" + jwt + "}");
         }
 
         if (username != null && roles != null) {
@@ -132,11 +131,11 @@ public class JWTAction implements Filter {
         try {
             filterChain.doFilter(servletRequest, servletResponse);
         } catch (ServletException e) {
-            logger.error("Failed to pass the request, response objects through filters", e);
+            log.error("Failed to pass the request, response objects through filters", e);
         }
     }
 
     public void destroy() {
-
+        // Do nothing
     }
 }

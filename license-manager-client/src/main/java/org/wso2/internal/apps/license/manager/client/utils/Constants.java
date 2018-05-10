@@ -28,10 +28,12 @@ public class Constants {
     public static final String BACKEND_URL = "backend_url";
     public static final String BACKEND_USERNAME = "backend_username";
     public static final String BACKEND_PASSWORD = "backend_password";
-    public static final String KEYSTORE_FILE_NAME= "sso_keystore_file_name";
+    public static final String KEYSTORE_FILE_NAME = "sso_keystore_file_name";
     public static final String KEYSTORE_PASSWORD = "sso_keystore_password";
     public static final String CERTIFICATE_ALIAS = "sso_certificate_alias";
     public static final String SSO_REDIRECT_URL = "sso_redirect_url";
+    public static final String TRUST_STORE_SERVICE_NAME = "trust_store_service_name";
+    public static final String TRUST_STORE_SERVICE_PASSWORD = "trust_store_service_password";
 
     public static final String DOWNLOAD_ENDPOINT = "/license/textToDownload";
 
