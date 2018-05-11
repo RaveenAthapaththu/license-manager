@@ -124,7 +124,7 @@ public class LicenseFileGenerator {
         file += formatString;
         file += "---------------------------------------------------------------------------------------------------------\n";
         while (rs.next()) {
-            formatString = String.format("%-80s%-15s%-10s%-10s\n",
+            formatString = String.format("%-80s%-15s%-10s\n",
                     rs.getString("COMP_KEY"),
                     rs.getString("COMP_TYPE"),
                     rs.getString("LICENSE_KEY") + "");
