@@ -34,20 +34,16 @@ import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 
 /**
  * Contains the functions required for the License Generation process.
@@ -125,7 +121,7 @@ public class LicenseManagerUtils {
      * @return JarHolder contains the details of jars.
      * @throws LicenseManagerRuntimeException if the jar extraction fails.
      */
-    public static JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
+    private static JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
 
         if (StringUtils.isEmpty(file) || !new File(file).exists() || !new File(file).isDirectory()) {
             throw new LicenseManagerRuntimeException("Folder is not found in the location");
@@ -133,26 +129,6 @@ public class LicenseManagerUtils {
         JarHolder jh = new JarHolder();
         jh.extractJarsRecursively(file);
         return jh;
-    }
-
-    /**
-     * Check whether there are jars existing inside a jar.
-     *
-     * @param filePath file location of the jar.
-     * @return true/false whether inner jars exists or not.
-     * @throws IOException if check failed.
-     */
-    public static boolean checkInnerJars(String filePath) throws IOException {
-
-        boolean containsJars = false;
-        ZipInputStream zip = new ZipInputStream(new FileInputStream(filePath));
-        for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
-            if (entry.getName().endsWith(".jar") || entry.getName().endsWith(".mar")) {
-                containsJars = true;
-                break;
-            }
-        }
-        return containsJars;
     }
 
     /**
@@ -174,14 +150,10 @@ public class LicenseManagerUtils {
             public void run() {
 
                 String ftpHost = SystemVariableUtil.getValue(Constants.FTP_HOST, null);
-                int ftpPort = Integer.valueOf(SystemVariableUtil.getValue(Constants.FTP_PORT, null));
-                String ftpUsername = SystemVariableUtil.getValue(Constants.FTP_USERNAME, null);
-                String ftpPassword = SystemVariableUtil.getValue(Constants.FTP_PASSWORD, null);
                 String ftpFilePath = SystemVariableUtil.getValue(Constants.FTP_FILE_LOCATION, null);
 
                 Session session = null;
                 ChannelSftp sftpChannel = null;
-                JSch jsch = new JSch();
 
                 try {
                     if (log.isDebugEnabled()) {
@@ -190,11 +162,7 @@ public class LicenseManagerUtils {
                     taskProgress.setMessage("Downloading the pack");
 
                     // Initiate SFTP connection.
-                    session = jsch.getSession(ftpUsername, ftpHost, ftpPort);
-                    Hashtable<String, String> config = new Hashtable<>();
-                    config.put("StrictHostKeyChecking", "no");
-                    session.setConfig(config);
-                    session.setPassword(ftpPassword);
+                    session = createSftpSession();
                     session.connect();
                     sftpChannel = (ChannelSftp) session.openChannel("sftp");
                     sftpChannel.connect();
@@ -219,7 +187,6 @@ public class LicenseManagerUtils {
                     if (log.isDebugEnabled()) {
                         log.debug("The file " + packName + " is successfully unzipped to location " + pathToStorage);
                         log.debug("Start extracting jars from " + packName.substring(0, packName.lastIndexOf('.')));
-
                     }
 
                     // Extract jars from the pack.
@@ -257,21 +224,88 @@ public class LicenseManagerUtils {
         return taskProgress;
     }
 
-    public static List<Jar> removeDuplicates(List<Jar> nameMissingJars){
+    /**
+     * Remove the duplicates in the name missing jars.
+     *
+     * @param nameMissingJars list of jars in which the names and version are missing
+     * @return unique list of jars with name missing.
+     */
+    public static List<Jar> removeDuplicates(List<Jar> nameMissingJars) {
+
         List<Jar> nameMissingUniqueJars = new ArrayList<>();
         for (Jar jar : nameMissingJars) {
             boolean newJar = true;
-            for(Jar uniqueJar : nameMissingUniqueJars){
-                if(jar.getProjectName().equals(uniqueJar.getProjectName())){
+            for (Jar uniqueJar : nameMissingUniqueJars) {
+                if (jar.getProjectName().equals(uniqueJar.getProjectName())) {
                     newJar = false;
                 }
             }
-            if(newJar){
+            if (newJar) {
                 nameMissingUniqueJars.add(jar);
             }
         }
-//        Set<Jar> set = new HashSet<>(nameMissingJars);
         return nameMissingUniqueJars;
+    }
+
+    /**
+     * Remove files from local file storage and FTP server after generating the license text.
+     *
+     * @param fileName product name for which the licenses were generated
+     */
+    public static void cleanFileStorage(String fileName) {
+
+        LicenseManagerUtils.deleteFolder(fileName + ".zip");
+        LicenseManagerUtils.deleteFolder(fileName);
+        String ftpFilePath = SystemVariableUtil.getValue(Constants.FTP_FILE_LOCATION, null);
+
+        Session session = null;
+        ChannelSftp sftpChannel = null;
+        try {
+            session = createSftpSession();
+            session.connect();
+            sftpChannel = (ChannelSftp) session.openChannel("sftp");
+            sftpChannel.connect();
+
+            // Remove the pack from
+            sftpChannel.rm(ftpFilePath + fileName + ".zip");
+            if (log.isDebugEnabled()) {
+                log.debug("The file " + fileName + ".zip" + " is removed from the FTP server");
+            }
+        } catch (JSchException | SftpException e) {
+            log.error("Failed to remove the zip file from the FTP server. " + e.getMessage(), e);
+        } finally {
+            // Close the connections.
+            if (session != null) {
+                session.disconnect();
+            }
+            if (sftpChannel != null) {
+                sftpChannel.exit();
+            }
+        }
+    }
+
+    /**
+     * Initiates a session to communicate with FTP server.
+     *
+     * @return SFTP session
+     * @throws JSchException if the initiation fails.
+     */
+    private static Session createSftpSession() throws JSchException {
+
+        String ftpHost = SystemVariableUtil.getValue(Constants.FTP_HOST, null);
+        int ftpPort = Integer.valueOf(SystemVariableUtil.getValue(Constants.FTP_PORT, null));
+        String ftpUsername = SystemVariableUtil.getValue(Constants.FTP_USERNAME, null);
+        String ftpPassword = SystemVariableUtil.getValue(Constants.FTP_PASSWORD, null);
+        JSch jsch = new JSch();
+
+        // Initiate SFTP connection.
+        Session session = jsch.getSession(ftpUsername, ftpHost, ftpPort);
+        Hashtable<String, String> config = new Hashtable<>();
+        config.put("StrictHostKeyChecking", "no");
+        session.setConfig(config);
+        session.setPassword(ftpPassword);
+        session.connect();
+        return session;
     }
 
 }
