@@ -22,18 +22,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
-import com.workingdogs.village.DataSetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.models.Jar;
 import org.wso2.internal.apps.license.manager.impl.JarHolder;
 import org.wso2.internal.apps.license.manager.impl.LicenseFileGenerator;
 import org.wso2.internal.apps.license.manager.impl.ProductJarManager;
+import org.wso2.internal.apps.license.manager.models.Jar;
 import org.wso2.internal.apps.license.manager.models.LicenseMissingJar;
 import org.wso2.internal.apps.license.manager.models.NewLicenseEntry;
 import org.wso2.internal.apps.license.manager.models.SessionObjectHolder;
@@ -50,9 +46,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.mail.MessagingException;
 import javax.ws.rs.Consumes;
@@ -76,7 +70,8 @@ public class MainService {
 
     /**
      * Returns the list of available set of licenses in the database.
-     * @param request   Http request.
+     *
+     * @param request Http request.
      * @return response with licenses.
      */
     @GET
@@ -92,7 +87,7 @@ public class MainService {
             responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", jsonArray);
-        } catch (SQLException | ClassNotFoundException | DataSetException e) {
+        } catch (SQLException | ClassNotFoundException e) {
 
             responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", "Failed to retrieve data from the database");
@@ -122,38 +117,13 @@ public class MainService {
     @Produces(MediaType.APPLICATION_JSON)
     public Response listUploadedPacks() {
 
-        String ftpHost = SystemVariableUtil.getValue(Constants.FTP_HOST, null);
-        int ftpPort = Integer.valueOf(SystemVariableUtil.getValue(Constants.FTP_PORT, null));
-        String ftpUsername = SystemVariableUtil.getValue(Constants.FTP_USERNAME, null);
-        String ftpPassword = SystemVariableUtil.getValue(Constants.FTP_PASSWORD, null);
-        String ftpFilePath = SystemVariableUtil.getValue(Constants.FTP_FILE_LOCATION, null);
-
-        ArrayList<String> listOfPacks = new ArrayList<>();
-        Session session = null;
-        ChannelSftp sftpChannel = null;
+        ArrayList<String> listOfPacks;
         JsonObject responseJson = new JsonObject();
         JsonArray responseData = new JsonArray();
-        JSch jsch = new JSch();
 
         try {
-            // Initiate the SFTP connection with the server.
-            session = jsch.getSession(ftpUsername, ftpHost, ftpPort);
-            Hashtable<String, String> config = new Hashtable<>();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-            session.setPassword(ftpPassword);
-            session.connect();
-            sftpChannel = (ChannelSftp) session.openChannel("sftp");
-            sftpChannel.connect();
-
             // Obtain the list of the available zip files.
-            Vector fileList = sftpChannel.ls(ftpFilePath);
-            for (Object aFileListVector : fileList) {
-                ChannelSftp.LsEntry entry = (ChannelSftp.LsEntry) aFileListVector;
-                if (entry.getFilename().endsWith(".zip")) {
-                    listOfPacks.add(entry.getFilename());
-                }
-            }
+            listOfPacks = LicenseManagerUtils.getListOfPacksName();
             for (String listOfPack : listOfPacks) {
                 JsonObject ob = new JsonObject();
                 ob.addProperty("name", listOfPack);
@@ -167,21 +137,19 @@ public class MainService {
             responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", "Failed to connect with FTP server");
             log.error("Failed to connect with FTP server. " + e.getMessage(), e);
-
-        } finally {
-            // Close the connections.
-            if (session != null) {
-                session.disconnect();
-            }
-            if (sftpChannel != null) {
-                sftpChannel.exit();
-            }
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
                 .build();
     }
 
+    /**
+     * Starts the downloading and extracting the selected pack in a new thread.
+     * @param request Post request
+     * @param username logged user
+     * @param selectedPack selected pack
+     * @return  success/failure of starting thread
+     */
     @POST
     @Path("/pack/jars")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -200,8 +168,14 @@ public class MainService {
                 .build();
     }
 
+    /**
+     * Submit the names and versions of the name missing jars and identifies the license missing jars.
+     * @param request POST request
+     * @param username logged user
+     * @param stringPayload list of jars with new names and version
+     * @return list of jars in which the licenses are missing
+     */
     @POST
-//    @Path("/enterJars")
     @Path("/pack/nameDefinedJars")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -211,8 +185,7 @@ public class MainService {
 
         JsonObject responseJson = new JsonObject();
         JsonParser jsonParser = new JsonParser();
-        // TODO: 4/9/18 default licenseID. retrieve licenses from the database if the jar exists with different version.
-        int licenseId = 1;
+
         try {
             JsonElement jsonElement = jsonParser.parse(stringPayload);
             JsonObject jsonObject = jsonElement.getAsJsonObject();
@@ -272,7 +245,7 @@ public class MainService {
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("component", componentJsonArray);
             responseJson.add("library", libraryJsonArray);
-        } catch (SQLException | ClassNotFoundException | DataSetException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", "Failed to load data");
             log.error("Failed to retrieve data from the database. " + e.getMessage(), e);
@@ -283,6 +256,12 @@ public class MainService {
                 .build();
     }
 
+    /**
+     * Request to generate the license text to previously selected pack.
+     * @param request POST request
+     * @param username logged user
+     * @return success/failure of generating the license text
+     */
     @POST
     @Path("/license/text")
     @Produces(MediaType.APPLICATION_JSON)
@@ -316,8 +295,13 @@ public class MainService {
                 .build();
     }
 
+    /**
+     * Request to download the license text file.
+     * @param request GET request
+     * @param username logged user
+     * @return the license text file
+     */
     @GET
-//    @Path("/downloadLicense")
     @Path("/license/textToDownload")
     public Response getLicenseTextFile(@Context Request request,
                                        @QueryParam("username") String username) {
@@ -331,10 +315,10 @@ public class MainService {
         File file = Paths.get(mountPath, fileName).toFile();
         if (file.exists()) {
 
-            // Delete the folders after generating licenses text.
-            LicenseManagerUtils.deleteFolder(mountPath + productName + "-" + productVersion + ".zip");
-            LicenseManagerUtils.deleteFolder(mountPath + productName + "-" + productVersion);
+            // Clean the storage.
+            LicenseManagerUtils.cleanFileStorage(productName + "-" + productVersion);
             objectHolderMap.remove(username);
+
             return Response.ok(file)
                     .header("Access-Control-Allow-Credentials", true)
                     .build();
@@ -344,8 +328,14 @@ public class MainService {
         }
     }
 
+    /**
+     * Add licenses for the jars which did not have licenses.
+     * @param request POST request
+     * @param username logged user
+     * @param stringPayload licenses for the jar
+     * @return success/failure of adding licenses
+     */
     @POST
-//    @Path("/addLicense")
     @Path("license/newLicenses")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -381,7 +371,7 @@ public class MainService {
                 dbHandler.insertComponent(name, componentName, version);
                 dbHandler.insertProductComponent(componentName, productId);
                 dbHandler.insertComponentLicense(componentName, licenseKey);
-                NewLicenseEntry newEntry = new NewLicenseEntry(componentName, name, version, licenseKey);
+                NewLicenseEntry newEntry = new NewLicenseEntry(componentName, licenseKey);
                 newLicenseEntryComponentList.add(newEntry);
             }
 
@@ -404,13 +394,13 @@ public class MainService {
                     componentKey = parent.getJarFile().getName();
                 }
                 int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
-                dbHandler.insertLibraryLicense(licenseKey, Integer.toString(libId));
+                dbHandler.insertLibraryLicense(licenseKey, libId);
                 if (parent != null && parent.getType().equals(Constants.JAR_TYPE_WSO2)) {
                     dbHandler.insertComponentLibrary(componentKey, libId);
                 } else {
                     dbHandler.insertProductLibrary(libId, productId);
                 }
-                NewLicenseEntry newEntry = new NewLicenseEntry(libraryFileName, name, version, licenseKey);
+                NewLicenseEntry newEntry = new NewLicenseEntry(libraryFileName, licenseKey);
                 newLicenseEntryLibraryList.add(newEntry);
             }
 
@@ -422,7 +412,7 @@ public class MainService {
             responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Done");
 
-        } catch (DataSetException | SQLException | ClassNotFoundException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             responseJson.addProperty("responseType", Constants.ERROR);
             responseJson.addProperty("responseMessage", "Failed to add licenses. " +
                     "Please contact application admin");
@@ -463,42 +453,44 @@ public class MainService {
         TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
         JsonObject responseJson = new JsonObject();
         JsonArray nameMissingJars = new JsonArray();
+        String statusMessage = taskProgress.getMessage();
 
         // Build the response based on the status of the task.
         switch (taskProgress.getStatus()) {
+
             case Constants.COMPLETE:
                 SessionObjectHolder userObjectHolder = new SessionObjectHolder();
                 JarHolder jarHolder = (JarHolder) taskProgress.getData();
                 userObjectHolder.setJarHolder(jarHolder);
                 objectHolderMap.put(username, userObjectHolder);
-                List<Jar> errorJarList = jarHolder.getErrorJarList();
 
+                List<Jar> errorJarList = LicenseManagerUtils.removeDuplicates(jarHolder.getErrorJarList());
                 // Convert the java List to a json object array.
                 for (int i = 0; i < errorJarList.size(); i++) {
                     JsonObject currentJar = new JsonObject();
                     currentJar.addProperty("index", i);
-                    currentJar.addProperty("jarFileName",errorJarList.get(i).getJarFile().getName());
+                    currentJar.addProperty("jarFileName", errorJarList.get(i).getJarFile().getName());
                     currentJar.addProperty("name", errorJarList.get(i).getProjectName());
                     currentJar.addProperty("version", errorJarList.get(i).getVersion());
                     nameMissingJars.add(currentJar);
                 }
                 responseJson.addProperty("responseType", Constants.SUCCESS);
                 responseJson.addProperty("responseStatus", Constants.COMPLETE);
-                responseJson.addProperty("responseMessage", taskProgress.getMessage());
+                responseJson.addProperty("responseMessage", statusMessage);
                 responseJson.add("responseData", nameMissingJars);
-//                ProgressTracker.deleteTaskProgress(username);
+                ProgressTracker.deleteTaskProgress(username);
                 break;
 
             case Constants.RUNNING:
                 responseJson.addProperty("responseType", Constants.SUCCESS);
                 responseJson.addProperty("responseStatus", Constants.RUNNING);
-                responseJson.addProperty("responseMessage", taskProgress.getMessage());
+                responseJson.addProperty("responseMessage", statusMessage);
                 break;
 
             default:
                 responseJson.addProperty("responseType", Constants.ERROR);
                 responseJson.addProperty("responseStatus", Constants.FAILED);
-                responseJson.addProperty("responseMessage", taskProgress.getMessage());
+                responseJson.addProperty("responseMessage", statusMessage);
                 break;
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
