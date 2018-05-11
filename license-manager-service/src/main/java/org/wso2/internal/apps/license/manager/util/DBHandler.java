@@ -19,20 +19,8 @@ package org.wso2.internal.apps.license.manager.util;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.workingdogs.village.DataSetException;
-import com.workingdogs.village.Record;
-import com.workingdogs.village.TableDataSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_LIBRARY;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_LICENSE;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_COMPONENT_PRODUCT;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_LICENSE;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_LIBRARY_PRODUCT;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_LICENSE;
-import org.wso2.internal.apps.license.manager.impl.tables.LM_PRODUCT;
-import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.MicroservicesRunner;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
@@ -87,39 +75,63 @@ public class DBHandler {
         con.close();
     }
 
-    public JsonArray selectAllLicense() throws SQLException, DataSetException {
-
-//        LM_LICENSE licenseTable = new LM_LICENSE();
-        TableDataSet tds;
+    /**
+     * Select all the licenses available from LM_LICENSE table.
+     *
+     * @return json array of licenses
+     * @throws SQLException if the sql execution fails
+     */
+    public JsonArray selectAllLicense() throws SQLException {
 
         JsonArray resultArray = new JsonArray();
-        tds = new TableDataSet(con, LM_LICENSE.table);
-        tds.fetchRecords();
-        for (int i = 0; i < tds.size(); i++) {
-            Record record = tds.getRecord(i);
+        String query = "SELECT * FROM LM_LICENSE";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
             JsonObject licenseJson = new JsonObject();
-            licenseJson.addProperty("LICENSE_ID", record.getValue("LICENSE_ID").asInt());
-            licenseJson.addProperty("LICENSE_KEY", record.getValue("LICENSE_KEY").toString());
-            licenseJson.addProperty("LICENSE_NAME", record.getValue("LICENSE_NAME").toString());
+            licenseJson.addProperty("LICENSE_ID", rs.getInt("LICENSE_ID"));
+            licenseJson.addProperty("LICENSE_KEY", rs.getString("LICENSE_KEY"));
+            licenseJson.addProperty("LICENSE_NAME", rs.getString("LICENSE_NAME"));
             resultArray.add(licenseJson);
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Licenses are retrieved from the LM_LICENSE table.");
         }
         return resultArray;
     }
 
+    /**
+     * Select license of a given id from LM_LICENSE table.
+     *
+     * @param id id of the license
+     * @return json array of licenses
+     * @throws SQLException if the sql execution fails
+     */
     public String selectLicenseFromId(int id) throws SQLException {
 
         String licenseKey = null;
 
-        String query = "SELECT * FROM LM_LICENSE WHERE LICENSE_ID=?";
+        String query = "SELECT LICENSE_KEY FROM LM_LICENSE WHERE LICENSE_ID=?";
         PreparedStatement preparedStatement = con.prepareStatement(query);
         preparedStatement.setInt(1, id);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
             licenseKey = rs.getString("LICENSE_KEY");
         }
+        if (log.isDebugEnabled()) {
+            log.debug("License for the id " + id + "  is retrieved from the LM_LICENSE table.");
+        }
         return licenseKey;
     }
 
+    /**
+     * Check for the existence and insert component into LM_COMPONENT table.
+     *
+     * @param name     name for the component
+     * @param fileName name of the jar file
+     * @param version  version of the component
+     * @throws SQLException if the sql execution fails
+     */
     public void insertComponent(String name, String fileName, String version) throws SQLException {
 
         if (!isComponentExists(fileName)) {
@@ -133,51 +145,83 @@ public class DBHandler {
             preparedStatement.setString(3, fileName);
             preparedStatement.setString(4, "bundle");
             preparedStatement.setString(5, version);
-
             preparedStatement.executeUpdate();
+
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully inserted the component with the key " + name + " into LM_COMPONENT table.");
+            }
         }
     }
 
-    private int insertLibrary(String name, String fileName, String version, String type) throws DataSetException,
-            SQLException {
+    /**
+     * Insert a new library.
+     *
+     * @param name     name for the library
+     * @param fileName name of the jar file
+     * @param version  version of the library
+     * @param type     type of the library
+     * @return id for the inserted library
+     * @throws SQLException if the sql execution fails
+     */
+    private int insertLibrary(String name, String fileName, String version, String type) throws SQLException {
 
-        LM_LIBRARY libTab = new LM_LIBRARY();
-        TableDataSet tds;
-        Record record;
-        tds = new TableDataSet(con, libTab.table);
-        record = tds.addRecord();
-        record.setValue(libTab.LIB_NAME, name)
-                .setValue(libTab.LIB_FILE_NAME, fileName)
-                .setValue(libTab.LIB_TYPE, type)
-                .setValue(libTab.LIB_VERSION, version)
-                .save(con);
-        Statement stmt;
-        stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID();");
-        rs.next();
-        return rs.getInt("LAST_INSERT_ID()");
+        String insertLibrary = "INSERT INTO  LM_LIBRARY"
+                + "(LIB_NAME, LIB_FILE_NAME, LIB_TYPE, LIB_VERSION) VALUES"
+                + "(?,?,?,?)";
+        PreparedStatement preparedStatement;
+        preparedStatement = con.prepareStatement(insertLibrary);
+        preparedStatement.setString(1, name);
+        preparedStatement.setString(2, fileName);
+        preparedStatement.setString(3, type);
+        preparedStatement.setString(4, version);
+        preparedStatement.executeUpdate();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Successfully inserted the component with the key " + name + " into LM_LIBRARY table.");
+        }
+
+        return getLastInsertId(con);
     }
 
-    public void insertProductComponent(String compKey, int productId) throws DataSetException, SQLException {
+    /**
+     * Insert a Product - Component relationship into LM_COMPONENT_PRODUCT table unless already exists.
+     *
+     * @param compKey   primary key for the component
+     * @param productId primary key for the product
+     * @throws SQLException if the sql execution fails
+     */
+    public void insertProductComponent(String compKey, int productId) throws SQLException {
 
-        LM_COMPONENT_PRODUCT compprodtab = new LM_COMPONENT_PRODUCT();
-        TableDataSet tds;
-        Record record;
         if (selectProductComponent(compKey, productId) == -1) {
-            tds = new TableDataSet(con, compprodtab.table);
-            record = tds.addRecord();
-            record.setValue(compprodtab.COMP_KEY, compKey)
-                    .setValue(compprodtab.PRODUCT_ID, productId)
-                    .save();
+
+            String insertLibrary = "INSERT INTO  LM_COMPONENT_PRODUCT (COMP_KEY, PRODUCT_ID) VALUES (?,?)";
+            PreparedStatement preparedStatement;
+            preparedStatement = con.prepareStatement(insertLibrary);
+            preparedStatement.setString(1, compKey);
+            preparedStatement.setInt(2, productId);
+            preparedStatement.executeUpdate();
+
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully inserted the product - component relationship for the product id " + productId +
+                        " and component key " + compKey + " into LM_COMPONENT_PRODUCT table.");
+            }
         }
     }
 
+    /**
+     * Get the id of a product-component relationship from the LM_COMPONENT_TABLE.
+     *
+     * @param compKey   primary key for the component
+     * @param productId primary key for the product
+     * @return id of the entry if exists, -1 if not
+     * @throws SQLException if the sql execution fails
+     */
     private int selectProductComponent(String compKey, int productId) throws SQLException {
 
         int id = -1;
         String query;
 
-        query = "SELECT * FROM LM_COMPONENT_PRODUCT WHERE COMP_KEY=? AND PRODUCT_ID=?";
+        query = "SELECT PRODUCT_ID FROM LM_COMPONENT_PRODUCT WHERE COMP_KEY=? AND PRODUCT_ID=?";
         PreparedStatement preparedStatement = con.prepareStatement(query);
         preparedStatement.setString(1, compKey);
         preparedStatement.setInt(2, productId);
@@ -188,27 +232,43 @@ public class DBHandler {
         return id;
     }
 
-    public void insertProductLibrary(int libId, int productId) throws DataSetException, SQLException {
+    /**
+     * Insert a Product - Library relationship into LM_LIBRARY_PRODUCT table unless already exists.
+     *
+     * @param libId     primary key for the library
+     * @param productId primary key for the product
+     * @throws SQLException if the sql execution fails
+     */
+    public void insertProductLibrary(int libId, int productId) throws SQLException {
 
-        LM_LIBRARY_PRODUCT libprodtab = new LM_LIBRARY_PRODUCT();
-        TableDataSet tds;
         if (selectProductLibrary(libId, productId) == -1) {
-            Record record;
-            tds = new TableDataSet(con, libprodtab.table);
-            record = tds.addRecord();
-            record.setValue(libprodtab.LIB_ID, libId)
-                    .setValue(libprodtab.PRODUCT_ID, productId)
-                    .save();
-        }
+            String insertLibrary = "INSERT INTO  LM_LIBRARY_PRODUCT (LIB_ID, PRODUCT_ID) VALUES (?,?)";
+            PreparedStatement preparedStatement;
+            preparedStatement = con.prepareStatement(insertLibrary);
+            preparedStatement.setInt(1, libId);
+            preparedStatement.setInt(2, productId);
+            preparedStatement.executeUpdate();
 
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully inserted the product - library relationship for the product id " + productId +
+                        " and library id " + libId + " into LM_LIBRARY_PRODUCT table.");
+            }
+        }
     }
 
+    /**
+     * Get the id of a product-library relationship from the LM_LIBRARY_PRODUCT table.
+     *
+     * @param libId     primary key for the library
+     * @param productId primary key for the product
+     * @return id of the entry if exists, -1 if not
+     * @throws SQLException if the sql execution fails
+     */
     private int selectProductLibrary(int libId, int productId) throws SQLException {
 
         int id = -1;
-        String query;
 
-        query = "SELECT * FROM LM_LIBRARY_PRODUCT WHERE LIB_ID=? AND PRODUCT_ID=?";
+        String query = "SELECT LIB_ID FROM LM_LIBRARY_PRODUCT WHERE LIB_ID=? AND PRODUCT_ID=?";
         PreparedStatement preparedStatement = con.prepareStatement(query);
         preparedStatement.setInt(1, libId);
         preparedStatement.setInt(2, productId);
@@ -219,29 +279,45 @@ public class DBHandler {
         return id;
     }
 
-    public void insertComponentLibrary(String component, int libraryId) throws SQLException, DataSetException {
+    /**
+     * Insert a Component - Library relationship into LM_COMPONENT_LIBRARY table unless already exists.
+     *
+     * @param compKey   primary key for the component
+     * @param libraryId primary key for the library
+     * @throws SQLException if the sql execution fails
+     */
+    public void insertComponentLibrary(String compKey, int libraryId) throws SQLException {
 
-        LM_COMPONENT_LIBRARY complibtab = new LM_COMPONENT_LIBRARY();
-        TableDataSet tds;
-        if (selectComponentLibrary(component, libraryId) == -1) {
-            Record record;
-            tds = new TableDataSet(con, complibtab.table);
-            record = tds.addRecord();
-            record.setValue(complibtab.LIB_ID, libraryId)
-                    .setValue(complibtab.COMP_KEY, component)
-                    .save();
+        if (selectComponentLibrary(compKey, libraryId) == -1) {
+            String insertLibrary = "INSERT INTO  LM_COMPONENT_LIBRARY (LIB_ID, COMP_KEY) VALUES (?,?)";
+            PreparedStatement preparedStatement;
+            preparedStatement = con.prepareStatement(insertLibrary);
+            preparedStatement.setInt(1, libraryId);
+            preparedStatement.setString(2, compKey);
+            preparedStatement.executeUpdate();
+
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully inserted the component - library relationship for the component key " +
+                        compKey + " and library id " + libraryId + " into LM_COMPONENT_LIBRARY table.");
+            }
         }
-
     }
 
-    private int selectComponentLibrary(String component, int libraryId) throws SQLException {
+    /**
+     * Get the id of a component-library relationship from LM_COMPONENT_LIBRARY table.
+     *
+     * @param compKey   primary key for the component
+     * @param libraryId primary key for the library
+     * @return id of the entry if exists, -1 if not
+     * @throws SQLException if the sql execution fails
+     */
+    private int selectComponentLibrary(String compKey, int libraryId) throws SQLException {
 
         int id = -1;
-        String query;
-        query = "SELECT * FROM LM_COMPONENT_LIBRARY WHERE LIB_ID=? AND COMP_KEY=?";
+        String query = "SELECT LIB_ID FROM LM_COMPONENT_LIBRARY WHERE LIB_ID=? AND COMP_KEY=?";
         PreparedStatement preparedStatement = con.prepareStatement(query);
         preparedStatement.setInt(1, libraryId);
-        preparedStatement.setString(2, component);
+        preparedStatement.setString(2, compKey);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
             id = rs.getInt("LIB_ID");
@@ -249,37 +325,65 @@ public class DBHandler {
         return id;
     }
 
-    public void insertComponentLicense(String compKey, String licenseKey) throws DataSetException, SQLException {
+    /**
+     * Insert new component- license relationship into the LM_COMPONENT_LICENSE table.
+     *
+     * @param compKey    primary key to the component
+     * @param licenseKey primary key to license
+     * @throws SQLException if sql query execution fails
+     */
+    public void insertComponentLicense(String compKey, String licenseKey) throws SQLException {
 
-        LM_COMPONENT_LICENSE complicTab = new LM_COMPONENT_LICENSE();
-        TableDataSet tds;
-        Record record;
+        String insertQuery = "INSERT INTO  LM_COMPONENT_LICENSE (COMP_KEY, LICENSE_KEY) VALUES (?,?)";
+        PreparedStatement preparedStatement;
+        preparedStatement = con.prepareStatement(insertQuery);
+        preparedStatement.setString(1, compKey);
+        preparedStatement.setString(2, licenseKey);
+        preparedStatement.executeUpdate();
 
-        tds = new TableDataSet(con, complicTab.table);
-        record = tds.addRecord();
-        record.setValue(complicTab.COMP_KEY, compKey).setValue(
-                complicTab.LICENSE_KEY, licenseKey).save();
+        if (log.isDebugEnabled()) {
+            log.debug("Successfully inserted the licenses for the component " + compKey +
+                    " into LM_COMPONENT_LICENSE table.");
+        }
     }
 
-    public void insertLibraryLicense(String licenseKey, String libId) throws DataSetException, SQLException {
+    /**
+     * Insert new library- license relationship into the LM_COMPONENT_LICENSE table.
+     *
+     * @param licenseKey primary key to the license
+     * @param libId      primary key to library
+     * @throws SQLException if the sql execution fails
+     */
+    public void insertLibraryLicense(String licenseKey, int libId) throws SQLException {
 
-        LM_LIBRARY_LICENSE liblicTab = new LM_LIBRARY_LICENSE();
-        TableDataSet tds;
-        Record record;
+        String insertQuery = "INSERT INTO  LM_LIBRARY_LICENSE (LIB_ID, LICENSE_KEY) VALUES (?,?)";
+        PreparedStatement preparedStatement;
+        preparedStatement = con.prepareStatement(insertQuery);
+        preparedStatement.setInt(1, libId);
+        preparedStatement.setString(2, licenseKey);
+        preparedStatement.executeUpdate();
 
-        tds = new TableDataSet(con, liblicTab.table);
-        record = tds.addRecord();
-        record.setValue(liblicTab.LIB_ID, libId)
-                .setValue(liblicTab.LICENSE_KEY, licenseKey)
-                .save();
+        if (log.isDebugEnabled()) {
+            log.debug("Successfully inserted the licenses for the library of id " + libId +
+                    " into LM_LIBRARY_LICENSE table.");
+        }
     }
 
+    /**
+     * Gets the id of an existing library.
+     *
+     * @param name    name of the library
+     * @param version version of the library
+     * @param type    type of the library
+     * @return id
+     * @throws SQLException if the sql execution fails
+     */
     public int selectLibraryId(String name, String version, String type) throws SQLException {
 
         int libraryId = -1;
         String query;
 
-        query = "SELECT * FROM LM_LIBRARY WHERE LIB_NAME=? AND LIB_VERSION=? AND LIB_TYPE=?";
+        query = "SELECT LIB_ID FROM LM_LIBRARY WHERE LIB_NAME=? AND LIB_VERSION=? AND LIB_TYPE=?";
         PreparedStatement preparedStatement = con.prepareStatement(query);
         preparedStatement.setString(1, name);
         preparedStatement.setString(2, version);
@@ -291,8 +395,40 @@ public class DBHandler {
         return libraryId;
     }
 
-    public int getLibraryId(String name, String fileName, String version, String type) throws SQLException,
-            DataSetException {
+    /**
+     * Insert a product entry to the LM_PRODUCT table.
+     *
+     * @param product name of the product.
+     * @param version version of the product.
+     * @return ID of the inserted product.
+     * @throws SQLException if the sql query execution fails
+     */
+    private int insertProduct(String product, String version) throws SQLException {
+
+        String insertProduct = "INSERT INTO LM_PRODUCT (PRODUCT_NAME, PRODUCT_VERSION,) VALUES (?,?)";
+        PreparedStatement preparedStatement;
+        preparedStatement = con.prepareStatement(insertProduct);
+        preparedStatement.setString(1, product);
+        preparedStatement.setString(2, version);
+        preparedStatement.executeUpdate();
+        if (log.isDebugEnabled()) {
+            log.debug("Successfully inserted the product " + product + " into LM_PRODUCT table.");
+        }
+        return getLastInsertId(con);
+
+    }
+
+    /**
+     * Get the id for a given library. If exists, returns the id otherwise insert and returns id.
+     *
+     * @param name     name for the library jar
+     * @param fileName file name of the jar
+     * @param version  version of the library
+     * @param type     type of the library
+     * @return id of the library
+     * @throws SQLException if the sql execution fails
+     */
+    public int getLibraryId(String name, String fileName, String version, String type) throws SQLException {
 
         int libraryId;
         libraryId = selectLibraryId(name, version, type);
@@ -302,28 +438,19 @@ public class DBHandler {
         return libraryId;
     }
 
-    private int insertProduct(String product, String version) throws DataSetException, SQLException {
-
-        LM_PRODUCT prodTab = new LM_PRODUCT();
-        TableDataSet tds;
-        Record record;
-        int productId;
-        tds = new TableDataSet(con, prodTab.table);
-        record = tds.addRecord();
-        record.setValue(prodTab.PRODUCT_NAME, product)
-                .setValue(prodTab.PRODUCT_VERSION, version)
-                .save(con);
-        productId = getLastInsertId(con);
-        return productId;
-
-    }
-
+    /**
+     * Get the product id when the name and the version is given.
+     *
+     * @param product name of the product
+     * @param version version of the product
+     * @return id the product
+     * @throws SQLException if the sql execution fails
+     */
     private int selectProductId(String product, String version) throws SQLException {
 
         int productId = -1;
-        String query;
 
-        query = "SELECT * FROM LM_PRODUCT WHERE PRODUCT_NAME=? AND PRODUCT_VERSION=? ";
+        String query = "SELECT PRODUCT_ID FROM LM_PRODUCT WHERE PRODUCT_NAME=? AND PRODUCT_VERSION=? ";
         PreparedStatement preparedStatement = con.prepareStatement(query);
         preparedStatement.setString(1, product);
         preparedStatement.setString(2, version);
@@ -334,7 +461,15 @@ public class DBHandler {
         return productId;
     }
 
-    public int getProductId(String product, String version) throws SQLException, DataSetException {
+    /**
+     * Get the id for a given product. If exists, returns the id otherwise insert and returns id.
+     *
+     * @param product name for the product
+     * @param version version of the product
+     * @return id of the product
+     * @throws SQLException if the sql execution fails
+     */
+    public int getProductId(String product, String version) throws SQLException {
 
         int productId;
         productId = selectProductId(product, version);
@@ -345,13 +480,19 @@ public class DBHandler {
 
     }
 
-    public boolean isComponentExists(String fileName) throws SQLException {
+    /**
+     * Check the existence of a given component.
+     *
+     * @param compKey primary key for the component
+     * @return true/false based on the existence
+     * @throws SQLException if the sql execution fails
+     */
+    public boolean isComponentExists(String compKey) throws SQLException {
 
-        String query;
         int id = -1;
-        query = "SELECT * FROM LM_COMPONENT WHERE COMP_KEY=?";
+        String query = "SELECT COMP_ID FROM LM_COMPONENT WHERE COMP_KEY=?";
         PreparedStatement preparedStatement = con.prepareStatement(query);
-        preparedStatement.setString(1, fileName);
+        preparedStatement.setString(1, compKey);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
             id = rs.getInt("COMP_ID");
@@ -359,36 +500,60 @@ public class DBHandler {
         return id != -1;
     }
 
-    public boolean isLibraryLicenseExists(int libraryId) throws DataSetException, SQLException {
+    /**
+     * Check whether license exists for a given library from LM_LIBRARY_LICENSE table.
+     *
+     * @param libraryId primary key of the library
+     * @return true of license exists. false otherwise
+     * @throws SQLException if sql execution fails
+     */
+    public boolean isLibraryLicenseExists(int libraryId) throws SQLException {
 
-        LM_LIBRARY_LICENSE libTable = new LM_LIBRARY_LICENSE();
-        TableDataSet tds;
-        boolean isExist;
-        tds = new TableDataSet(con, libTable.table);
-        tds.where(libTable.LIB_ID + "=" + Integer.toString(libraryId));
-        tds.fetchRecords();
-        isExist = (tds.size() != 0);
+        boolean isExist = false;
+        String query = "SELECT LIB_ID FROM LM_LIBRARY_LICENSE WHERE LIB_ID=?";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setInt(1, libraryId);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            isExist = true;
+        }
         return isExist;
     }
 
-    public boolean isComponentLicenseExists(String fileName) throws DataSetException, SQLException {
+    /**
+     * Check whether license exists for a given component from LM_COMPONENT_LICENSE table.
+     *
+     * @param compKey primary key of the component
+     * @return true of license exists. false otherwise
+     * @throws SQLException if sql execution fails
+     */
+    public boolean isComponentLicenseExists(String compKey) throws SQLException {
 
-        LM_COMPONENT_LICENSE compLicenseTable = new LM_COMPONENT_LICENSE();
-        TableDataSet tds;
-        tds = new TableDataSet(con, compLicenseTable.table);
-        tds.where(compLicenseTable.COMP_KEY + "='" + fileName + "'");
-        tds.fetchRecords();
-        return tds.size() != 0;
-
+        boolean isExist = false;
+        String query = "SELECT COMP_KEY FROM LM_COMPONENT_LICENSE WHERE COMP_KEY=?";
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setString(1, compKey);
+        ResultSet rs = preparedStatement.executeQuery();
+        while (rs.next()) {
+            isExist = true;
+        }
+        return isExist;
     }
 
-    public String getComponentLicenseForAnyVersion(String name) throws SQLException {
+    /**
+     * Select licenses for component despite of its version.
+     *
+     * @param compName name of the component
+     * @return license key of any version of the given component
+     * @throws SQLException if sql execution fails
+     */
+    public String getComponentLicenseForAnyVersion(String compName) throws SQLException {
 
-        String query;
         String licenseKey = "NEW";
-        query = "SELECT LICENSE_KEY FROM LM_COMPONENT_LICENSE WHERE COMP_KEY = (SELECT COMP_KEY FROM LM_COMPONENT WHERE COMP_NAME=? LIMIT 1)";
+        String query = "SELECT LICENSE_KEY FROM LM_COMPONENT_LICENSE WHERE COMP_KEY = (SELECT COMP_KEY FROM " +
+                "LM_COMPONENT WHERE COMP_NAME=? LIMIT 1)";
         PreparedStatement preparedStatement = con.prepareStatement(query);
-        preparedStatement.setString(1, name);
+        preparedStatement.setString(1, compName);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
             licenseKey = rs.getString("LICENSE_KEY");
@@ -396,18 +561,24 @@ public class DBHandler {
         return licenseKey;
     }
 
-    public String getLibraryLicenseForAnyVersion(String name) throws SQLException {
+    /**
+     * Select licenses for library despite of its version.
+     *
+     * @param libraryName name of the library
+     * @return license key of any version of the given component
+     * @throws SQLException if sql execution fails
+     */
+    public String getLibraryLicenseForAnyVersion(String libraryName) throws SQLException {
 
-        String query;
         String licenseKey = "NEW";
-        query = "SELECT LICENSE_KEY FROM LM_LIBRARY_LICENSE WHERE LIB_ID = (SELECT LIB_ID FROM LM_LIBRARY WHERE LIB_NAME=? LIMIT 1)";
+        String query = "SELECT LICENSE_KEY FROM LM_LIBRARY_LICENSE WHERE LIB_ID = (SELECT LIB_ID FROM LM_LIBRARY " +
+                "WHERE LIB_NAME=? LIMIT 1)";
         PreparedStatement preparedStatement = con.prepareStatement(query);
-        preparedStatement.setString(1, name);
+        preparedStatement.setString(1, libraryName);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
             licenseKey = rs.getString("LICENSE_KEY");
         }
         return licenseKey;
     }
-
 }
