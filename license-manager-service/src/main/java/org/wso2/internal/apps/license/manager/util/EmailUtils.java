@@ -129,14 +129,10 @@ public class EmailUtils {
                             "<table>\n" +
                             "  <tr>\n" +
                             "    <th>File Name</th>\n" +
-                            "    <th>Name</th>\n" +
-                            "    <th>Version</th>\n" +
                             "    <th>License</th>\n" +
                             "  </tr>\n";
             for (int i = 0; i < entries.size(); i++) {
-                String name = entries.get(i).getName();
                 String fileName = entries.get(i).getFileName();
-                String version = entries.get(i).getVersion();
                 String license = entries.get(i).getLicenseKey();
                 Boolean isEven = i % 2 == 0;
 
@@ -147,8 +143,6 @@ public class EmailUtils {
                 }
                 tableBody = tableBody +
                         "<td>" + fileName + "</td>\n" +
-                        "<td>" + name + "</td>\n" +
-                        "<td>" + version + "</td>\n" +
                         "<td>" + license + "</td>\n" +
                         "</tr>";
             }
