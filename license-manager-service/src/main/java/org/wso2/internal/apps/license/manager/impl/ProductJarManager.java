@@ -21,7 +21,6 @@ package org.wso2.internal.apps.license.manager.impl;
 import com.workingdogs.village.DataSetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.impl.JarHolder;
 import org.wso2.internal.apps.license.manager.models.Jar;
 import org.wso2.internal.apps.license.manager.models.LicenseMissingJar;
 import org.wso2.internal.apps.license.manager.util.Constants;
@@ -79,7 +78,7 @@ public class ProductJarManager {
         }
     }
 
-    private void insert(Jar mj) throws DataSetException, SQLException {
+    private void insert(Jar mj) throws SQLException {
 
         String version = mj.getVersion();
         String name = mj.getProjectName();
@@ -87,10 +86,10 @@ public class ProductJarManager {
         String type = mj.getType();
         if (type.equals(Constants.JAR_TYPE_WSO2)) {
             if (!dbHandler.isComponentExists(fileName)) {
-                String licenseForAnyVersion = dbHandler.getComponetLicenseForAnyVersion(name);
+                String licenseForAnyVersion = dbHandler.getComponentLicenseForAnyVersion(name);
                 licenseMissingComponents.add(new LicenseMissingJar(mj, licenseForAnyVersion));
             } else if (dbHandler.isComponentExists(fileName) && !dbHandler.isComponentLicenseExists(fileName)) {
-                String licenseForAnyVersion = dbHandler.getComponetLicenseForAnyVersion(name);
+                String licenseForAnyVersion = dbHandler.getComponentLicenseForAnyVersion(name);
                 licenseMissingComponents.add(new LicenseMissingJar(mj, licenseForAnyVersion));
             } else {
                 dbHandler.insertProductComponent(fileName, productId);
