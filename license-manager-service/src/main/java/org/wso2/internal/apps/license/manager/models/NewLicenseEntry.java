@@ -21,16 +21,13 @@ package org.wso2.internal.apps.license.manager.models;
  * Java object to contain the details of new entry of licenses for components/libraries.
  */
 public class NewLicenseEntry {
+
     private String fileName;
-    private String name;
-    private String version;
     private String licenseKey;
 
-    public NewLicenseEntry(String fileName, String name, String version, String licenseKey) {
+    public NewLicenseEntry(String fileName, String licenseKey) {
 
         this.fileName = fileName;
-        this.name = name;
-        this.version = version;
         this.licenseKey = licenseKey;
     }
 
@@ -44,26 +41,6 @@ public class NewLicenseEntry {
         this.fileName = fileName;
     }
 
-    public String getName() {
-
-        return name;
-    }
-
-    public void setName(String name) {
-
-        this.name = name;
-    }
-
-    public String getVersion() {
-
-        return version;
-    }
-
-    public void setVersion(String version) {
-
-        this.version = version;
-    }
-
     public String getLicenseKey() {
 
         return licenseKey;
@@ -73,4 +50,5 @@ public class NewLicenseEntry {
 
         this.licenseKey = licenseKey;
     }
+
 }
