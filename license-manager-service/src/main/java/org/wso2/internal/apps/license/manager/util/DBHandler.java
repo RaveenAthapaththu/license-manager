@@ -37,7 +37,7 @@ import java.sql.Statement;
 public class DBHandler {
 
     private static final Logger log = LoggerFactory.getLogger(MicroservicesRunner.class);
-    private Connection con;
+    private Connection connection;
 
     public DBHandler() throws ClassNotFoundException, SQLException {
 
@@ -46,7 +46,7 @@ public class DBHandler {
         String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
         String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
         Class.forName(databaseDriver);
-        con = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
+        connection = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
 
     }
 
@@ -72,7 +72,7 @@ public class DBHandler {
 
     public void closeConnection() throws SQLException {
 
-        con.close();
+        connection.close();
     }
 
     /**
@@ -85,7 +85,7 @@ public class DBHandler {
 
         JsonArray resultArray = new JsonArray();
         String query = "SELECT * FROM LM_LICENSE";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
             JsonObject licenseJson = new JsonObject();
@@ -112,7 +112,7 @@ public class DBHandler {
         String licenseKey = null;
 
         String query = "SELECT LICENSE_KEY FROM LM_LICENSE WHERE LICENSE_ID=?";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setInt(1, id);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
@@ -139,7 +139,7 @@ public class DBHandler {
                     + "(COMP_NAME, COMP_FILE_NAME, COMP_KEY, COMP_TYPE,COMP_VERSION) VALUES"
                     + "(?,?,?,?,?)";
             PreparedStatement preparedStatement;
-            preparedStatement = con.prepareStatement(insertComponent);
+            preparedStatement = connection.prepareStatement(insertComponent);
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, fileName);
             preparedStatement.setString(3, fileName);
@@ -169,7 +169,7 @@ public class DBHandler {
                 + "(LIB_NAME, LIB_FILE_NAME, LIB_TYPE, LIB_VERSION) VALUES"
                 + "(?,?,?,?)";
         PreparedStatement preparedStatement;
-        preparedStatement = con.prepareStatement(insertLibrary);
+        preparedStatement = connection.prepareStatement(insertLibrary);
         preparedStatement.setString(1, name);
         preparedStatement.setString(2, fileName);
         preparedStatement.setString(3, type);
@@ -180,7 +180,7 @@ public class DBHandler {
             log.debug("Successfully inserted the component with the key " + name + " into LM_LIBRARY table.");
         }
 
-        return getLastInsertId(con);
+        return getLastInsertId(connection);
     }
 
     /**
@@ -196,7 +196,7 @@ public class DBHandler {
 
             String insertLibrary = "INSERT INTO  LM_COMPONENT_PRODUCT (COMP_KEY, PRODUCT_ID) VALUES (?,?)";
             PreparedStatement preparedStatement;
-            preparedStatement = con.prepareStatement(insertLibrary);
+            preparedStatement = connection.prepareStatement(insertLibrary);
             preparedStatement.setString(1, compKey);
             preparedStatement.setInt(2, productId);
             preparedStatement.executeUpdate();
@@ -222,7 +222,7 @@ public class DBHandler {
         String query;
 
         query = "SELECT PRODUCT_ID FROM LM_COMPONENT_PRODUCT WHERE COMP_KEY=? AND PRODUCT_ID=?";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, compKey);
         preparedStatement.setInt(2, productId);
         ResultSet rs = preparedStatement.executeQuery();
@@ -244,7 +244,7 @@ public class DBHandler {
         if (selectProductLibrary(libId, productId) == -1) {
             String insertLibrary = "INSERT INTO  LM_LIBRARY_PRODUCT (LIB_ID, PRODUCT_ID) VALUES (?,?)";
             PreparedStatement preparedStatement;
-            preparedStatement = con.prepareStatement(insertLibrary);
+            preparedStatement = connection.prepareStatement(insertLibrary);
             preparedStatement.setInt(1, libId);
             preparedStatement.setInt(2, productId);
             preparedStatement.executeUpdate();
@@ -269,7 +269,7 @@ public class DBHandler {
         int id = -1;
 
         String query = "SELECT LIB_ID FROM LM_LIBRARY_PRODUCT WHERE LIB_ID=? AND PRODUCT_ID=?";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setInt(1, libId);
         preparedStatement.setInt(2, productId);
         ResultSet rs = preparedStatement.executeQuery();
@@ -291,7 +291,7 @@ public class DBHandler {
         if (selectComponentLibrary(compKey, libraryId) == -1) {
             String insertLibrary = "INSERT INTO  LM_COMPONENT_LIBRARY (LIB_ID, COMP_KEY) VALUES (?,?)";
             PreparedStatement preparedStatement;
-            preparedStatement = con.prepareStatement(insertLibrary);
+            preparedStatement = connection.prepareStatement(insertLibrary);
             preparedStatement.setInt(1, libraryId);
             preparedStatement.setString(2, compKey);
             preparedStatement.executeUpdate();
@@ -315,7 +315,7 @@ public class DBHandler {
 
         int id = -1;
         String query = "SELECT LIB_ID FROM LM_COMPONENT_LIBRARY WHERE LIB_ID=? AND COMP_KEY=?";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setInt(1, libraryId);
         preparedStatement.setString(2, compKey);
         ResultSet rs = preparedStatement.executeQuery();
@@ -336,7 +336,7 @@ public class DBHandler {
 
         String insertQuery = "INSERT INTO  LM_COMPONENT_LICENSE (COMP_KEY, LICENSE_KEY) VALUES (?,?)";
         PreparedStatement preparedStatement;
-        preparedStatement = con.prepareStatement(insertQuery);
+        preparedStatement = connection.prepareStatement(insertQuery);
         preparedStatement.setString(1, compKey);
         preparedStatement.setString(2, licenseKey);
         preparedStatement.executeUpdate();
@@ -358,7 +358,7 @@ public class DBHandler {
 
         String insertQuery = "INSERT INTO  LM_LIBRARY_LICENSE (LIB_ID, LICENSE_KEY) VALUES (?,?)";
         PreparedStatement preparedStatement;
-        preparedStatement = con.prepareStatement(insertQuery);
+        preparedStatement = connection.prepareStatement(insertQuery);
         preparedStatement.setInt(1, libId);
         preparedStatement.setString(2, licenseKey);
         preparedStatement.executeUpdate();
@@ -384,7 +384,7 @@ public class DBHandler {
         String query;
 
         query = "SELECT LIB_ID FROM LM_LIBRARY WHERE LIB_NAME=? AND LIB_VERSION=? AND LIB_TYPE=?";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, name);
         preparedStatement.setString(2, version);
         preparedStatement.setString(3, type);
@@ -403,18 +403,18 @@ public class DBHandler {
      * @return ID of the inserted product.
      * @throws SQLException if the sql query execution fails
      */
-    private int insertProduct(String product, String version) throws SQLException {
+    public int insertProduct(String product, String version) throws SQLException {
 
-        String insertProduct = "INSERT INTO LM_PRODUCT (PRODUCT_NAME, PRODUCT_VERSION,) VALUES (?,?)";
+        String insertProduct = "INSERT INTO LM_PRODUCT (PRODUCT_NAME, PRODUCT_VERSION) VALUES (?,?)";
         PreparedStatement preparedStatement;
-        preparedStatement = con.prepareStatement(insertProduct);
+        preparedStatement = connection.prepareStatement(insertProduct);
         preparedStatement.setString(1, product);
         preparedStatement.setString(2, version);
         preparedStatement.executeUpdate();
         if (log.isDebugEnabled()) {
             log.debug("Successfully inserted the product " + product + " into LM_PRODUCT table.");
         }
-        return getLastInsertId(con);
+        return getLastInsertId(connection);
 
     }
 
@@ -451,7 +451,7 @@ public class DBHandler {
         int productId = -1;
 
         String query = "SELECT PRODUCT_ID FROM LM_PRODUCT WHERE PRODUCT_NAME=? AND PRODUCT_VERSION=? ";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, product);
         preparedStatement.setString(2, version);
         ResultSet rs = preparedStatement.executeQuery();
@@ -491,7 +491,7 @@ public class DBHandler {
 
         int id = -1;
         String query = "SELECT COMP_ID FROM LM_COMPONENT WHERE COMP_KEY=?";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, compKey);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
@@ -511,7 +511,7 @@ public class DBHandler {
 
         boolean isExist = false;
         String query = "SELECT LIB_ID FROM LM_LIBRARY_LICENSE WHERE LIB_ID=?";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setInt(1, libraryId);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
@@ -531,7 +531,7 @@ public class DBHandler {
 
         boolean isExist = false;
         String query = "SELECT COMP_KEY FROM LM_COMPONENT_LICENSE WHERE COMP_KEY=?";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, compKey);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
@@ -552,7 +552,7 @@ public class DBHandler {
         String licenseKey = "NEW";
         String query = "SELECT LICENSE_KEY FROM LM_COMPONENT_LICENSE WHERE COMP_KEY = (SELECT COMP_KEY FROM " +
                 "LM_COMPONENT WHERE COMP_NAME=? LIMIT 1)";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, compName);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
@@ -573,7 +573,7 @@ public class DBHandler {
         String licenseKey = "NEW";
         String query = "SELECT LICENSE_KEY FROM LM_LIBRARY_LICENSE WHERE LIB_ID = (SELECT LIB_ID FROM LM_LIBRARY " +
                 "WHERE LIB_NAME=? LIMIT 1)";
-        PreparedStatement preparedStatement = con.prepareStatement(query);
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, libraryName);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {

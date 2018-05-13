@@ -20,6 +20,8 @@ package org.wso2.internal.apps.license.manager.util;
 import org.wso2.internal.apps.license.manager.models.NewLicenseEntry;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import javax.mail.Authenticator;
@@ -44,7 +46,8 @@ public class EmailUtils {
      * @param libraries  the newly added libraries.
      * @throws MessagingException if the email couldn't be sent throws the exception.
      */
-    public static void sendEmail(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry> libraries)
+    public static void sendEmail(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry> libraries,
+                                 boolean isComplete)
             throws MessagingException {
 
         Properties props = new Properties();
@@ -65,8 +68,10 @@ public class EmailUtils {
                         return new PasswordAuthentication(username, password);
                     }
                 });
-
-        String body = createHtmlBody(addedBy, components, libraries);
+        ArrayList<NewLicenseEntry> entriesWithGpl = new ArrayList<>();
+        checkForGpl(components, entriesWithGpl);
+        checkForGpl(libraries, entriesWithGpl);
+        String body = createHtmlBody(addedBy, components, libraries, entriesWithGpl, isComplete);
         Message message = new MimeMessage(session);
         message.setFrom(new InternetAddress(username));
         InternetAddress[] adminEmails = InternetAddress.parse(adminEmailsAsString, true);
@@ -85,39 +90,58 @@ public class EmailUtils {
      * @param libraries  the newly added libraries.
      * @return html body as a string
      */
-    private static String createHtmlBody(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry> libraries) {
+    private static String createHtmlBody(String addedBy, List<NewLicenseEntry> components,
+                                         List<NewLicenseEntry> libraries, List<NewLicenseEntry> entriesWithGpl,
+                                         boolean isComplete) {
 
         String finalHtml;
+        String heading = createHeading(addedBy, isComplete);
+        String gplLicenses = "NOTE: GPL licenses were added to following jars.";
+        String htmlGplLicenses = createTableBody(entriesWithGpl, gplLicenses);
         String htmlComponents = createTableBody(components, "Components");
         String htmlLibraries = createTableBody(libraries, "Libraries");
 
-        finalHtml = "\n \n Following new licenses were added by " + addedBy + "." +
-                "<html>\n" +
-                "<head>\n" +
-                "<style>\n" +
-                "table {\n" +
-                "    font-family: arial, sans-serif;\n" +
-                "    border-collapse: collapse;\n" +
-                "    width: 100%;\n" +
-                "}\n" +
-                "\n" +
-                "td, th {\n" +
-                "    border: 1px solid #c6c6c6;\n" +
-                "    text-align: left;\n" +
-                "    padding: 8px;\n" +
-                "}\n" +
-                "\n" +
-                "</style>\n" +
-                "</head>\n" +
-                "<body>\n" +
-                "\n" +
-                htmlComponents +
-                "\n" +
-                htmlLibraries +
-                "</table>\n" +
-                "</body>\n" +
-                "</html>\n";
+        finalHtml =
+                heading +
+                        "<html>\n" +
+                        "<head>\n" +
+                        "<style>\n" +
+                        "table {\n" +
+                        "    font-family: arial, sans-serif;\n" +
+                        "    border-collapse: collapse;\n" +
+                        "    width: 100%;\n" +
+                        "}\n" +
+                        "\n" +
+                        "td, th {\n" +
+                        "    border: 1px solid #c6c6c6;\n" +
+                        "    text-align: left;\n" +
+                        "    padding: 8px;\n" +
+                        "}\n" +
+                        "\n" +
+                        "</style>\n" +
+                        "</head>\n" +
+                        "<body>\n" +
+                        "\n" +
+                        htmlGplLicenses +
+                        "\n" +
+                        htmlComponents +
+                        "\n" +
+                        htmlLibraries +
+                        "</table>\n" +
+                        "</body>\n" +
+                        "</html>\n";
         return finalHtml;
+    }
+
+    private static String createHeading(String username, Boolean isComplete) {
+
+        String heading = "Following new licenses were added by " + username + ". \n";
+
+        if (!isComplete) {
+            heading = heading+"But the license generation was failed while adding licenses" +
+                    ". ";
+        }
+        return heading;
     }
 
     private static String createTableBody(List<NewLicenseEntry> entries, String heading) {
@@ -136,7 +160,7 @@ public class EmailUtils {
                 String license = entries.get(i).getLicenseKey();
                 Boolean isEven = i % 2 == 0;
 
-                if (isEven || i == 0) {
+                if (isEven) {
                     tableBody = tableBody + "<tr style=\"background-color: #dddddd;\"> \n";
                 } else {
                     tableBody = tableBody + "<tr style=\"background-color: #ffffff;\"> \n";
@@ -149,6 +173,20 @@ public class EmailUtils {
             tableBody += "</table>\n";
         }
         return tableBody;
+    }
+
+    private static void checkForGpl(List<NewLicenseEntry> entries, List<NewLicenseEntry> entriesWithGpl) {
+
+        Iterator<NewLicenseEntry> iterator = entries.iterator();
+
+        while (iterator.hasNext()) {
+            NewLicenseEntry entry = iterator.next();
+            if (entry.getLicenseKey().equals("gpl2") || entry.getLicenseKey().equals("lgpl")) {
+                entriesWithGpl.add(entry);
+                iterator.remove();
+            }
+
+        }
     }
 
 }

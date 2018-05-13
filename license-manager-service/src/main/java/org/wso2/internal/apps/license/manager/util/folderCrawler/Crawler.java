@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Stack;
 
 /**
- * @author pubudu
+ * Crawling through all the folders inside a given folder.
  */
 public class Crawler implements Serializable {
 

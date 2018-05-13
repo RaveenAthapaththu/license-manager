@@ -30,24 +30,24 @@ public class Constants {
 
     // Environment variables for FTP server access.
     public static final String FILE_DOWNLOAD_PATH = "LICENSE_MANAGER_FILE_UPLOAD_PATH";
-    public static final String FTP_HOST = "LICENSE_MANAGER_FTP_HOST";
-    public static final String FTP_PORT = "LICENSE_MANAGER_FTP_PORT";
-    public static final String FTP_USERNAME = "LICENSE_MANAGER_FTP_USERNAME";
-    public static final String FTP_PASSWORD = "LICENSE_MANAGER_FTP_PASSWORD";
-    public static final String FTP_FILE_LOCATION = "LICENSE_MANAGER_FTP_FILE_LOCATION";
+    static final String FTP_HOST = "LICENSE_MANAGER_FTP_HOST";
+    static final String FTP_PORT = "LICENSE_MANAGER_FTP_PORT";
+    static final String FTP_USERNAME = "LICENSE_MANAGER_FTP_USERNAME";
+    static final String FTP_PASSWORD = "LICENSE_MANAGER_FTP_PASSWORD";
+    static final String FTP_FILE_LOCATION = "LICENSE_MANAGER_FTP_FILE_LOCATION";
 
     // Environment variables for sending emails.
-    public static final String EMAIL_USERNAME = "LICENSE_MANAGER_EMAIL_USERNAME";
-    public static final String EMAIL_PASSWORD = "LICENSE_MANAGER_EMAIL_PASSWORD";
-    public static final String LICENSE_MANAGER_ADMINS = "LICENSE_MANAGER_ADMINS";
+    static final String EMAIL_USERNAME = "LICENSE_MANAGER_EMAIL_USERNAME";
+    static final String EMAIL_PASSWORD = "LICENSE_MANAGER_EMAIL_PASSWORD";
+    static final String LICENSE_MANAGER_ADMINS = "LICENSE_MANAGER_ADMINS";
 
     // Environment variables for authentication.
     public static final String LICENSE_MANAGER_APP_USERNAME = "LICENSE_MANAGER_APP_USERNAME";
     public static final String LICENSE_MANAGER_APP_PASSWORD = "LICENSE_MANAGER_APP_PASSWORD";
 
     // Constants related to response
-    public static final String SUCCESS = "Done";
-    public static final String ERROR = "Error";
+    public static final String SUCCESS = "done";
+    public static final String ERROR = "error";
 
     // Constants in extracting licenses.
     public static final String JAR_TYPE_WSO2 = "wso2";
@@ -59,6 +59,14 @@ public class Constants {
     public static final String COMPLETE = "complete";
     public static final String FAILED = "failed";
     public static final String RUNNING = "running";
+
+    // Response json object parameter names;
+    public static final String RESPONSE_TYPE = "responseType";
+    public static final String RESPONSE_MESSAGE = "responseMessage";
+    public static final String RESPONSE_DATA = "responseData";
+    public static final String RESPONSE_STATUS = "responseStatus";
+    public static final String LICENSE_MISSING_COMPONENTS = "component";
+    public static final String LICENSE_MISSING_LIBRARIES = "library";
 
     public Constants() {
         // Do nothing.
