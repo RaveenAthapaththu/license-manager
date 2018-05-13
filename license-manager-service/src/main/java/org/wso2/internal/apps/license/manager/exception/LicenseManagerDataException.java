@@ -16,15 +16,28 @@
  * under the License.
  */
 
-package org.wso2.internal.apps.license.manager.impl.tables;
+package org.wso2.internal.apps.license.manager.exception;
 
-/**
- * @author pubudu
- */
-public class LM_COMPONENT_PRODUCT {
+public class LicenseManagerDataException extends Exception {
 
-    public String table = "LM_COMPONENT_PRODUCT";
-    public String COMP_KEY = "COMP_KEY";
-    public String PRODUCT_ID = "PRODUCT_ID";
+    /**
+     * Constructor with only the message of the exception
+     *
+     * @param message string message about the exception
+     */
+    public LicenseManagerDataException(String message) {
 
+        super(message);
+    }
+
+    /**
+     * Constructor with both message and cause
+     *
+     * @param message String message about caused exception
+     * @param cause   caught exception
+     */
+    public LicenseManagerDataException(String message, Throwable cause) {
+
+        super(message, cause);
+    }
 }

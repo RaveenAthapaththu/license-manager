@@ -22,10 +22,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.SftpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.internal.apps.license.manager.exception.LicenseManagerConfigurationException;
 import org.wso2.internal.apps.license.manager.impl.JarHolder;
 import org.wso2.internal.apps.license.manager.impl.LicenseFileGenerator;
 import org.wso2.internal.apps.license.manager.impl.ProductJarManager;
@@ -37,6 +36,7 @@ import org.wso2.internal.apps.license.manager.models.TaskProgress;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.DBHandler;
 import org.wso2.internal.apps.license.manager.util.EmailUtils;
+import org.wso2.internal.apps.license.manager.util.JsonUtils;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.internal.apps.license.manager.util.ProgressTracker;
 import org.wso2.msf4j.Request;
@@ -59,17 +59,21 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+//todo inculde checkstyles
+
 /**
  * Main Service class which contains all the micro service endpoints.
  */
 @Path("/")
 public class MainService {
 
+// todo change mainservice
+
     private static final Logger log = LoggerFactory.getLogger(MainService.class);
     private ConcurrentHashMap<String, SessionObjectHolder> objectHolderMap = new ConcurrentHashMap<>();
 
     /**
-     * Returns the list of available set of licenses in the database.
+     * Return the list of available set of licenses in the database.
      *
      * @param request Http request.
      * @return response with licenses.
@@ -77,7 +81,7 @@ public class MainService {
     @GET
     @Path("/license/list")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response selectLicenseResource(@Context Request request) {
+    public Response getAllLicenseInformation(@Context Request request) {
 
         JsonObject responseJson = new JsonObject();
         DBHandler dbHandler = null;
@@ -133,10 +137,10 @@ public class MainService {
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("responseData", responseData);
 
-        } catch (JSchException | SftpException e) {
+        } catch (LicenseManagerConfigurationException e) {
             responseJson.addProperty("responseType", Constants.ERROR);
-            responseJson.addProperty("responseMessage", "Failed to connect with FTP server");
-            log.error("Failed to connect with FTP server. " + e.getMessage(), e);
+            responseJson.addProperty("responseMessage", e.getMessage());
+            log.error("Failed to get the list of uploaded pack. " + e.getMessage(), e);
         }
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
@@ -144,11 +148,12 @@ public class MainService {
     }
 
     /**
-     * Starts the downloading and extracting the selected pack in a new thread.
-     * @param request Post request
-     * @param username logged user
+     * Start the downloading and extracting the selected pack in a new thread.
+     *
+     * @param request      Post request
+     * @param username     logged user
      * @param selectedPack selected pack
-     * @return  success/failure of starting thread
+     * @return success/failure of starting thread
      */
     @POST
     @Path("/pack/jars")
@@ -170,8 +175,9 @@ public class MainService {
 
     /**
      * Submit the names and versions of the name missing jars and identifies the license missing jars.
-     * @param request POST request
-     * @param username logged user
+     *
+     * @param request       POST request
+     * @param username      logged user
      * @param stringPayload list of jars with new names and version
      * @return list of jars in which the licenses are missing
      */
@@ -203,44 +209,22 @@ public class MainService {
             // Add name defined jars into the jar list of the jar holder.
             for (Jar jar : jarHolder.getErrorJarList()) {
                 jarHolder.getJarList().add(jar);
-
             }
 
+            // Enter jars to DB
             ProductJarManager productJarManager = new ProductJarManager(jarHolder);
             productJarManager.enterJarsIntoDB();
+
+            // Get the license missing jars ( components and libraries)
             List<LicenseMissingJar> componentList = productJarManager.getLicenseMissingComponents();
             List<LicenseMissingJar> libraryList = productJarManager.getLicenseMissingLibraries();
             objectHolderMap.get(username).setLicenseMissingComponents(componentList);
             objectHolderMap.get(username).setLicenseMissingLibraries(libraryList);
             objectHolderMap.get(username).setProductId(productJarManager.getProductId());
-            JsonArray componentJsonArray = new JsonArray();
-            JsonArray libraryJsonArray = new JsonArray();
+            JsonArray componentJsonArray = JsonUtils.getComponentsListAsJson(componentList);
+            JsonArray libraryJsonArray = JsonUtils.getLibraryListAsJson(libraryList);
 
-            for (int i = 0; i < componentList.size(); i++) {
-                JsonObject component = new JsonObject();
-                component.addProperty("index", i);
-                component.addProperty("name", componentList.get(i).getJar().getProjectName());
-                component.addProperty("version", componentList.get(i).getJar().getVersion());
-                component.addProperty("type", componentList.get(i).getJar().getType());
-                component.addProperty("previousLicense", componentList.get(i).getLicenseKey());
-                component.addProperty("licenseKey", componentList.get(i).getLicenseKey());
-                componentJsonArray.add(component);
-            }
-
-            for (int i = 0; i < libraryList.size(); i++) {
-                JsonObject library = new JsonObject();
-                String libraryType = (libraryList.get(i).getJar().getParent() == null) ?
-                        ((libraryList.get(i).getJar().isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :
-                        Constants.JAR_TYPE_JAR_IN_BUNDLE;
-                library.addProperty("index", i);
-                library.addProperty("name", libraryList.get(i).getJar().getProjectName());
-                library.addProperty("version", libraryList.get(i).getJar().getVersion());
-                library.addProperty("type", libraryType);
-                library.addProperty("previousLicense", libraryList.get(i).getLicenseKey());
-                library.addProperty("licenseKey", libraryList.get(i).getLicenseKey());
-                libraryJsonArray.add(library);
-            }
-
+            // Create the response if success
             responseJson.addProperty("responseType", Constants.SUCCESS);
             responseJson.addProperty("responseMessage", "Done");
             responseJson.add("component", componentJsonArray);
@@ -258,7 +242,8 @@ public class MainService {
 
     /**
      * Request to generate the license text to previously selected pack.
-     * @param request POST request
+     *
+     * @param request  POST request
      * @param username logged user
      * @return success/failure of generating the license text
      */
@@ -297,7 +282,8 @@ public class MainService {
 
     /**
      * Request to download the license text file.
-     * @param request GET request
+     *
+     * @param request  GET request
      * @param username logged user
      * @return the license text file
      */
@@ -330,8 +316,9 @@ public class MainService {
 
     /**
      * Add licenses for the jars which did not have licenses.
-     * @param request POST request
-     * @param username logged user
+     *
+     * @param request       POST request
+     * @param username      logged user
      * @param stringPayload licenses for the jar
      * @return success/failure of adding licenses
      */
@@ -367,7 +354,6 @@ public class MainService {
                 String name = componentsJson.get(i).getAsJsonObject().get("name").getAsString();
                 String version = componentsJson.get(i).getAsJsonObject().get("version").getAsString();
                 String licenseKey = componentsJson.get(i).getAsJsonObject().get("licenseKey").getAsString();
-//                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
                 dbHandler.insertComponent(name, componentName, version);
                 dbHandler.insertProductComponent(componentName, productId);
                 dbHandler.insertComponentLicense(componentName, licenseKey);
@@ -383,23 +369,25 @@ public class MainService {
                 String name = librariesJson.get(i).getAsJsonObject().get("name").getAsString();
                 String version = librariesJson.get(i).getAsJsonObject().get("version").getAsString();
                 String type = librariesJson.get(i).getAsJsonObject().get("type").getAsString();
-//                int licenseId = librariesJson.get(i).getAsJsonObject().get("licenseId").getAsInt();
-//                String licenseKey = dbHandler.selectLicenseFromId(licenseId);
                 String licenseKey = librariesJson.get(i).getAsJsonObject().get("licenseKey").getAsString();
 
                 String libraryFileName = sessionObjectHolder.getLicenseMissingLibraries().get(index).getJar().getJarFile()
                         .getName();
+
                 if (sessionObjectHolder.getLicenseMissingLibraries().get(index).getJar().getParent() != null) {
                     parent = sessionObjectHolder.getLicenseMissingLibraries().get(index).getJar().getParent();
                     componentKey = parent.getJarFile().getName();
                 }
                 int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
                 dbHandler.insertLibraryLicense(licenseKey, libId);
+
+                // If the parent is wso2 insert it as a component-library relationship
                 if (parent != null && parent.getType().equals(Constants.JAR_TYPE_WSO2)) {
                     dbHandler.insertComponentLibrary(componentKey, libId);
                 } else {
                     dbHandler.insertProductLibrary(libId, productId);
                 }
+
                 NewLicenseEntry newEntry = new NewLicenseEntry(libraryFileName, licenseKey);
                 newLicenseEntryLibraryList.add(newEntry);
             }
@@ -452,7 +440,7 @@ public class MainService {
 
         TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
         JsonObject responseJson = new JsonObject();
-        JsonArray nameMissingJars = new JsonArray();
+        JsonArray nameMissingJars;
         String statusMessage = taskProgress.getMessage();
 
         // Build the response based on the status of the task.
@@ -465,15 +453,8 @@ public class MainService {
                 objectHolderMap.put(username, userObjectHolder);
 
                 List<Jar> errorJarList = LicenseManagerUtils.removeDuplicates(jarHolder.getErrorJarList());
-                // Convert the java List to a json object array.
-                for (int i = 0; i < errorJarList.size(); i++) {
-                    JsonObject currentJar = new JsonObject();
-                    currentJar.addProperty("index", i);
-                    currentJar.addProperty("jarFileName", errorJarList.get(i).getJarFile().getName());
-                    currentJar.addProperty("name", errorJarList.get(i).getProjectName());
-                    currentJar.addProperty("version", errorJarList.get(i).getVersion());
-                    nameMissingJars.add(currentJar);
-                }
+                nameMissingJars = JsonUtils.getNameMissingJarsAsJson(errorJarList);
+
                 responseJson.addProperty("responseType", Constants.SUCCESS);
                 responseJson.addProperty("responseStatus", Constants.COMPLETE);
                 responseJson.addProperty("responseMessage", statusMessage);
