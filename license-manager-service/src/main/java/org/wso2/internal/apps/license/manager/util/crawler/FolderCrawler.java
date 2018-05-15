@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.internal.apps.license.manager.util.folderCrawler;
+package org.wso2.internal.apps.license.manager.util.crawler;
 
 import org.op4j.Op;
 import org.wso2.internal.apps.license.manager.util.filters.DirectoryFilter;
@@ -31,7 +31,7 @@ import java.util.Stack;
 /**
  * Crawling through all the folders inside a given folder.
  */
-public class Crawler implements Serializable {
+public class FolderCrawler implements Serializable {
 
     public List<File> find(String path, FileFilter filter) {
 

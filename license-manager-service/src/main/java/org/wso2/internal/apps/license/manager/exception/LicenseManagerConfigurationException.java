@@ -18,7 +18,7 @@
 package org.wso2.internal.apps.license.manager.exception;
 
 /**
- * Exceptions occur during configuring the license manager
+ * Exceptions occur during configuring the license manager services
  */
 public class LicenseManagerConfigurationException extends Exception {
 

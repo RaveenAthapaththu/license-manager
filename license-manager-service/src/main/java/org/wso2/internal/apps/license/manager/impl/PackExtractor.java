@@ -31,6 +31,9 @@ import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.io.File;
 
+/**
+ * Executes the the process of downloading the pack from FTP server and extracting jars.
+ */
 public class PackExtractor {
 
     private static final Logger log = LoggerFactory.getLogger(PackExtractor.class);
@@ -42,7 +45,7 @@ public class PackExtractor {
      * @param packName pack to be extracted.
      * @return TaskProgress
      */
-    public TaskProgress startPackExtractionProcess(String username, String packName) {
+    public TaskProgress startPackExtractionProcess(String username, final String packName) {
 
         final TaskProgress taskProgress = ProgressTracker.createNewTaskProgress(username);
         taskProgress.setMessage("Pack extraction process started");
@@ -80,14 +83,14 @@ public class PackExtractor {
 
                     // Extract jars from the pack.
                     taskProgress.setMessage("Extracting jars");
-                    JarHolder jarHolder = LicenseManagerUtils.checkJars(filePath);
+                    JarFileInformationHolder jarFileInformationHolder = LicenseManagerUtils.checkJars(filePath);
                     if (log.isDebugEnabled()) {
                         log.debug("Jars are successfully extracted from " + packName.substring(0, packName
                                 .lastIndexOf('.')));
                     }
-                    taskProgress.setMessage("Jar extraction complete");
+                    taskProgress.setMessage("JarFile.java extraction complete");
                     taskProgress.setStatus(Constants.COMPLETE);
-                    taskProgress.setData(jarHolder);
+                    taskProgress.setData(jarFileInformationHolder);
                 } catch (LicenseManagerRuntimeException e) {
                     taskProgress.setStatus(Constants.FAILED);
                     taskProgress.setMessage("Failed to extract jars from the pack");

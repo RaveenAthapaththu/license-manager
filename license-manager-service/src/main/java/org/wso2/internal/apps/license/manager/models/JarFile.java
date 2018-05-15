@@ -19,12 +19,11 @@
 package org.wso2.internal.apps.license.manager.models;
 
 import java.io.File;
-import java.io.Serializable;
 
 /**
- * Java object containing jar details.
+ * Java object containing jar file details.
  */
-public class Jar{
+public class JarFile {
 
     private String projectName;
     private String type;
@@ -34,7 +33,7 @@ public class Jar{
     private String description;
     private String url;
     private File jarFile, extractedFolder;
-    private Jar parent;
+    private JarFile parent;
     private boolean isBundle = false;
     private boolean isValidName = false;
 
@@ -78,12 +77,12 @@ public class Jar{
         this.vendor = vendor;
     }
 
-    public Jar getParent() {
+    public JarFile getParent() {
 
         return parent;
     }
 
-    public void setParent(Jar parent) {
+    public void setParent(JarFile parent) {
 
         this.parent = parent;
 

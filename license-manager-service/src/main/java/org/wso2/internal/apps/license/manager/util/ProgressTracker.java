@@ -17,8 +17,6 @@
  */
 package org.wso2.internal.apps.license.manager.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.models.TaskProgress;
 
 import java.util.HashMap;
@@ -32,7 +30,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class ProgressTracker {
 
-    private static final Logger log = LoggerFactory.getLogger(ProgressTracker.class);
     private static final ReadWriteLock progressTrackerLock = new ReentrantReadWriteLock();
     // Stores the TaskProgress object mapped to the username.
     private static Map<String, TaskProgress> taskProgressMap = new HashMap<>();
@@ -76,7 +73,7 @@ public class ProgressTracker {
     /**
      * Delete a task progress being tracked.
      *
-     * @param username    The email of the user who started the task
+     * @param username The email of the user who started the task
      */
     public static void deleteTaskProgress(String username) {
 

@@ -57,8 +57,8 @@ public class EmailUtils {
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.port", "465");
 
-        String username = SystemVariableUtil.getValue(Constants.EMAIL_USERNAME, null);
-        String password = SystemVariableUtil.getValue(Constants.EMAIL_PASSWORD, null);
+        final String username = SystemVariableUtil.getValue(Constants.EMAIL_USERNAME, null);
+        final String password = SystemVariableUtil.getValue(Constants.EMAIL_PASSWORD, null);
         String adminEmailsAsString = SystemVariableUtil.getValue(Constants.LICENSE_MANAGER_ADMINS, null);
 
         Session session = Session.getDefaultInstance(props,
@@ -138,8 +138,7 @@ public class EmailUtils {
         String heading = "Following new licenses were added by " + username + ". \n";
 
         if (!isComplete) {
-            heading = heading+"But the license generation was failed while adding licenses" +
-                    ". ";
+            heading = heading + "But the license generation was failed while adding licenses. ";
         }
         return heading;
     }

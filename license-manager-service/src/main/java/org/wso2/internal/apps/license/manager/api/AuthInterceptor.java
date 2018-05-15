@@ -31,8 +31,9 @@ public class AuthInterceptor extends AbstractBasicAuthSecurityInterceptor {
 
     @Override
     protected boolean authenticate(String username, String password) {
-        String app_username = SystemVariableUtil.getValue(Constants.LICENSE_MANAGER_APP_USERNAME, null);
-        String app_password = SystemVariableUtil.getValue(Constants.LICENSE_MANAGER_APP_PASSWORD, null);
-        return Objects.equals(username, app_username) && Objects.equals(password, app_password);
+
+        String appUsername = SystemVariableUtil.getValue(Constants.LICENSE_MANAGER_APP_USERNAME, null);
+        String appPassword = SystemVariableUtil.getValue(Constants.LICENSE_MANAGER_APP_PASSWORD, null);
+        return Objects.equals(username, appUsername) && Objects.equals(password, appPassword);
     }
 }

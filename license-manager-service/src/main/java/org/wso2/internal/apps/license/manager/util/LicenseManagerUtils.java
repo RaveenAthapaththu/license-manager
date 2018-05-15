@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerConfigurationException;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
-import org.wso2.internal.apps.license.manager.impl.JarHolder;
-import org.wso2.internal.apps.license.manager.models.Jar;
+import org.wso2.internal.apps.license.manager.impl.JarFileInformationHolder;
+import org.wso2.internal.apps.license.manager.models.JarFile;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -108,18 +108,18 @@ public class LicenseManagerUtils {
     }
 
     /**
-     * Recursively check the jars of a pack and creates a new JarHolder object.
+     * Recursively check the jars of a pack and creates a new JarFileInformationHolder object.
      *
      * @param file path to the pack
-     * @return JarHolder contains the details of jars.
+     * @return JarFileInformationHolder contains the details of jars.
      * @throws LicenseManagerRuntimeException if the jar extraction fails.
      */
-    public static JarHolder checkJars(String file) throws LicenseManagerRuntimeException {
+    public static JarFileInformationHolder checkJars(String file) throws LicenseManagerRuntimeException {
 
         if (StringUtils.isEmpty(file) || !new File(file).exists() || !new File(file).isDirectory()) {
             throw new LicenseManagerRuntimeException("Folder is not found in the location");
         }
-        JarHolder jh = new JarHolder();
+        JarFileInformationHolder jh = new JarFileInformationHolder();
         jh.extractJarsRecursively(file);
         return jh;
     }
@@ -127,24 +127,24 @@ public class LicenseManagerUtils {
     /**
      * Remove the duplicates in the name missing jars.
      *
-     * @param nameMissingJars list of jars in which the names and version are missing
+     * @param nameMissingJarFiles list of jars in which the names and version are missing
      * @return unique list of jars with name missing.
      */
-    public static List<Jar> removeDuplicates(List<Jar> nameMissingJars) {
+    public static List<JarFile> removeDuplicates(List<JarFile> nameMissingJarFiles) {
 
-        List<Jar> nameMissingUniqueJars = new ArrayList<>();
-        for (Jar jar : nameMissingJars) {
+        List<JarFile> nameMissingUniqueJarFiles = new ArrayList<>();
+        for (JarFile jarFile : nameMissingJarFiles) {
             boolean newJar = true;
-            for (Jar uniqueJar : nameMissingUniqueJars) {
-                if (jar.getProjectName().equals(uniqueJar.getProjectName())) {
+            for (JarFile uniqueJarFile : nameMissingUniqueJarFiles) {
+                if (jarFile.getProjectName().equals(uniqueJarFile.getProjectName())) {
                     newJar = false;
                 }
             }
             if (newJar) {
-                nameMissingUniqueJars.add(jar);
+                nameMissingUniqueJarFiles.add(jarFile);
             }
         }
-        return nameMissingUniqueJars;
+        return nameMissingUniqueJarFiles;
     }
 
     /**

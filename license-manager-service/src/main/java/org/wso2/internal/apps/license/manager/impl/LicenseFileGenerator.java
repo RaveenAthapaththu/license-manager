@@ -122,7 +122,7 @@ public class LicenseFileGenerator {
 
         String formatString = String.format("%-80s%-15s%-10s\n", "Name", "Type", "License");
         file += formatString;
-        file += "---------------------------------------------------------------------------------------------------------\n";
+        file += "---------------------------------------------------------------------------------------------------\n";
         while (rs.next()) {
             formatString = String.format("%-80s%-15s%-10s\n",
                     rs.getString("COMP_KEY"),
@@ -139,9 +139,9 @@ public class LicenseFileGenerator {
                     ("LICENSE_NAME"), "", rs.getString("LICENSE_URL"));
             file += formatString;
         }
-//            System.out.println(file);
         try {
-            FileWriter fw = new FileWriter(packPath + File.separator + "LICENSE(" + product + "-" + version + ").TXT");
+            FileWriter fw =
+                    new FileWriter(packPath + File.separator + "LICENSE(" + product + "-" + version + ").TXT");
             fw.write(file);
             fw.close();
         } catch (IOException ex) {

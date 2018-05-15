@@ -18,6 +18,9 @@
 
 package org.wso2.internal.apps.license.manager.exception;
 
+/**
+ * Exceptions that might occur while communicating with the database.
+ */
 public class LicenseManagerDataException extends Exception {
 
     /**

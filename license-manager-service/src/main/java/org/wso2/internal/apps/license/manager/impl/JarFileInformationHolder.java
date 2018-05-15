@@ -20,13 +20,11 @@ package org.wso2.internal.apps.license.manager.impl;
 
 import org.apache.commons.lang.StringUtils;
 import org.op4j.Op;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
-import org.wso2.internal.apps.license.manager.util.filters.ZipFilter;
-import org.wso2.internal.apps.license.manager.util.folderCrawler.Crawler;
-import org.wso2.internal.apps.license.manager.models.Jar;
+import org.wso2.internal.apps.license.manager.models.JarFile;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
+import org.wso2.internal.apps.license.manager.util.crawler.FolderCrawler;
+import org.wso2.internal.apps.license.manager.util.filters.ZipFilter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,7 +36,6 @@ import java.util.List;
 import java.util.Stack;
 import java.util.UUID;
 import java.util.jar.Attributes;
-import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -46,140 +43,19 @@ import java.util.zip.ZipInputStream;
 /**
  * Java object to store the jar details of a pack.
  */
-public class JarHolder implements Serializable {
+public class JarFileInformationHolder implements Serializable {
 
-    private static final Logger log = LoggerFactory.getLogger(JarHolder.class);
-    private List<Jar> jarList = new ArrayList<>();
-    private List<Jar> errorJarList = new ArrayList<>();
+    private List<JarFile> jarFileList = new ArrayList<>();
+    private List<JarFile> errorJarFileList = new ArrayList<>();
     private String productName;
     private String productVersion;
-    private Crawler crawler = new Crawler();
-
-    public List<Jar> getJarList() {
-
-        return jarList;
-    }
-
-    public void setJarList(List<Jar> jarList) {
-
-        this.jarList = jarList;
-    }
-
-    public List<Jar> getErrorJarList() {
-
-        return errorJarList;
-    }
-
-    public String getProductName() {
-
-        return productName;
-    }
-
-    public String getProductVersion() {
-
-        return productVersion;
-    }
-
-    /**
-     * Recursively check all the jars in the product.
-     * @param product    path to the pack.
-     * @throws LicenseManagerRuntimeException   If file unzipping or extraction fails.
-     */
-    public void extractJarsRecursively(String product) throws LicenseManagerRuntimeException {
-
-        String targetFolder = new File(product).getName();
-        String uuid = UUID.randomUUID().toString();
-        String tempFolderToHoldJars = new File(product).getParent() + File.separator + uuid;
-        productName = getName(targetFolder);
-        productVersion = getVersion(targetFolder);
-        findDirectJars(product);
-        findAllJars(tempFolderToHoldJars);
-        LicenseManagerUtils.deleteFolder(tempFolderToHoldJars);
-    }
-
-    /**
-     * Obtain the direct jars contained in the pack.
-     * @param path  path to the pack file
-     */
-    private void findDirectJars(String path) {
-
-        ZipFilter zipFilter = new ZipFilter();
-        List<File> directZips = crawler.find(path, zipFilter);
-        Iterator<File> i = directZips.iterator();
-        Jar currentJar;
-
-        while (i.hasNext()) {
-            File jarFile = i.next();
-            currentJar = getJar(jarFile, null);
-            jarList.add(currentJar);
-        }
-    }
-
-    /**
-     * Find all the jars including inner jars which are inside another jar.
-     * @param tempFolderToHoldJars  File path to extract the jars.
-     * @throws LicenseManagerRuntimeException if the jar extraction fails.
-     */
-    private void findAllJars(String tempFolderToHoldJars) throws LicenseManagerRuntimeException {
-
-        new File(tempFolderToHoldJars).mkdir();
-
-        Stack<Jar> zipStack = new Stack<>();
-
-        zipStack.addAll(jarList);
-        jarList = new ArrayList<>();
-        ZipFilter zipFilter = new ZipFilter();
-
-        while (!zipStack.empty()) {
-            Jar jar = zipStack.pop();
-            Jar currentJar;
-
-            File toBeExtracted = jar.getJarFile();
-            if (!tempFolderToHoldJars.endsWith(File.separator)) {
-                tempFolderToHoldJars = tempFolderToHoldJars + File.separator;
-            }
-            File extractTo;
-
-            // Get information from the Manifest file.
-            Manifest manifest;
-            try {
-                manifest = new JarFile(toBeExtracted).getManifest();
-            } catch (IOException e) {
-                throw new LicenseManagerRuntimeException("Failed to get the Manifest of the jar.", e);
-            }
-            if (manifest != null) {
-                currentJar = getJar(jar.getJarFile(), jar.getParent());
-                jar = currentJar;
-//                jar.setExtractedFolder(extractTo);
-                jar.setType(getType(manifest, jar));
-                jar.setIsBundle(getIsBundle(manifest));
-                if (!currentJar.isValidName()) {
-                    errorJarList.add(jar);
-                } else {
-                    jarList.add(jar);
-                }
-            }
-
-            // If a jar contains jars inside, extract the parent jar.
-            if (checkInnerJars(toBeExtracted.getAbsolutePath())) {
-                extractTo = new File(tempFolderToHoldJars + toBeExtracted.getName());
-                extractTo.mkdir();
-                LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extractTo.getAbsolutePath());
-                Iterator<File> i = Op.onArray(extractTo.listFiles(zipFilter)).toList().get().iterator();
-                File nextFile;
-                while (i.hasNext()) {
-                    nextFile = i.next();
-                    zipStack.add(getJar(nextFile, jar));
-                }
-            }
-        }
-    }
+    private FolderCrawler folderCrawler = new FolderCrawler();
 
     /**
      * Extract the name of the jar from the file name.
      *
-     * @param name  file name of the jar
-     * @return  name of the jar
+     * @param name file name of the jar
+     * @return name of the jar
      */
     private static String getName(String name) {
 
@@ -191,7 +67,6 @@ public class JarHolder implements Serializable {
                     | name.charAt(i + 1) == 'r')) {
 
                 extractedName = name.substring(0, i);
-
             }
         }
         return extractedName;
@@ -200,8 +75,8 @@ public class JarHolder implements Serializable {
     /**
      * Extract the version of the jar from the file name.
      *
-     * @param name  file name of the jar
-     * @return  version of the jar
+     * @param name file name of the jar
+     * @return version of the jar
      */
     private static String getVersion(String name) {
 
@@ -220,19 +95,143 @@ public class JarHolder implements Serializable {
         return extractedVersion;
     }
 
+    public List<JarFile> getJarFileList() {
+
+        return jarFileList;
+    }
+
+    public void setJarFileList(List<JarFile> jarFileList) {
+
+        this.jarFileList = jarFileList;
+    }
+
+    public List<JarFile> getErrorJarFileList() {
+
+        return errorJarFileList;
+    }
+
+    public String getProductName() {
+
+        return productName;
+    }
+
+    public String getProductVersion() {
+
+        return productVersion;
+    }
+
     /**
-     * Returns the type of the jar by evaluating the Manifest file.
-     * @param man   Manifest of the jar
-     * @param jar   jar for which the type is needed
-     * @return  type of the jar
+     * Recursively check all the jars in the product.
+     *
+     * @param product path to the pack.
+     * @throws LicenseManagerRuntimeException If file unzipping or extraction fails.
      */
-    private String getType(Manifest man, Jar jar) {
+    public void extractJarsRecursively(String product) throws LicenseManagerRuntimeException {
+
+        String targetFolder = new File(product).getName();
+        String uuid = UUID.randomUUID().toString();
+        String tempFolderToHoldJars = new File(product).getParent() + File.separator + uuid;
+        productName = getName(targetFolder);
+        productVersion = getVersion(targetFolder);
+        findDirectJars(product);
+        findAllJars(tempFolderToHoldJars);
+        LicenseManagerUtils.deleteFolder(tempFolderToHoldJars);
+    }
+
+    /**
+     * Obtain the direct jars contained in the pack.
+     *
+     * @param path path to the pack file
+     */
+    private void findDirectJars(String path) {
+
+        ZipFilter zipFilter = new ZipFilter();
+        List<File> directZips = folderCrawler.find(path, zipFilter);
+        Iterator<File> i = directZips.iterator();
+        JarFile currentJarFile;
+
+        while (i.hasNext()) {
+            File jarFile = i.next();
+            currentJarFile = getJar(jarFile, null);
+            jarFileList.add(currentJarFile);
+        }
+    }
+
+    /**
+     * Find all the jars including inner jars which are inside another jar.
+     *
+     * @param tempFolderToHoldJars File path to extract the jars.
+     * @throws LicenseManagerRuntimeException if the jar extraction fails.
+     */
+    private void findAllJars(String tempFolderToHoldJars) throws LicenseManagerRuntimeException {
+
+        new File(tempFolderToHoldJars).mkdir();
+
+        Stack<JarFile> zipStack = new Stack<>();
+
+        zipStack.addAll(jarFileList);
+        jarFileList = new ArrayList<>();
+        ZipFilter zipFilter = new ZipFilter();
+
+        while (!zipStack.empty()) {
+            JarFile jarFile = zipStack.pop();
+            JarFile currentJarFile;
+
+            File toBeExtracted = jarFile.getJarFile();
+            if (!tempFolderToHoldJars.endsWith(File.separator)) {
+                tempFolderToHoldJars = tempFolderToHoldJars + File.separator;
+            }
+            File extractTo;
+
+            // Get information from the Manifest file.
+            Manifest manifest;
+            try {
+                manifest = new java.util.jar.JarFile(toBeExtracted).getManifest();
+            } catch (IOException e) {
+                throw new LicenseManagerRuntimeException("Failed to get the Manifest of the jarFile.", e);
+            }
+            if (manifest != null) {
+                currentJarFile = getJar(jarFile.getJarFile(), jarFile.getParent());
+                jarFile = currentJarFile;
+//                jarFile.setExtractedFolder(extractTo);
+                jarFile.setType(getType(manifest, jarFile));
+                jarFile.setIsBundle(getIsBundle(manifest));
+                if (!currentJarFile.isValidName()) {
+                    errorJarFileList.add(jarFile);
+                } else {
+                    jarFileList.add(jarFile);
+                }
+            }
+
+            // If a jarFile contains jars inside, extract the parent jarFile.
+            if (checkInnerJars(toBeExtracted.getAbsolutePath())) {
+                extractTo = new File(tempFolderToHoldJars + toBeExtracted.getName());
+                extractTo.mkdir();
+                LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extractTo.getAbsolutePath());
+                Iterator<File> i = Op.onArray(extractTo.listFiles(zipFilter)).toList().get().iterator();
+                File nextFile;
+                while (i.hasNext()) {
+                    nextFile = i.next();
+                    zipStack.add(getJar(nextFile, jarFile));
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the type of the jarFile by evaluating the Manifest file.
+     *
+     * @param man     Manifest of the jarFile
+     * @param jarFile jarFile for which the type is needed
+     * @return type of the jarFile
+     */
+    private String getType(Manifest man, JarFile jarFile) {
 
         Attributes map = man.getMainAttributes();
         String name = map.getValue("Bundle-Name");
         if ((name != null && name.startsWith("org.wso2"))
-                || (jar.getJarFile().getName().startsWith("org.wso2"))
-                || jar.getVersion().contains("wso2")) {
+                || (jarFile.getJarFile().getName().startsWith("org.wso2"))
+                || jarFile.getVersion().contains("wso2")) {
             return "wso2";
         } else {
             return "outside";
@@ -240,15 +239,15 @@ public class JarHolder implements Serializable {
     }
 
     /**
-     * Set the values for the attributes of the Jar object.
+     * Set the values for the attributes of the JarFile.java object.
      *
-     * @param jarFile   jar file to create a Jar object
-     * @param parent    parent jar of the corresponding jar
-     * @return  Jar object
+     * @param jarFile jar file to create a JarFile.java object
+     * @param parent  parent jar of the corresponding jar
+     * @return JarFile.java object
      */
-    private Jar getJar(File jarFile, Jar parent) {
+    private JarFile getJar(File jarFile, JarFile parent) {
 
-        Jar jar = new Jar();
+        JarFile jar = new JarFile();
         String jarName = getName(jarFile.getName());
         String jarVersion = getVersion(jarFile.getName());
 
@@ -283,7 +282,7 @@ public class JarHolder implements Serializable {
     /**
      * Checks whether a jar file contains other jar files inside it.
      *
-     * @param filePath  absolute path to the jar
+     * @param filePath absolute path to the jar
      * @return true/false
      * @throws LicenseManagerRuntimeException if file input stream fails.
      */
@@ -298,13 +297,14 @@ public class JarHolder implements Serializable {
                 }
             }
         } catch (IOException e) {
-            throw new LicenseManagerRuntimeException("Failed to check the inner jars. ",e);
+            throw new LicenseManagerRuntimeException("Failed to check the inner jars. ", e);
         }
         return containsJars;
     }
 
-    private String getDefaultName(String filename){
-        if (filename.endsWith(".jar") || filename.endsWith(".mar")){
+    private String getDefaultName(String filename) {
+
+        if (filename.endsWith(".jar") || filename.endsWith(".mar")) {
             filename = filename.replace(".jar", "");
             filename = filename.replace(".mar", "");
         }

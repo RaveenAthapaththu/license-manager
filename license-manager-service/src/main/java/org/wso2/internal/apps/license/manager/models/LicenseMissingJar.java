@@ -23,23 +23,23 @@ package org.wso2.internal.apps.license.manager.models;
  */
 public class LicenseMissingJar {
 
-    private Jar jar;
+    private JarFile jarFile;
     private String licenseKey;
 
-    public LicenseMissingJar(Jar jar, String licenseKey) {
+    public LicenseMissingJar(JarFile jarFile, String licenseKey) {
 
-        this.jar = jar;
+        this.jarFile = jarFile;
         this.licenseKey = licenseKey;
     }
 
-    public Jar getJar() {
+    public JarFile getJarFile() {
 
-        return jar;
+        return jarFile;
     }
 
-    public void setJar(Jar jar) {
+    public void setJarFile(JarFile jarFile) {
 
-        this.jar = jar;
+        this.jarFile = jarFile;
     }
 
     public String getLicenseKey() {

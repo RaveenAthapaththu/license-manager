@@ -17,7 +17,7 @@
  */
 package org.wso2.internal.apps.license.manager.models;
 
-import org.wso2.internal.apps.license.manager.impl.JarHolder;
+import org.wso2.internal.apps.license.manager.impl.JarFileInformationHolder;
 
 import java.util.List;
 
@@ -26,19 +26,19 @@ import java.util.List;
  */
 public class SessionObjectHolder {
 
-    private JarHolder jarHolder;
+    private JarFileInformationHolder jarFileInformationHolder;
     private int productId;
     private List<LicenseMissingJar> licenseMissingLibraries;
     private List<LicenseMissingJar> licenseMissingComponents;
 
-    public JarHolder getJarHolder() {
+    public JarFileInformationHolder getJarFileInformationHolder() {
 
-        return jarHolder;
+        return jarFileInformationHolder;
     }
 
-    public void setJarHolder(JarHolder jarHolder) {
+    public void setJarFileInformationHolder(JarFileInformationHolder jarFileInformationHolder) {
 
-        this.jarHolder = jarHolder;
+        this.jarFileInformationHolder = jarFileInformationHolder;
     }
 
     public List<LicenseMissingJar> getLicenseMissingLibraries() {

@@ -22,7 +22,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.wso2.internal.apps.license.manager.models.Jar;
+import org.wso2.internal.apps.license.manager.models.JarFile;
 import org.wso2.internal.apps.license.manager.models.LicenseMissingJar;
 
 import java.util.ArrayList;
@@ -46,9 +46,9 @@ public class JsonUtils {
         for (int i = 0; i < componentList.size(); i++) {
             JsonObject component = new JsonObject();
             component.addProperty("index", i);
-            component.addProperty("name", componentList.get(i).getJar().getProjectName());
-            component.addProperty("version", componentList.get(i).getJar().getVersion());
-            component.addProperty("type", componentList.get(i).getJar().getType());
+            component.addProperty("name", componentList.get(i).getJarFile().getProjectName());
+            component.addProperty("version", componentList.get(i).getJarFile().getVersion());
+            component.addProperty("type", componentList.get(i).getJarFile().getType());
             component.addProperty("previousLicense", componentList.get(i).getLicenseKey());
             component.addProperty("licenseKey", componentList.get(i).getLicenseKey());
             componentJsonArray.add(component);
@@ -67,12 +67,12 @@ public class JsonUtils {
         JsonArray libraryJsonArray = new JsonArray();
         for (int i = 0; i < libraryList.size(); i++) {
             JsonObject library = new JsonObject();
-            String libraryType = (libraryList.get(i).getJar().getParent() == null) ?
-                    ((libraryList.get(i).getJar().isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :
-                    Constants.JAR_TYPE_JAR_IN_BUNDLE;
+            String libraryType = (libraryList.get(i).getJarFile().getParent() == null) ?
+                    ((libraryList.get(i).getJarFile().isBundle()) ? Constants.JAR_TYPE_BUNDLE :
+                            Constants.JAR_TYPE_JAR) : Constants.JAR_TYPE_JAR_IN_BUNDLE;
             library.addProperty("index", i);
-            library.addProperty("name", libraryList.get(i).getJar().getProjectName());
-            library.addProperty("version", libraryList.get(i).getJar().getVersion());
+            library.addProperty("name", libraryList.get(i).getJarFile().getProjectName());
+            library.addProperty("version", libraryList.get(i).getJarFile().getVersion());
             library.addProperty("type", libraryType);
             library.addProperty("previousLicense", libraryList.get(i).getLicenseKey());
             library.addProperty("licenseKey", libraryList.get(i).getLicenseKey());
@@ -84,18 +84,18 @@ public class JsonUtils {
     /**
      * Create a json array from the list of name missing jars.
      *
-     * @param errorJarList array of name missing jars
+     * @param errorJarFileList array of name missing jars
      * @return json array of name missing jars
      */
-    public static JsonArray getNameMissingJarsAsJson(List<Jar> errorJarList) {
+    public static JsonArray getNameMissingJarsAsJson(List<JarFile> errorJarFileList) {
 
         JsonArray nameMissingJars = new JsonArray();
-        for (int i = 0; i < errorJarList.size(); i++) {
+        for (int i = 0; i < errorJarFileList.size(); i++) {
             JsonObject currentJar = new JsonObject();
             currentJar.addProperty("index", i);
-            currentJar.addProperty("jarFileName", errorJarList.get(i).getJarFile().getName());
-            currentJar.addProperty("name", errorJarList.get(i).getProjectName());
-            currentJar.addProperty("version", errorJarList.get(i).getVersion());
+            currentJar.addProperty("jarFileName", errorJarFileList.get(i).getJarFile().getName());
+            currentJar.addProperty("name", errorJarFileList.get(i).getProjectName());
+            currentJar.addProperty("version", errorJarFileList.get(i).getVersion());
             nameMissingJars.add(currentJar);
         }
         return nameMissingJars;

@@ -20,9 +20,11 @@ package org.wso2.internal.apps.license.manager.impl;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerConfigurationException;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerDataException;
-import org.wso2.internal.apps.license.manager.models.Jar;
+import org.wso2.internal.apps.license.manager.models.JarFile;
 import org.wso2.internal.apps.license.manager.models.LicenseMissingJar;
 import org.wso2.internal.apps.license.manager.models.NewLicenseEntry;
 import org.wso2.internal.apps.license.manager.util.Constants;
@@ -36,7 +38,39 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.mail.MessagingException;
 
+/**
+ * Implementation of the executions of the services exposed by the micro service.
+ */
 public class ServiceExecutor {
+
+    private static final Logger log = LoggerFactory.getLogger(ServiceExecutor.class);
+
+    /**
+     * Get the all the licenses available as a list of json array.
+     *
+     * @return list of licenses
+     * @throws LicenseManagerDataException if the SFTP connection fails
+     */
+    public JsonArray getListOfAllLicenses() throws LicenseManagerDataException {
+
+        JsonArray listOfLicensesAsJson;
+        DBHandler dbHandler = null;
+        try {
+            dbHandler = new DBHandler();
+            listOfLicensesAsJson = dbHandler.selectAllLicense();
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new LicenseManagerDataException("Failed to retrieve data from the database.", e);
+        } finally {
+            if (dbHandler != null) {
+                try {
+                    dbHandler.closeConnection();
+                } catch (SQLException e) {
+                    log.error("Failed to close the database connection. " + e.getMessage(), e);
+                }
+            }
+        }
+        return listOfLicensesAsJson;
+    }
 
     /**
      * Get the list of zip packs uploaded to the FTP server.
@@ -60,33 +94,55 @@ public class ServiceExecutor {
         }
     }
 
-    public void updateNameMissingListOfJars(JarHolder jarHolder, JsonArray jarsWithNames) {
+    /**
+     * Update the name and version of the list of jars which name and version is undefined with user input.
+     *
+     * @param jarFileInformationHolder java object which contains jar object details
+     * @param jarsWithNames            json array which hols the user inputs
+     */
+    public void updateNameMissingListOfJars(JarFileInformationHolder jarFileInformationHolder,
+                                            JsonArray jarsWithNames) {
+
         // Define the name and the version from the user input.
         for (int i = 0; i < jarsWithNames.size(); i++) {
             JsonObject jar = jarsWithNames.get(i).getAsJsonObject();
             int index = jar.get("index").getAsInt();
-            jarHolder.getErrorJarList().get(index).setProjectName(jar.get("name").getAsString());
-            jarHolder.getErrorJarList().get(index).setVersion(jar.get("version").getAsString());
+            jarFileInformationHolder.getErrorJarFileList().get(index).setProjectName(jar.get("name").getAsString());
+            jarFileInformationHolder.getErrorJarFileList().get(index).setVersion(jar.get("version").getAsString());
         }
 
         // Add name defined jars into the jar list of the jar holder.
-        for (Jar jar : jarHolder.getErrorJarList()) {
-            jarHolder.getJarList().add(jar);
+        for (JarFile jarFile : jarFileInformationHolder.getErrorJarFileList()) {
+            jarFileInformationHolder.getJarFileList().add(jarFile);
         }
     }
 
-    public ProductJarManager insertJarInfoToDb(JarHolder jarHolder) throws LicenseManagerDataException {
+    /**
+     * Insert the information of all jars extracted from the pack into the database.
+     *
+     * @param jarFileInformationHolder java object which contains jar object details
+     * @return java object which holds the license missing jars
+     * @throws LicenseManagerDataException if the data insertion fails
+     */
+    public JarFileInfoDataHandler insertJarInfoToDb(JarFileInformationHolder jarFileInformationHolder)
+            throws LicenseManagerDataException {
 
-        ProductJarManager productJarManager = null;
+        JarFileInfoDataHandler jarFileInfoDataHandler;
         try {
-            productJarManager = new ProductJarManager(jarHolder);
-            productJarManager.enterJarsIntoDB();
+            jarFileInfoDataHandler = new JarFileInfoDataHandler(jarFileInformationHolder);
+            jarFileInfoDataHandler.enterJarsIntoDB();
         } catch (ClassNotFoundException | SQLException e) {
             throw new LicenseManagerDataException("Failed to connect with database.", e);
         }
-        return productJarManager;
+        return jarFileInfoDataHandler;
     }
 
+    /**
+     * Update the licenses of the license missing jars with the user input.
+     *
+     * @param licenseMissingJarList list of license missing jars
+     * @param licenseDefinedJars    user inputs for the licenses
+     */
     public void updateLicensesOfLicenseMissingJars(List<LicenseMissingJar> licenseMissingJarList,
                                                    JsonArray licenseDefinedJars) {
 
@@ -97,9 +153,19 @@ public class ServiceExecutor {
         }
     }
 
-    public void insertNewLicensesToDb(List<LicenseMissingJar> componentList,
-                                      List<LicenseMissingJar> libraryList,
-                                      int productId, String username) throws LicenseManagerDataException, MessagingException {
+    /**
+     * Insert new licenses for the jars into the database and send mail to the admin.
+     *
+     * @param componentList list of component jars with new licenses
+     * @param libraryList   list of library jars with new licenses
+     * @param productId     product id which the jars belong to
+     * @param username      user who added the licenses
+     * @throws LicenseManagerDataException if the data insertion fails
+     * @throws MessagingException          if sending mail fails
+     */
+    public void insertNewLicensesToDb(List<LicenseMissingJar> componentList, List<LicenseMissingJar> libraryList,
+                                      int productId, String username)
+            throws LicenseManagerDataException, MessagingException {
 
         DBHandler dbHandler = null;
         List<NewLicenseEntry> newLicenseEntryComponentList = new ArrayList<>();
@@ -109,10 +175,10 @@ public class ServiceExecutor {
             dbHandler = new DBHandler();
             // Insert new licenses for the components.
             for (LicenseMissingJar licenseMissingJar : componentList) {
-                String name = licenseMissingJar.getJar().getProjectName();
-                String componentName = licenseMissingJar.getJar().getJarFile().getName();
+                String name = licenseMissingJar.getJarFile().getProjectName();
+                String componentName = licenseMissingJar.getJarFile().getJarFile().getName();
                 String licenseKey = licenseMissingJar.getLicenseKey();
-                String version = licenseMissingJar.getJar().getVersion();
+                String version = licenseMissingJar.getJarFile().getVersion();
                 dbHandler.insertComponent(name, componentName, version);
                 dbHandler.insertProductComponent(componentName, productId);
                 dbHandler.insertComponentLicense(componentName, licenseKey);
@@ -122,16 +188,16 @@ public class ServiceExecutor {
 
             // Insert new licenses for the libraries.
             for (LicenseMissingJar licenseMissingJar : libraryList) {
-                String name = licenseMissingJar.getJar().getProjectName();
-                String libraryFileName = licenseMissingJar.getJar().getJarFile().getName();
+                String name = licenseMissingJar.getJarFile().getProjectName();
+                String libraryFileName = licenseMissingJar.getJarFile().getJarFile().getName();
                 String licenseKey = licenseMissingJar.getLicenseKey();
-                String version = licenseMissingJar.getJar().getVersion();
-                String type = licenseMissingJar.getJar().getType();
+                String version = licenseMissingJar.getJarFile().getVersion();
+                String type = licenseMissingJar.getJarFile().getType();
                 String componentKey = null;
-                Jar parent = null;
+                JarFile parent = null;
 
-                if (licenseMissingJar.getJar().getParent() != null) {
-                    parent = licenseMissingJar.getJar().getParent();
+                if (licenseMissingJar.getJarFile().getParent() != null) {
+                    parent = licenseMissingJar.getJarFile().getParent();
                     componentKey = parent.getJarFile().getName();
                 }
                 int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
@@ -158,11 +224,12 @@ public class ServiceExecutor {
             throw new LicenseManagerDataException("Failed to add licenses.", e);
         } finally {
             try {
-                dbHandler.closeConnection();
+                if (dbHandler != null) {
+                    dbHandler.closeConnection();
+                }
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error("Could not close the database connection. " + e.getMessage(), e);
             }
         }
-
     }
 }
