@@ -168,11 +168,13 @@ public class ServiceExecutor {
             throws LicenseManagerDataException, MessagingException {
 
         DBHandler dbHandler = null;
+        Boolean isInsertionSuccess = false;
         List<NewLicenseEntry> newLicenseEntryComponentList = new ArrayList<>();
         List<NewLicenseEntry> newLicenseEntryLibraryList = new ArrayList<>();
 
         try {
             dbHandler = new DBHandler();
+
             // Insert new licenses for the components.
             for (LicenseMissingJar licenseMissingJar : componentList) {
                 String name = licenseMissingJar.getJarFile().getProjectName();
@@ -200,6 +202,7 @@ public class ServiceExecutor {
                     parent = licenseMissingJar.getJarFile().getParent();
                     componentKey = parent.getJarFile().getName();
                 }
+
                 int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
                 dbHandler.insertLibraryLicense(licenseKey, libId);
 
@@ -213,16 +216,14 @@ public class ServiceExecutor {
                 NewLicenseEntry newEntry = new NewLicenseEntry(libraryFileName, licenseKey);
                 newLicenseEntryLibraryList.add(newEntry);
             }
-            // If there are new licenses added successfully, send a mail to the admin.
-            if (newLicenseEntryComponentList.size() > 0 || newLicenseEntryLibraryList.size() > 0) {
-                EmailUtils.sendEmail(username, newLicenseEntryComponentList, newLicenseEntryLibraryList, true);
-            }
+            isInsertionSuccess = true;
         } catch (ClassNotFoundException | SQLException e) {
-            if (newLicenseEntryComponentList.size() > 0 || newLicenseEntryLibraryList.size() > 0) {
-                EmailUtils.sendEmail(username, newLicenseEntryComponentList, newLicenseEntryLibraryList, false);
-            }
             throw new LicenseManagerDataException("Failed to add licenses.", e);
         } finally {
+            // Send an email to the admin if there are any new licenses added.
+            if (newLicenseEntryComponentList.size() > 0 || newLicenseEntryLibraryList.size() > 0) {
+                EmailUtils.sendEmail(username, newLicenseEntryComponentList, newLicenseEntryLibraryList, isInsertionSuccess);
+            }
             try {
                 if (dbHandler != null) {
                     dbHandler.closeConnection();
