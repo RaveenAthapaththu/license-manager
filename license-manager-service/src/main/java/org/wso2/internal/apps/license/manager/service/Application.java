@@ -32,7 +32,7 @@ public class Application {
         new MicroservicesRunner()
                 .addGlobalRequestInterceptor(new CorsInterceptor())
                 .addGlobalRequestInterceptor(new AuthInterceptor())
-                .deploy(new LicenseManagerService())
+                .deploy(new LicenseManagerServiceEndpoint())
                 .start();
     }
 }

@@ -98,22 +98,22 @@ public class ServiceExecutor {
      * Update the name and version of the list of jars which name and version is undefined with user input.
      *
      * @param jarFileInformationHolder java object which contains jar object details
-     * @param jarsWithNames            json array which hols the user inputs
+     * @param jarsWithDefinedNames            json array which hols the user inputs
      */
-    public void updateNameMissingListOfJars(JarFileInformationHolder jarFileInformationHolder,
-                                            JsonArray jarsWithNames) {
+    public void updateFaultyNamedListOfJars(JarFileInformationHolder jarFileInformationHolder,
+                                            JsonArray jarsWithDefinedNames) {
 
         // Define the name and the version from the user input.
-        for (int i = 0; i < jarsWithNames.size(); i++) {
-            JsonObject jar = jarsWithNames.get(i).getAsJsonObject();
+        for (int i = 0; i < jarsWithDefinedNames.size(); i++) {
+            JsonObject jar = jarsWithDefinedNames.get(i).getAsJsonObject();
             int index = jar.get("index").getAsInt();
-            jarFileInformationHolder.getErrorJarFileList().get(index).setProjectName(jar.get("name").getAsString());
-            jarFileInformationHolder.getErrorJarFileList().get(index).setVersion(jar.get("version").getAsString());
+            jarFileInformationHolder.getFaultyNamedJars().get(index).setProjectName(jar.get("name").getAsString());
+            jarFileInformationHolder.getFaultyNamedJars().get(index).setVersion(jar.get("version").getAsString());
         }
 
         // Add name defined jars into the jar list of the jar holder.
-        for (JarFile jarFile : jarFileInformationHolder.getErrorJarFileList()) {
-            jarFileInformationHolder.getJarFileList().add(jarFile);
+        for (JarFile jarFile : jarFileInformationHolder.getFaultyNamedJars()) {
+            jarFileInformationHolder.getJarFilesInPack().add(jarFile);
         }
     }
 
@@ -128,12 +128,14 @@ public class ServiceExecutor {
             throws LicenseManagerDataException {
 
         JarFileInfoDataHandler jarFileInfoDataHandler;
+
         try {
             jarFileInfoDataHandler = new JarFileInfoDataHandler(jarFileInformationHolder);
             jarFileInfoDataHandler.enterJarsIntoDB();
         } catch (ClassNotFoundException | SQLException e) {
             throw new LicenseManagerDataException("Failed to connect with database.", e);
         }
+
         return jarFileInfoDataHandler;
     }
 
@@ -169,61 +171,23 @@ public class ServiceExecutor {
 
         DBHandler dbHandler = null;
         Boolean isInsertionSuccess = false;
-        List<NewLicenseEntry> newLicenseEntryComponentList = new ArrayList<>();
-        List<NewLicenseEntry> newLicenseEntryLibraryList = new ArrayList<>();
+        List<NewLicenseEntry> newLicenseEntryComponentList = null;
+        List<NewLicenseEntry> newLicenseEntryLibraryList = null;
 
         try {
             dbHandler = new DBHandler();
-
-            // Insert new licenses for the components.
-            for (LicenseMissingJar licenseMissingJar : componentList) {
-                String name = licenseMissingJar.getJarFile().getProjectName();
-                String componentName = licenseMissingJar.getJarFile().getJarFile().getName();
-                String licenseKey = licenseMissingJar.getLicenseKey();
-                String version = licenseMissingJar.getJarFile().getVersion();
-                dbHandler.insertComponent(name, componentName, version);
-                dbHandler.insertProductComponent(componentName, productId);
-                dbHandler.insertComponentLicense(componentName, licenseKey);
-                NewLicenseEntry newEntry = new NewLicenseEntry(componentName, licenseKey);
-                newLicenseEntryComponentList.add(newEntry);
-            }
-
-            // Insert new licenses for the libraries.
-            for (LicenseMissingJar licenseMissingJar : libraryList) {
-                String name = licenseMissingJar.getJarFile().getProjectName();
-                String libraryFileName = licenseMissingJar.getJarFile().getJarFile().getName();
-                String licenseKey = licenseMissingJar.getLicenseKey();
-                String version = licenseMissingJar.getJarFile().getVersion();
-                String type = licenseMissingJar.getJarFile().getType();
-                String componentKey = null;
-                JarFile parent = null;
-
-                if (licenseMissingJar.getJarFile().getParent() != null) {
-                    parent = licenseMissingJar.getJarFile().getParent();
-                    componentKey = parent.getJarFile().getName();
-                }
-
-                int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
-                dbHandler.insertLibraryLicense(licenseKey, libId);
-
-                // If the parent is wso2 insert it as a component-library relationship
-                if (parent != null && parent.getType().equals(Constants.JAR_TYPE_WSO2)) {
-                    dbHandler.insertComponentLibrary(componentKey, libId);
-                } else {
-                    dbHandler.insertProductLibrary(libId, productId);
-                }
-
-                NewLicenseEntry newEntry = new NewLicenseEntry(libraryFileName, licenseKey);
-                newLicenseEntryLibraryList.add(newEntry);
-            }
+            newLicenseEntryComponentList = insertComponentLicenses(componentList, productId, dbHandler);
+            newLicenseEntryLibraryList = insertLibraryLicenses(libraryList, productId, dbHandler);
             isInsertionSuccess = true;
         } catch (ClassNotFoundException | SQLException e) {
             throw new LicenseManagerDataException("Failed to add licenses.", e);
         } finally {
             // Send an email to the admin if there are any new licenses added.
             if (newLicenseEntryComponentList.size() > 0 || newLicenseEntryLibraryList.size() > 0) {
-                EmailUtils.sendEmail(username, newLicenseEntryComponentList, newLicenseEntryLibraryList, isInsertionSuccess);
+                EmailUtils.sendEmail(username, newLicenseEntryComponentList, newLicenseEntryLibraryList,
+                        isInsertionSuccess);
             }
+
             try {
                 if (dbHandler != null) {
                     dbHandler.closeConnection();
@@ -232,5 +196,59 @@ public class ServiceExecutor {
                 log.error("Could not close the database connection. " + e.getMessage(), e);
             }
         }
+    }
+
+    private List<NewLicenseEntry> insertComponentLicenses(List<LicenseMissingJar> componentList, int productId,
+                                                          DBHandler dbHandler) throws SQLException {
+
+        List<NewLicenseEntry> newLicenseEntryComponentList = new ArrayList<>();
+
+        for (LicenseMissingJar licenseMissingJar : componentList) {
+            String name = licenseMissingJar.getJarFile().getProjectName();
+            String componentName = licenseMissingJar.getJarFile().getJarFile().getName();
+            String licenseKey = licenseMissingJar.getLicenseKey();
+            String version = licenseMissingJar.getJarFile().getVersion();
+            dbHandler.insertComponent(name, componentName, version);
+            dbHandler.insertProductComponent(componentName, productId);
+            dbHandler.insertComponentLicense(componentName, licenseKey);
+            NewLicenseEntry newEntry = new NewLicenseEntry(componentName, licenseKey);
+            newLicenseEntryComponentList.add(newEntry);
+        }
+        return newLicenseEntryComponentList;
+    }
+
+    private List<NewLicenseEntry> insertLibraryLicenses(List<LicenseMissingJar> libraryList, int productId,
+                                                        DBHandler dbHandler) throws SQLException {
+
+        List<NewLicenseEntry> newLicenseEntryLibraryList = new ArrayList<>();
+
+        for (LicenseMissingJar licenseMissingJar : libraryList) {
+            String name = licenseMissingJar.getJarFile().getProjectName();
+            String libraryFileName = licenseMissingJar.getJarFile().getJarFile().getName();
+            String licenseKey = licenseMissingJar.getLicenseKey();
+            String version = licenseMissingJar.getJarFile().getVersion();
+            String type = licenseMissingJar.getJarFile().getType();
+            String componentKey = null;
+            JarFile parent = null;
+
+            if (licenseMissingJar.getJarFile().getParent() != null) {
+                parent = licenseMissingJar.getJarFile().getParent();
+                componentKey = parent.getJarFile().getName();
+            }
+
+            int libId = dbHandler.getLibraryId(name, libraryFileName, version, type);
+            dbHandler.insertLibraryLicense(licenseKey, libId);
+
+            // If the parent is wso2 insert it as a component-library relationship
+            if (parent != null && parent.getType().equals(Constants.JAR_TYPE_WSO2)) {
+                dbHandler.insertComponentLibrary(componentKey, libId);
+            } else {
+                dbHandler.insertProductLibrary(libId, productId);
+            }
+
+            NewLicenseEntry newEntry = new NewLicenseEntry(libraryFileName, licenseKey);
+            newLicenseEntryLibraryList.add(newEntry);
+        }
+        return newLicenseEntryLibraryList;
     }
 }

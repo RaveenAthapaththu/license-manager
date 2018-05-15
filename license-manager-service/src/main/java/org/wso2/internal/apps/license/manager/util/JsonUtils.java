@@ -82,23 +82,23 @@ public class JsonUtils {
     }
 
     /**
-     * Create a json array from the list of name missing jars.
+     * Create a json array from the list of faulty named jars.
      *
-     * @param errorJarFileList array of name missing jars
-     * @return json array of name missing jars
+     * @param errorJarFileList array of faulty named jars
+     * @return json array of faulty named jars
      */
-    public static JsonArray getNameMissingJarsAsJson(List<JarFile> errorJarFileList) {
+    public static JsonArray getFaultyNamedJarsAsJsonArray(List<JarFile> errorJarFileList) {
 
-        JsonArray nameMissingJars = new JsonArray();
+        JsonArray faultyNamedJars = new JsonArray();
         for (int i = 0; i < errorJarFileList.size(); i++) {
             JsonObject currentJar = new JsonObject();
             currentJar.addProperty("index", i);
             currentJar.addProperty("jarFileName", errorJarFileList.get(i).getJarFile().getName());
             currentJar.addProperty("name", errorJarFileList.get(i).getProjectName());
             currentJar.addProperty("version", errorJarFileList.get(i).getVersion());
-            nameMissingJars.add(currentJar);
+            faultyNamedJars.add(currentJar);
         }
-        return nameMissingJars;
+        return faultyNamedJars;
     }
 
     public static JsonArray getListOfPacksUploadedAsJson(ArrayList<String> listOfPacks) {

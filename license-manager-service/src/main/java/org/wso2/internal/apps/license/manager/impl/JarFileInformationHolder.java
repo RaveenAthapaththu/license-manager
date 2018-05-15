@@ -24,7 +24,6 @@ import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeExc
 import org.wso2.internal.apps.license.manager.models.JarFile;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.internal.apps.license.manager.util.crawler.FolderCrawler;
-import org.wso2.internal.apps.license.manager.util.filters.ZipFilter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,8 +44,8 @@ import java.util.zip.ZipInputStream;
  */
 public class JarFileInformationHolder implements Serializable {
 
-    private List<JarFile> jarFileList = new ArrayList<>();
-    private List<JarFile> errorJarFileList = new ArrayList<>();
+    private List<JarFile> jarFilesInPack = new ArrayList<>();
+    private List<JarFile> faultyNamedJars = new ArrayList<>();
     private String productName;
     private String productVersion;
     private FolderCrawler folderCrawler = new FolderCrawler();
@@ -95,19 +94,19 @@ public class JarFileInformationHolder implements Serializable {
         return extractedVersion;
     }
 
-    public List<JarFile> getJarFileList() {
+    List<JarFile> getJarFilesInPack() {
 
-        return jarFileList;
+        return jarFilesInPack;
     }
 
-    public void setJarFileList(List<JarFile> jarFileList) {
+    public void setJarFilesInPack(List<JarFile> jarFilesInPack) {
 
-        this.jarFileList = jarFileList;
+        this.jarFilesInPack = jarFilesInPack;
     }
 
-    public List<JarFile> getErrorJarFileList() {
+    public List<JarFile> getFaultyNamedJars() {
 
-        return errorJarFileList;
+        return faultyNamedJars;
     }
 
     public String getProductName() {
@@ -145,15 +144,14 @@ public class JarFileInformationHolder implements Serializable {
      */
     private void findDirectJars(String path) {
 
-        ZipFilter zipFilter = new ZipFilter();
-        List<File> directZips = folderCrawler.find(path, zipFilter);
+        List<File> directZips = folderCrawler.find(path);
         Iterator<File> i = directZips.iterator();
         JarFile currentJarFile;
 
         while (i.hasNext()) {
             File jarFile = i.next();
             currentJarFile = getJar(jarFile, null);
-            jarFileList.add(currentJarFile);
+            jarFilesInPack.add(currentJarFile);
         }
     }
 
@@ -169,9 +167,8 @@ public class JarFileInformationHolder implements Serializable {
 
         Stack<JarFile> zipStack = new Stack<>();
 
-        zipStack.addAll(jarFileList);
-        jarFileList = new ArrayList<>();
-        ZipFilter zipFilter = new ZipFilter();
+        zipStack.addAll(jarFilesInPack);
+        jarFilesInPack = new ArrayList<>();
 
         while (!zipStack.empty()) {
             JarFile jarFile = zipStack.pop();
@@ -193,13 +190,12 @@ public class JarFileInformationHolder implements Serializable {
             if (manifest != null) {
                 currentJarFile = getJar(jarFile.getJarFile(), jarFile.getParent());
                 jarFile = currentJarFile;
-//                jarFile.setExtractedFolder(extractTo);
                 jarFile.setType(getType(manifest, jarFile));
                 jarFile.setIsBundle(getIsBundle(manifest));
                 if (!currentJarFile.isValidName()) {
-                    errorJarFileList.add(jarFile);
+                    faultyNamedJars.add(jarFile);
                 } else {
-                    jarFileList.add(jarFile);
+                    jarFilesInPack.add(jarFile);
                 }
             }
 
@@ -208,7 +204,9 @@ public class JarFileInformationHolder implements Serializable {
                 extractTo = new File(tempFolderToHoldJars + toBeExtracted.getName());
                 extractTo.mkdir();
                 LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extractTo.getAbsolutePath());
-                Iterator<File> i = Op.onArray(extractTo.listFiles(zipFilter)).toList().get().iterator();
+                Iterator<File> i = Op.onArray(extractTo
+                        .listFiles(file -> file.getName().endsWith(".jar") || file.getName().endsWith(".mar")))
+                        .toList().get().iterator();
                 File nextFile;
                 while (i.hasNext()) {
                     nextFile = i.next();
@@ -289,6 +287,7 @@ public class JarFileInformationHolder implements Serializable {
     private boolean checkInnerJars(String filePath) throws LicenseManagerRuntimeException {
 
         boolean containsJars = false;
+
         try {
             ZipInputStream zip = new ZipInputStream(new FileInputStream(filePath));
             for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
@@ -299,6 +298,7 @@ public class JarFileInformationHolder implements Serializable {
         } catch (IOException e) {
             throw new LicenseManagerRuntimeException("Failed to check the inner jars. ", e);
         }
+
         return containsJars;
     }
 
@@ -308,6 +308,7 @@ public class JarFileInformationHolder implements Serializable {
             filename = filename.replace(".jar", "");
             filename = filename.replace(".mar", "");
         }
+
         return filename;
     }
 }

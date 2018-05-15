@@ -125,26 +125,26 @@ public class LicenseManagerUtils {
     }
 
     /**
-     * Remove the duplicates in the name missing jars.
+     * Remove the duplicates in the faulty named jars.
      *
-     * @param nameMissingJarFiles list of jars in which the names and version are missing
-     * @return unique list of jars with name missing.
+     * @param faultyNamedJars list of jars in which the names and version are missing
+     * @return unique list of jars with faulty names.
      */
-    public static List<JarFile> removeDuplicates(List<JarFile> nameMissingJarFiles) {
+    public static List<JarFile> removeDuplicates(List<JarFile> faultyNamedJars) {
 
-        List<JarFile> nameMissingUniqueJarFiles = new ArrayList<>();
-        for (JarFile jarFile : nameMissingJarFiles) {
+        List<JarFile> faultyNamedUniqueJarFiles = new ArrayList<>();
+        for (JarFile jarFile : faultyNamedJars) {
             boolean newJar = true;
-            for (JarFile uniqueJarFile : nameMissingUniqueJarFiles) {
+            for (JarFile uniqueJarFile : faultyNamedUniqueJarFiles) {
                 if (jarFile.getProjectName().equals(uniqueJarFile.getProjectName())) {
                     newJar = false;
                 }
             }
             if (newJar) {
-                nameMissingUniqueJarFiles.add(jarFile);
+                faultyNamedUniqueJarFiles.add(jarFile);
             }
         }
-        return nameMissingUniqueJarFiles;
+        return faultyNamedUniqueJarFiles;
     }
 
     /**

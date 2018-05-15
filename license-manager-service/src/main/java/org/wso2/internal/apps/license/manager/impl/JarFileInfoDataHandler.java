@@ -70,7 +70,7 @@ public class JarFileInfoDataHandler {
         try {
             this.productId = dbHandler.getProductId(jarFileInformationHolder.getProductName(),
                     jarFileInformationHolder.getProductVersion());
-            for (JarFile j : jarFileInformationHolder.getJarFileList()) {
+            for (JarFile j : jarFileInformationHolder.getJarFilesInPack()) {
                 insert(j);
             }
         } finally {

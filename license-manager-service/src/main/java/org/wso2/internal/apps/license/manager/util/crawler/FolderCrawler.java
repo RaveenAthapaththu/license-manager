@@ -19,10 +19,8 @@
 package org.wso2.internal.apps.license.manager.util.crawler;
 
 import org.op4j.Op;
-import org.wso2.internal.apps.license.manager.util.filters.DirectoryFilter;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,17 +31,16 @@ import java.util.Stack;
  */
 public class FolderCrawler implements Serializable {
 
-    public List<File> find(String path, FileFilter filter) {
+    public List<File> find(String path) {
 
-        List<File> files;
+        List<File> files = new ArrayList<>();
         Stack<File> directories = new Stack<>();
-        DirectoryFilter dirFilter = new DirectoryFilter();
-        files = new ArrayList<>();
         directories.add(new File(path));
         while (!directories.empty()) {
             File next = directories.pop();
-            directories.addAll(Op.onArray(next.listFiles(dirFilter)).toList().get());
-            files.addAll(Op.onArray(next.listFiles(filter)).toList().get());
+            directories.addAll(Op.onArray(next.listFiles(File::isDirectory)).toList().get());
+            files.addAll(Op.onArray(next.listFiles(
+                    file -> file.getName().endsWith(".jar") || file.getName().endsWith(".mar"))).toList().get());
         }
         return files;
     }
