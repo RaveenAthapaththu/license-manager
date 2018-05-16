@@ -21,10 +21,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.internal.apps.license.manager.connector.FtpConnector;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerConfigurationException;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
-import org.wso2.internal.apps.license.manager.impl.JarFileInformationHolder;
-import org.wso2.internal.apps.license.manager.models.JarFile;
+import org.wso2.internal.apps.license.manager.impl.JarFileExtractor;
+import org.wso2.internal.apps.license.manager.model.JarFile;
+import org.wso2.internal.apps.license.manager.model.JarFilesHolder;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -108,20 +110,20 @@ public class LicenseManagerUtils {
     }
 
     /**
-     * Recursively check the jars of a pack and creates a new JarFileInformationHolder object.
+     * Recursively check the jars of a pack and creates a new JarFileExtractor object.
      *
      * @param file path to the pack
-     * @return JarFileInformationHolder contains the details of jars.
+     * @return JarFileHolder object which contains the details of jars.
      * @throws LicenseManagerRuntimeException if the jar extraction fails.
      */
-    public static JarFileInformationHolder checkJars(String file) throws LicenseManagerRuntimeException {
+    public static JarFilesHolder checkJars(String file) throws LicenseManagerRuntimeException {
 
         if (StringUtils.isEmpty(file) || !new File(file).exists() || !new File(file).isDirectory()) {
             throw new LicenseManagerRuntimeException("Folder is not found in the location");
         }
-        JarFileInformationHolder jh = new JarFileInformationHolder();
-        jh.extractJarsRecursively(file);
-        return jh;
+        JarFileExtractor extractor = new JarFileExtractor();
+        return extractor.extractJarsRecursively(file);
+
     }
 
     /**
@@ -156,16 +158,11 @@ public class LicenseManagerUtils {
 
         LicenseManagerUtils.deleteFolder(fileName + ".zip");
         LicenseManagerUtils.deleteFolder(fileName);
-        FtpConnectionHandler ftpConnectionHandler = new FtpConnectionHandler();
         try {
-            ftpConnectionHandler.initiateSftpConnection();
-            ftpConnectionHandler.deleteFileFromFtpServer(fileName);
+            FtpConnector ftpConnector = FtpConnector.getFtpConnector();
+            ftpConnector.deleteFileFromFtpServer(fileName);
         } catch (LicenseManagerConfigurationException e) {
             log.error("Failed to remove the zip file from the FTP server. " + e.getMessage(), e);
-        } finally {
-            // Close the connections.
-            ftpConnectionHandler.closeSftpConnection();
         }
     }
-
 }

@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.internal.apps.license.manager.util;
+package org.wso2.internal.apps.license.manager.connector;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -26,6 +26,7 @@ import com.jcraft.jsch.SftpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerConfigurationException;
+import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.util.ArrayList;
@@ -35,14 +36,14 @@ import java.util.Vector;
 /**
  * Create a connection with the FTP server and execute functions.
  */
-public class FtpConnectionHandler {
+public class FtpConnector {
 
-    private static final Logger log = LoggerFactory.getLogger(FtpConnectionHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(FtpConnector.class);
+    private static FtpConnector ftpConnector = null;
+    private static Session session = null;
+    private static ChannelSftp sftpChannel = null;
 
-    private Session session = null;
-    private ChannelSftp sftpChannel = null;
-
-    public void initiateSftpConnection() throws LicenseManagerConfigurationException {
+    private FtpConnector() throws LicenseManagerConfigurationException {
 
         String ftpHost = SystemVariableUtil.getValue(Constants.FTP_HOST, null);
         int ftpPort = Integer.valueOf(SystemVariableUtil.getValue(Constants.FTP_PORT, null));
@@ -65,6 +66,14 @@ public class FtpConnectionHandler {
         }
     }
 
+    public static synchronized FtpConnector getFtpConnector() throws LicenseManagerConfigurationException {
+
+        if (ftpConnector == null || !session.isConnected()) {
+            ftpConnector = new FtpConnector();
+        }
+        return ftpConnector;
+
+    }
     public void closeSftpConnection() {
 
         if (session != null) {

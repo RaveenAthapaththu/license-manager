@@ -28,19 +28,6 @@ public class Constants {
     public static final String DATABASE_USERNAME = "DATABASE_USERNAME";
     public static final String DATABASE_PASSWORD = "DATABASE_PASSWORD";
 
-    // Environment variables for FTP server access.
-    public static final String FILE_DOWNLOAD_PATH = "LICENSE_MANAGER_FILE_UPLOAD_PATH";
-    static final String FTP_HOST = "LICENSE_MANAGER_FTP_HOST";
-    static final String FTP_PORT = "LICENSE_MANAGER_FTP_PORT";
-    static final String FTP_USERNAME = "LICENSE_MANAGER_FTP_USERNAME";
-    static final String FTP_PASSWORD = "LICENSE_MANAGER_FTP_PASSWORD";
-    static final String FTP_FILE_LOCATION = "LICENSE_MANAGER_FTP_FILE_LOCATION";
-
-    // Environment variables for sending emails.
-    static final String EMAIL_USERNAME = "LICENSE_MANAGER_EMAIL_USERNAME";
-    static final String EMAIL_PASSWORD = "LICENSE_MANAGER_EMAIL_PASSWORD";
-    static final String LICENSE_MANAGER_ADMINS = "LICENSE_MANAGER_ADMINS";
-
     // Environment variables for authentication.
     public static final String LICENSE_MANAGER_APP_USERNAME = "LICENSE_MANAGER_APP_USERNAME";
     public static final String LICENSE_MANAGER_APP_PASSWORD = "LICENSE_MANAGER_APP_PASSWORD";
@@ -60,13 +47,25 @@ public class Constants {
     public static final String FAILED = "failed";
     public static final String RUNNING = "running";
 
-    // Response json object parameter names;
+    // Response json object parameter names.
     public static final String RESPONSE_TYPE = "responseType";
     public static final String RESPONSE_MESSAGE = "responseMessage";
     public static final String RESPONSE_DATA = "responseData";
     public static final String RESPONSE_STATUS = "responseStatus";
     public static final String LICENSE_MISSING_COMPONENTS = "component";
     public static final String LICENSE_MISSING_LIBRARIES = "library";
+
+    // Environment variables for FTP server access.
+    public static final String FILE_DOWNLOAD_PATH = "LICENSE_MANAGER_FILE_UPLOAD_PATH";
+    public static final String FTP_HOST = "LICENSE_MANAGER_FTP_HOST";
+    public static final String FTP_PORT = "LICENSE_MANAGER_FTP_PORT";
+    public static final String FTP_USERNAME = "LICENSE_MANAGER_FTP_USERNAME";
+    public static final String FTP_PASSWORD = "LICENSE_MANAGER_FTP_PASSWORD";
+    public static final String FTP_FILE_LOCATION = "LICENSE_MANAGER_FTP_FILE_LOCATION";
+    // Environment variables for sending emails.
+    public static final String EMAIL_USERNAME = "LICENSE_MANAGER_EMAIL_USERNAME";
+    public static final String EMAIL_PASSWORD = "LICENSE_MANAGER_EMAIL_PASSWORD";
+    public static final String LICENSE_MANAGER_ADMINS = "LICENSE_MANAGER_ADMINS";
 
     public Constants() {
         // Do nothing.

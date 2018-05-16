@@ -15,30 +15,61 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.internal.apps.license.manager.models;
 
-import org.wso2.internal.apps.license.manager.impl.JarFileInformationHolder;
+package org.wso2.internal.apps.license.manager.model;
 
 import java.util.List;
 
 /**
- * Java object to contain the objects required for the license generation per a session.
+ * Holds the details of the all the jars in a given pack.
  */
-public class SessionObjectHolder {
+public class JarFilesHolder {
 
-    private JarFileInformationHolder jarFileInformationHolder;
-    private int productId;
+    private List<JarFile> jarFilesInPack;
+    private List<JarFile> faultyNamedJars;
     private List<LicenseMissingJar> licenseMissingLibraries;
     private List<LicenseMissingJar> licenseMissingComponents;
+    private String productName;
+    private String productVersion;
 
-    public JarFileInformationHolder getJarFileInformationHolder() {
+    public List<JarFile> getJarFilesInPack() {
 
-        return jarFileInformationHolder;
+        return jarFilesInPack;
     }
 
-    public void setJarFileInformationHolder(JarFileInformationHolder jarFileInformationHolder) {
+    public void setJarFilesInPack(List<JarFile> jarFilesInPack) {
 
-        this.jarFileInformationHolder = jarFileInformationHolder;
+        this.jarFilesInPack = jarFilesInPack;
+    }
+
+    public List<JarFile> getFaultyNamedJars() {
+
+        return faultyNamedJars;
+    }
+
+    public void setFaultyNamedJars(List<JarFile> faultyNamedJars) {
+
+        this.faultyNamedJars = faultyNamedJars;
+    }
+
+    public String getProductName() {
+
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+
+        this.productName = productName;
+    }
+
+    public String getProductVersion() {
+
+        return productVersion;
+    }
+
+    public void setProductVersion(String productVersion) {
+
+        this.productVersion = productVersion;
     }
 
     public List<LicenseMissingJar> getLicenseMissingLibraries() {
@@ -59,15 +90,5 @@ public class SessionObjectHolder {
     public void setLicenseMissingComponents(List<LicenseMissingJar> licenseMissingComponents) {
 
         this.licenseMissingComponents = licenseMissingComponents;
-    }
-
-    public int getProductId() {
-
-        return productId;
-    }
-
-    public void setProductId(int productId) {
-
-        this.productId = productId;
     }
 }

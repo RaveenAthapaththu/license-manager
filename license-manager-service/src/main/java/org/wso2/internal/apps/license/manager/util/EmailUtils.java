@@ -17,7 +17,7 @@
  */
 package org.wso2.internal.apps.license.manager.util;
 
-import org.wso2.internal.apps.license.manager.models.NewLicenseEntry;
+import org.wso2.internal.apps.license.manager.model.NewLicenseEntry;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.util.ArrayList;
@@ -47,8 +47,7 @@ public class EmailUtils {
      * @throws MessagingException if the email couldn't be sent throws the exception.
      */
     public static void sendEmail(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry> libraries,
-                                 boolean isComplete)
-            throws MessagingException {
+                                 boolean isComplete) throws MessagingException {
 
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
@@ -90,9 +89,8 @@ public class EmailUtils {
      * @param libraries  the newly added libraries.
      * @return html body as a string
      */
-    private static String createHtmlBody(String addedBy, List<NewLicenseEntry> components,
-                                         List<NewLicenseEntry> libraries, List<NewLicenseEntry> entriesWithGpl,
-                                         boolean isComplete) {
+    private static String createHtmlBody(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry>
+            libraries, List<NewLicenseEntry> entriesWithGpl, boolean isComplete) {
 
         String finalHtml;
         String heading = createHeading(addedBy, isComplete);

@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.internal.apps.license.manager.models;
+package org.wso2.internal.apps.license.manager.model;
 
 /**
  * Java object to store the progress of a task.

@@ -22,8 +22,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.wso2.internal.apps.license.manager.models.JarFile;
-import org.wso2.internal.apps.license.manager.models.LicenseMissingJar;
+import org.wso2.internal.apps.license.manager.model.JarFile;
+import org.wso2.internal.apps.license.manager.model.LicenseMissingJar;
 
 import java.util.ArrayList;
 import java.util.List;

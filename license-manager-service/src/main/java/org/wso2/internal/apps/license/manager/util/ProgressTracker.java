@@ -17,7 +17,7 @@
  */
 package org.wso2.internal.apps.license.manager.util;
 
-import org.wso2.internal.apps.license.manager.models.TaskProgress;
+import org.wso2.internal.apps.license.manager.model.TaskProgress;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -24,15 +24,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerConfigurationException;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerDataException;
-import org.wso2.internal.apps.license.manager.impl.JarFileInfoDataHandler;
-import org.wso2.internal.apps.license.manager.impl.JarFileInformationHolder;
-import org.wso2.internal.apps.license.manager.impl.LicenseFileGenerator;
-import org.wso2.internal.apps.license.manager.impl.PackExtractor;
-import org.wso2.internal.apps.license.manager.impl.ServiceExecutor;
-import org.wso2.internal.apps.license.manager.models.JarFile;
-import org.wso2.internal.apps.license.manager.models.LicenseMissingJar;
-import org.wso2.internal.apps.license.manager.models.SessionObjectHolder;
-import org.wso2.internal.apps.license.manager.models.TaskProgress;
+import org.wso2.internal.apps.license.manager.impl.AddNewLicenseApiServiceImpl;
+import org.wso2.internal.apps.license.manager.impl.GenerateLicenseTextApiServiceImpl;
+import org.wso2.internal.apps.license.manager.impl.GetAllLicensesApiServiceImpl;
+import org.wso2.internal.apps.license.manager.impl.GetFaultyNamedJarsApiServiceImpl;
+import org.wso2.internal.apps.license.manager.impl.GetUploadedPacksApiServiceImpl;
+import org.wso2.internal.apps.license.manager.impl.UpdateJarInfoApiServiceImpl;
+import org.wso2.internal.apps.license.manager.model.JarFile;
+import org.wso2.internal.apps.license.manager.model.JarFilesHolder;
+import org.wso2.internal.apps.license.manager.model.SessionObjectHolder;
+import org.wso2.internal.apps.license.manager.model.TaskProgress;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.JsonUtils;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
@@ -76,11 +77,11 @@ public class LicenseManagerServiceEndpoint {
     public Response getAllUploadedPacks() {
 
         JsonObject responseJson = new JsonObject();
-        ServiceExecutor serviceExecutor = new ServiceExecutor();
+        GetUploadedPacksApiServiceImpl serviceImpl = new GetUploadedPacksApiServiceImpl();
 
         try {
             // Obtain the list of the available zip files.
-            JsonArray responseData = serviceExecutor.getListOfPacksName();
+            JsonArray responseData = serviceImpl.getListOfPacksName();
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "List of uploaded packs were retrieved.");
             responseJson.add(Constants.RESPONSE_DATA, responseData);
@@ -107,12 +108,12 @@ public class LicenseManagerServiceEndpoint {
     public Response getAllLicenseInformation(@Context Request request) {
 
         JsonObject responseJson = new JsonObject();
-        ServiceExecutor serviceExecutor = new ServiceExecutor();
+        GetAllLicensesApiServiceImpl serviceImpl = new GetAllLicensesApiServiceImpl();
 
         try {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "All the licenses were extracted.");
-            responseJson.add(Constants.RESPONSE_DATA, serviceExecutor.getListOfAllLicenses());
+            responseJson.add(Constants.RESPONSE_DATA, serviceImpl.getListOfAllLicenses());
         } catch (LicenseManagerDataException e) {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, e.getMessage());
@@ -140,8 +141,8 @@ public class LicenseManagerServiceEndpoint {
                                                @QueryParam("username") String username,
                                                String selectedPack) {
 
-        PackExtractor packExtractor = new PackExtractor();
-        TaskProgress taskProgress = packExtractor.startPackExtractionProcess(username, selectedPack);
+        GetFaultyNamedJarsApiServiceImpl serviceImpl = new GetFaultyNamedJarsApiServiceImpl();
+        TaskProgress taskProgress = serviceImpl.startPackExtractionProcess(username, selectedPack);
 
         JsonObject responseJson = new JsonObject();
         responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
@@ -217,11 +218,10 @@ public class LicenseManagerServiceEndpoint {
 
         if (taskProgress.getStatus().equals(Constants.COMPLETE)) {
             SessionObjectHolder userObjectHolder = new SessionObjectHolder();
-            JarFileInformationHolder jarFileInformationHolder = (JarFileInformationHolder) taskProgress.getData();
-            userObjectHolder.setJarFileInformationHolder(jarFileInformationHolder);
+            JarFilesHolder jarFilesHolder = (JarFilesHolder) taskProgress.getData();
+            userObjectHolder.setJarFilesHolder(jarFilesHolder);
             sessionObjectHolderMap.put(username, userObjectHolder);
-            List<JarFile> errorJarFileList =
-                    LicenseManagerUtils.removeDuplicates(jarFileInformationHolder.getFaultyNamedJars());
+            List<JarFile> errorJarFileList = LicenseManagerUtils.removeDuplicates(jarFilesHolder.getFaultyNamedJars());
             faultyNamedJars = JsonUtils.getFaultyNamedJarsAsJsonArray(errorJarFileList);
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, statusMessage);
@@ -254,28 +254,24 @@ public class LicenseManagerServiceEndpoint {
                                                String stringPayload) {
 
         JsonObject responseJson = new JsonObject();
-        ServiceExecutor serviceExecutor = new ServiceExecutor();
-        JarFileInformationHolder jarFileInformationHolder = sessionObjectHolderMap.get(username)
-                .getJarFileInformationHolder();
-        serviceExecutor.updateFaultyNamedListOfJars(jarFileInformationHolder,
-                JsonUtils.getAttributesFromRequestBody(stringPayload, "jars"));
+        UpdateJarInfoApiServiceImpl serviceImpl = new UpdateJarInfoApiServiceImpl();
+        JarFilesHolder jarFilesHolder = sessionObjectHolderMap.get(username).getJarFilesHolder();
 
         try {
-            JarFileInfoDataHandler jarFileInfoDataHandler = serviceExecutor.insertJarInfoToDb(jarFileInformationHolder);
+
+            int productId = serviceImpl.updateJarInfo(jarFilesHolder, JsonUtils.getAttributesFromRequestBody
+                    (stringPayload, "jars"));
 
             // Get the license missing jars ( components and libraries)
-            List<LicenseMissingJar> componentList = jarFileInfoDataHandler.getLicenseMissingComponents();
-            List<LicenseMissingJar> libraryList = jarFileInfoDataHandler.getLicenseMissingLibraries();
-
-            sessionObjectHolderMap.get(username).setLicenseMissingComponents(componentList);
-            sessionObjectHolderMap.get(username).setLicenseMissingLibraries(libraryList);
-            sessionObjectHolderMap.get(username).setProductId(jarFileInfoDataHandler.getProductId());
+            sessionObjectHolderMap.get(username).setProductId(productId);
 
             // Create the response if success
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "License missing jars were identified.");
-            responseJson.add(Constants.LICENSE_MISSING_COMPONENTS, JsonUtils.getComponentsListAsJson(componentList));
-            responseJson.add(Constants.LICENSE_MISSING_LIBRARIES, JsonUtils.getLibraryListAsJson(libraryList));
+            responseJson.add(Constants.LICENSE_MISSING_COMPONENTS, JsonUtils.getComponentsListAsJson(jarFilesHolder
+                    .getLicenseMissingComponents()));
+            responseJson.add(Constants.LICENSE_MISSING_LIBRARIES, JsonUtils.getLibraryListAsJson(jarFilesHolder
+                    .getLicenseMissingLibraries()));
         } catch (LicenseManagerDataException e) {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, e.getMessage());
@@ -305,21 +301,12 @@ public class LicenseManagerServiceEndpoint {
 
         JsonObject responseJson = new JsonObject();
 
-        // Extract data from the request.
-        JsonArray componentsJson = JsonUtils.getAttributesFromRequestBody(stringPayload, "components");
-        JsonArray librariesJson = JsonUtils.getAttributesFromRequestBody(stringPayload, "libraries");
-
         SessionObjectHolder sessionObjectHolder = sessionObjectHolderMap.get(username);
-        int productId = sessionObjectHolder.getProductId();
-        ServiceExecutor serviceExecutor = new ServiceExecutor();
-        serviceExecutor
-                .updateLicensesOfLicenseMissingJars(sessionObjectHolder.getLicenseMissingComponents(), componentsJson);
-        serviceExecutor
-                .updateLicensesOfLicenseMissingJars(sessionObjectHolder.getLicenseMissingLibraries(), librariesJson);
+        AddNewLicenseApiServiceImpl serviceImpl = new AddNewLicenseApiServiceImpl();
 
         try {
-            serviceExecutor.insertNewLicensesToDb(sessionObjectHolder.getLicenseMissingComponents(),
-                    sessionObjectHolder.getLicenseMissingLibraries(), productId, username);
+            serviceImpl.updateLicenses(sessionObjectHolder.getJarFilesHolder(), stringPayload, sessionObjectHolder
+                    .getProductId(), username);
 
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Licenses were added successfully.");
@@ -359,12 +346,11 @@ public class LicenseManagerServiceEndpoint {
         String productVersion = null;
 
         try {
-            JarFileInformationHolder jarFileInformationHolder =
-                    sessionObjectHolderMap.get(username).getJarFileInformationHolder();
-            productName = jarFileInformationHolder.getProductName();
-            productVersion = jarFileInformationHolder.getProductVersion();
-            LicenseFileGenerator licenseFileGenerator = new LicenseFileGenerator();
-            licenseFileGenerator.generateLicenceFile(productName, productVersion, fileUploadPath);
+            JarFilesHolder jarFilesHolder = sessionObjectHolderMap.get(username).getJarFilesHolder();
+            productName = jarFilesHolder.getProductName();
+            productVersion = jarFilesHolder.getProductVersion();
+            GenerateLicenseTextApiServiceImpl serviceImpl = new GenerateLicenseTextApiServiceImpl();
+            serviceImpl.generateLicenceFile(productName, productVersion, fileUploadPath);
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Done");
         } catch (IOException e) {
@@ -397,10 +383,9 @@ public class LicenseManagerServiceEndpoint {
                                        @QueryParam("username") String username) {
 
         String mountPath = SystemVariableUtil.getValue(Constants.FILE_DOWNLOAD_PATH, null);
-        JarFileInformationHolder jarFileInformationHolder = sessionObjectHolderMap.get(username)
-                .getJarFileInformationHolder();
-        String productName = jarFileInformationHolder.getProductName();
-        String productVersion = jarFileInformationHolder.getProductVersion();
+        JarFilesHolder jarFilesHolder = sessionObjectHolderMap.get(username).getJarFilesHolder();
+        String productName = jarFilesHolder.getProductName();
+        String productVersion = jarFilesHolder.getProductVersion();
         String fileName = "LICENSE(" + productName + "-" + productVersion + ").TXT";
         File file = Paths.get(mountPath, fileName).toFile();
         if (file.exists()) {

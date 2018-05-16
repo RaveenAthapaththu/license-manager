@@ -18,28 +18,23 @@
 
 package org.wso2.internal.apps.license.manager.impl;
 
+import org.wso2.internal.apps.license.manager.connector.DatabaseConnectionPool;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerDataException;
-import org.wso2.internal.apps.license.manager.util.Constants;
-import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Generates the license text for a given product and version.
  */
-public class LicenseFileGenerator {
+public class GenerateLicenseTextApiServiceImpl {
 
     private Connection con;
     private String file = "\n" +
@@ -55,25 +50,22 @@ public class LicenseFileGenerator {
             "At the bottom of this file is a table that shows what each license indicated\n" +
             "below is and where the actual text of the license can be found.\n\n";
 
-    public LicenseFileGenerator() throws LicenseManagerDataException {
+    public GenerateLicenseTextApiServiceImpl() throws LicenseManagerDataException {
 
-        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+        DatabaseConnectionPool databaseConnectionPool = DatabaseConnectionPool.getDbConnectionPool();
         try {
-            Class.forName(databaseDriver);
-            this.con = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
-        } catch (ClassNotFoundException | SQLException e) {
-            throw new LicenseManagerDataException("Failed to connect with the database.",e);
+            con = databaseConnectionPool.getDataSource().getConnection();
+        } catch (SQLException e) {
+            throw new LicenseManagerDataException("Failed to connect with database.", e);
         }
     }
 
-    public void generateLicenceFile(String product, String version, String packPath) throws LicenseManagerDataException, IOException {
+    public void generateLicenceFile(String product, String version, String packPath)
+            throws LicenseManagerDataException, IOException {
 
         try {
             Statement statement = con.createStatement();
-             ResultSet rs = statement.executeQuery("SELECT * FROM " +
+            ResultSet rs = statement.executeQuery("SELECT * FROM " +
                     "(SELECT " +
                     "   LM_PRODUCT.PRODUCT_NAME" +
                     "   ,LM_PRODUCT.PRODUCT_VERSION" +
@@ -95,9 +87,9 @@ public class LicenseFileGenerator {
                     "   LM_LIBRARY.LIB_FILE_NAME," +
                     "   LM_LIBRARY.LIB_TYPE," +
                     "   LM_LIBRARY_LICENSE.LICENSE_KEY " +
-                    "FROM ((((LM_PRODUCT INNER JOIN LM_COMPONENT_PRODUCT ON LM_PRODUCT.PRODUCT_ID=LM_COMPONENT_PRODUCT" +
-                    ".PRODUCT_ID)" +
-                    "   INNER JOIN LM_COMPONENT_LIBRARY ON LM_COMPONENT_PRODUCT.COMP_KEY=LM_COMPONENT_LIBRARY.COMP_KEY)" +
+                    "FROM ((((LM_PRODUCT INNER JOIN LM_COMPONENT_PRODUCT " +
+                    "ON LM_PRODUCT.PRODUCT_ID=LM_COMPONENT_PRODUCT.PRODUCT_ID)" +
+                    " INNER JOIN LM_COMPONENT_LIBRARY ON LM_COMPONENT_PRODUCT.COMP_KEY=LM_COMPONENT_LIBRARY.COMP_KEY)" +
                     "INNER JOIN LM_LIBRARY ON LM_COMPONENT_LIBRARY.LIB_ID=LM_LIBRARY.LIB_ID)" +
                     "INNER JOIN LM_LIBRARY_LICENSE ON LM_LIBRARY_LICENSE.LIB_ID=LM_LIBRARY.LIB_ID)" +
                     "UNION " +
@@ -132,7 +124,7 @@ public class LicenseFileGenerator {
 
             String formatString = String.format("%-80s%-15s%-10s\n", "Name", "Type", "License");
             file += formatString;
-            file += "---------------------------------------------------------------------------------------------------\n";
+            file += "-----------------------------------------------------------------------------------------------\n";
             while (rs.next()) {
                 formatString = String.format("%-80s%-15s%-10s\n",
                         rs.getString("COMP_KEY"),
@@ -154,7 +146,7 @@ public class LicenseFileGenerator {
             fw.write(file);
             fw.close();
         } catch (SQLException e) {
-            throw new LicenseManagerDataException("Failed to retrieve licenses from database.",e);
+            throw new LicenseManagerDataException("Failed to retrieve licenses from database.", e);
         }
     }
 

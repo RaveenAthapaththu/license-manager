@@ -21,16 +21,15 @@ package org.wso2.internal.apps.license.manager.impl;
 import org.apache.commons.lang.StringUtils;
 import org.op4j.Op;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
-import org.wso2.internal.apps.license.manager.models.JarFile;
+import org.wso2.internal.apps.license.manager.model.JarFile;
+import org.wso2.internal.apps.license.manager.model.JarFilesHolder;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.internal.apps.license.manager.util.crawler.FolderCrawler;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 import java.util.UUID;
@@ -40,15 +39,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * Java object to store the jar details of a pack.
+ * Extract jar file information of a pack recursively.
  */
-public class JarFileInformationHolder implements Serializable {
-
-    private List<JarFile> jarFilesInPack = new ArrayList<>();
-    private List<JarFile> faultyNamedJars = new ArrayList<>();
-    private String productName;
-    private String productVersion;
-    private FolderCrawler folderCrawler = new FolderCrawler();
+public class JarFileExtractor {
 
     /**
      * Extract the name of the jar from the file name.
@@ -61,9 +54,8 @@ public class JarFileInformationHolder implements Serializable {
         String extractedName = null;
 
         for (int i = 0; i < name.length(); i++) {
-            if ((name.charAt(i) == '-' | name.charAt(i) == '_')
-                    && (Character.isDigit(name.charAt(i + 1)) | name.charAt(i + 1) == 'S'
-                    | name.charAt(i + 1) == 'r')) {
+            if ((name.charAt(i) == '-' | name.charAt(i) == '_') && (Character.isDigit(name.charAt(i + 1)) |
+                    name.charAt(i + 1) == 'S' | name.charAt(i + 1) == 'r')) {
 
                 extractedName = name.substring(0, i);
             }
@@ -85,38 +77,12 @@ public class JarFileInformationHolder implements Serializable {
         name = name.replace(".mar", "");
 
         for (int i = 0; i < name.length(); i++) {
-            if ((name.charAt(i) == '-' | name.charAt(i) == '_')
-                    && (Character.isDigit(name.charAt(i + 1)) | name.charAt(i + 1) == 'S'
-                    | name.charAt(i + 1) == 'r')) {
+            if ((name.charAt(i) == '-' | name.charAt(i) == '_') && (Character.isDigit(name.charAt(i + 1)) |
+                    name.charAt(i + 1) == 'S' | name.charAt(i + 1) == 'r')) {
                 extractedVersion = name.substring(i + 1, name.length());
             }
         }
         return extractedVersion;
-    }
-
-    List<JarFile> getJarFilesInPack() {
-
-        return jarFilesInPack;
-    }
-
-    public void setJarFilesInPack(List<JarFile> jarFilesInPack) {
-
-        this.jarFilesInPack = jarFilesInPack;
-    }
-
-    public List<JarFile> getFaultyNamedJars() {
-
-        return faultyNamedJars;
-    }
-
-    public String getProductName() {
-
-        return productName;
-    }
-
-    public String getProductVersion() {
-
-        return productVersion;
     }
 
     /**
@@ -125,16 +91,23 @@ public class JarFileInformationHolder implements Serializable {
      * @param product path to the pack.
      * @throws LicenseManagerRuntimeException If file unzipping or extraction fails.
      */
-    public void extractJarsRecursively(String product) throws LicenseManagerRuntimeException {
+    public JarFilesHolder extractJarsRecursively(String product) throws LicenseManagerRuntimeException {
+
+        JarFilesHolder jarFilesHolder = new JarFilesHolder();
 
         String targetFolder = new File(product).getName();
         String uuid = UUID.randomUUID().toString();
         String tempFolderToHoldJars = new File(product).getParent() + File.separator + uuid;
-        productName = getName(targetFolder);
-        productVersion = getVersion(targetFolder);
-        findDirectJars(product);
-        findAllJars(tempFolderToHoldJars);
+
+        List<JarFile> jarFilesInPack = findDirectJars(product);
+        List<JarFile> faultyNamedJars = findAllJars(tempFolderToHoldJars, jarFilesInPack);
         LicenseManagerUtils.deleteFolder(tempFolderToHoldJars);
+
+        jarFilesHolder.setProductName(getName(targetFolder));
+        jarFilesHolder.setProductVersion(getVersion(targetFolder));
+        jarFilesHolder.setJarFilesInPack(jarFilesInPack);
+        jarFilesHolder.setFaultyNamedJars(faultyNamedJars);
+        return jarFilesHolder;
     }
 
     /**
@@ -142,17 +115,16 @@ public class JarFileInformationHolder implements Serializable {
      *
      * @param path path to the pack file
      */
-    private void findDirectJars(String path) {
+    private List<JarFile> findDirectJars(String path) {
 
+        FolderCrawler folderCrawler = new FolderCrawler();
         List<File> directZips = folderCrawler.find(path);
-        Iterator<File> i = directZips.iterator();
-        JarFile currentJarFile;
-
-        while (i.hasNext()) {
-            File jarFile = i.next();
-            currentJarFile = getJar(jarFile, null);
-            jarFilesInPack.add(currentJarFile);
+        List<JarFile> listOfDirectJarsInPack = new ArrayList<>();
+        for (File directZip : directZips) {
+            JarFile currentJarFile = createJarObjectFromFile(directZip, null);
+            listOfDirectJarsInPack.add(currentJarFile);
         }
+        return listOfDirectJarsInPack;
     }
 
     /**
@@ -161,38 +133,35 @@ public class JarFileInformationHolder implements Serializable {
      * @param tempFolderToHoldJars File path to extract the jars.
      * @throws LicenseManagerRuntimeException if the jar extraction fails.
      */
-    private void findAllJars(String tempFolderToHoldJars) throws LicenseManagerRuntimeException {
+    private List<JarFile> findAllJars(String tempFolderToHoldJars, List<JarFile> jarFilesInPack) throws
+            LicenseManagerRuntimeException {
 
         new File(tempFolderToHoldJars).mkdir();
 
         Stack<JarFile> zipStack = new Stack<>();
+        List<JarFile> faultyNamedJars = new ArrayList<>();
 
         zipStack.addAll(jarFilesInPack);
-        jarFilesInPack = new ArrayList<>();
+        jarFilesInPack.clear();
+        tempFolderToHoldJars = tempFolderToHoldJars + File.separator;
 
         while (!zipStack.empty()) {
             JarFile jarFile = zipStack.pop();
-            JarFile currentJarFile;
-
-            File toBeExtracted = jarFile.getJarFile();
-            if (!tempFolderToHoldJars.endsWith(File.separator)) {
-                tempFolderToHoldJars = tempFolderToHoldJars + File.separator;
-            }
+            File fileToBeExtracted = jarFile.getJarFile();
             File extractTo;
 
             // Get information from the Manifest file.
             Manifest manifest;
             try {
-                manifest = new java.util.jar.JarFile(toBeExtracted).getManifest();
+                manifest = new java.util.jar.JarFile(fileToBeExtracted).getManifest();
             } catch (IOException e) {
                 throw new LicenseManagerRuntimeException("Failed to get the Manifest of the jarFile.", e);
             }
             if (manifest != null) {
-                currentJarFile = getJar(jarFile.getJarFile(), jarFile.getParent());
-                jarFile = currentJarFile;
+                setNameAndVersionOfJar(jarFile.getJarFile(), jarFile);
                 jarFile.setType(getType(manifest, jarFile));
                 jarFile.setIsBundle(getIsBundle(manifest));
-                if (!currentJarFile.isValidName()) {
+                if (!jarFile.isValidName()) {
                     faultyNamedJars.add(jarFile);
                 } else {
                     jarFilesInPack.add(jarFile);
@@ -200,20 +169,19 @@ public class JarFileInformationHolder implements Serializable {
             }
 
             // If a jarFile contains jars inside, extract the parent jarFile.
-            if (checkInnerJars(toBeExtracted.getAbsolutePath())) {
-                extractTo = new File(tempFolderToHoldJars + toBeExtracted.getName());
+            if (checkInnerJars(fileToBeExtracted.getAbsolutePath())) {
+                extractTo = new File(tempFolderToHoldJars + fileToBeExtracted.getName());
                 extractTo.mkdir();
-                LicenseManagerUtils.unzip(toBeExtracted.getAbsolutePath(), extractTo.getAbsolutePath());
-                Iterator<File> i = Op.onArray(extractTo
+                LicenseManagerUtils.unzip(fileToBeExtracted.getAbsolutePath(), extractTo.getAbsolutePath());
+                List<File> listOfInnerFiles = Op.onArray(extractTo
                         .listFiles(file -> file.getName().endsWith(".jar") || file.getName().endsWith(".mar")))
-                        .toList().get().iterator();
-                File nextFile;
-                while (i.hasNext()) {
-                    nextFile = i.next();
-                    zipStack.add(getJar(nextFile, jarFile));
+                        .toList().get();
+                for (File nextFile : listOfInnerFiles) {
+                    zipStack.add(createJarObjectFromFile(nextFile, jarFile));
                 }
             }
         }
+        return faultyNamedJars;
     }
 
     /**
@@ -237,21 +205,19 @@ public class JarFileInformationHolder implements Serializable {
     }
 
     /**
-     * Set the values for the attributes of the JarFile.java object.
+     * Set the values for the attributes of the Jar object.
      *
-     * @param jarFile jar file to create a JarFile.java object
-     * @param parent  parent jar of the corresponding jar
-     * @return JarFile.java object
+     * @param fileContainingJar jar file to create a JarFile.java object
+     * @param jar               JarFile java object
      */
-    private JarFile getJar(File jarFile, JarFile parent) {
+    private void setNameAndVersionOfJar(File fileContainingJar, JarFile jar) {
 
-        JarFile jar = new JarFile();
-        String jarName = getName(jarFile.getName());
-        String jarVersion = getVersion(jarFile.getName());
+        String jarName = getName(fileContainingJar.getName());
+        String jarVersion = getVersion(fileContainingJar.getName());
 
         if (StringUtils.isEmpty(jarName) || StringUtils.isEmpty(jarVersion)) {
             jar.setValidName(false);
-            jar.setProjectName(getDefaultName(jarFile.getName()));
+            jar.setProjectName(getDefaultName(fileContainingJar.getName()));
             jar.setVersion("1.0.0");
         } else {
             jar.setValidName(true);
@@ -259,7 +225,20 @@ public class JarFileInformationHolder implements Serializable {
             jar.setVersion(jarVersion);
         }
 
-        jar.setJarFile(jarFile);
+    }
+
+    /**
+     * Set the values for the attributes of the Jar object.
+     *
+     * @param fileContainingJar jar file to create a JarFile.java object
+     * @param parent            parent jar of the corresponding jar
+     * @return JarFile object
+     */
+    private JarFile createJarObjectFromFile(File fileContainingJar, JarFile parent) {
+
+        JarFile jar = new JarFile();
+        setNameAndVersionOfJar(fileContainingJar, jar);
+        jar.setJarFile(fileContainingJar);
         jar.setParent(parent);
         return jar;
     }
