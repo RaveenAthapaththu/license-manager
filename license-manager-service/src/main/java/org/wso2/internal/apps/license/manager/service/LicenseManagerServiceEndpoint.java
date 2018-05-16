@@ -350,7 +350,7 @@ public class LicenseManagerServiceEndpoint {
             productName = jarFilesHolder.getProductName();
             productVersion = jarFilesHolder.getProductVersion();
             GenerateLicenseTextApiServiceImpl serviceImpl = new GenerateLicenseTextApiServiceImpl();
-            serviceImpl.generateLicenceFile(productName, productVersion, fileUploadPath);
+            serviceImpl.generateLicenseFile(productName, productVersion, fileUploadPath);
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Done");
         } catch (IOException e) {

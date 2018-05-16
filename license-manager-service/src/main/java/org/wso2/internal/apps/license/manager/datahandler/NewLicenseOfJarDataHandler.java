@@ -30,7 +30,7 @@ import java.sql.Statement;
 /**
  * Child class which contains data transferring operations specifically related to defining licenses for the jars.
  */
-public class NewLicenseOfJarDataHandler extends JarFileInfoDataHandler {
+public class NewLicenseOfJarDataHandler extends JarFileDataHandler {
 
     private static final Logger log = LoggerFactory.getLogger(NewLicenseOfJarDataHandler.class);
 

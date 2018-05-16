@@ -31,7 +31,7 @@ import java.sql.Statement;
  * Child class which contains operations specifically related to transferring data of the jar file which already has
  * licenses defined.
  */
-public class LicenseExistingJarFileDataHandler extends JarFileInfoDataHandler {
+public class LicenseExistingJarFileDataHandler extends JarFileDataHandler {
 
     private static final Logger log = LoggerFactory.getLogger(LicenseExistingJarFileDataHandler.class);
 

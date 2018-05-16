@@ -31,12 +31,12 @@ import java.sql.SQLException;
 /**
  * Super class which handles the data transfers related to jar files with the database.
  */
-public class JarFileInfoDataHandler {
+public class JarFileDataHandler {
 
     private static final Logger log = LoggerFactory.getLogger(LicenseExistingJarFileDataHandler.class);
     Connection connection;
 
-    JarFileInfoDataHandler() throws SQLException {
+    JarFileDataHandler() throws SQLException {
 
         DatabaseConnectionPool databaseConnectionPool = DatabaseConnectionPool.getDbConnectionPool();
         connection = databaseConnectionPool.getDataSource().getConnection();
@@ -215,14 +215,14 @@ public class JarFileInfoDataHandler {
      */
     public boolean isComponentExists(String compKey) throws SQLException {
 
-        int id = -1;
+        boolean isExist = false;
         String query = SqlRelatedConstants.SELECT_COMPONENT;
         PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, compKey);
         ResultSet rs = preparedStatement.executeQuery();
         while (rs.next()) {
-            id = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_COMPONENT);
+            isExist = true;
         }
-        return id != -1;
+        return isExist;
     }
 }
