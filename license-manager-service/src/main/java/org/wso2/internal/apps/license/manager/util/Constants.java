@@ -56,7 +56,7 @@ public class Constants {
     public static final String LICENSE_MISSING_LIBRARIES = "library";
 
     // Environment variables for FTP server access.
-    public static final String FILE_DOWNLOAD_PATH = "LICENSE_MANAGER_FILE_UPLOAD_PATH";
+    public static final String FILE_DOWNLOAD_PATH = "LICENSE_MANAGER_FILE_DOWNLOAD_PATH";
     public static final String FTP_HOST = "LICENSE_MANAGER_FTP_HOST";
     public static final String FTP_PORT = "LICENSE_MANAGER_FTP_PORT";
     public static final String FTP_USERNAME = "LICENSE_MANAGER_FTP_USERNAME";

@@ -25,6 +25,8 @@ import com.google.gson.JsonParser;
 import org.wso2.internal.apps.license.manager.model.JarFile;
 import org.wso2.internal.apps.license.manager.model.LicenseMissingJar;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +37,7 @@ public class JsonUtils {
 
     /**
      * Create an array of json objects containing the license missing components.
+     * { index : xxx, name : xxx, version : xxx, type : xxx, previousLicense : xxx, licenseKey : xxx }
      *
      * @param componentList array list of components
      * @return json array of components
@@ -58,6 +61,7 @@ public class JsonUtils {
 
     /**
      * Create an array of json objects containing the license missing libraries.
+     * { index : xxx, name : xxx, version : xxx, type : xxx, previousLicense : xxx, licenseKey : xxx }
      *
      * @param libraryList array list of libraries
      * @return json array of libraries
@@ -83,6 +87,7 @@ public class JsonUtils {
 
     /**
      * Create a json array from the list of faulty named jars.
+     * { index : xxx, jarFileName : xxx, name : xxx, version : xxx }
      *
      * @param errorJarFileList array of faulty named jars
      * @return json array of faulty named jars
@@ -101,6 +106,13 @@ public class JsonUtils {
         return faultyNamedJars;
     }
 
+    /**
+     * Create a json array from the list of uploaded pack.
+     * {name : nameOfThePack}
+     *
+     * @param listOfPacks list of packs as an array list of strings
+     * @return json array
+     */
     public static JsonArray getListOfPacksUploadedAsJson(ArrayList<String> listOfPacks) {
 
         JsonArray uploadedPacks = new JsonArray();
@@ -114,14 +126,41 @@ public class JsonUtils {
         return uploadedPacks;
     }
 
+    /**
+     * Get the json array from a given string when the attribute name is given.
+     *
+     * @param requestBody   string containing a json object
+     * @param attributeName attribute which should be retrieved
+     * @return jason array object retrieved from the string
+     */
     public static JsonArray getAttributesFromRequestBody(String requestBody, String attributeName) {
 
         JsonParser jsonParser = new JsonParser();
 
         JsonElement jsonElement = jsonParser.parse(requestBody);
         JsonObject jsonObject = jsonElement.getAsJsonObject();
-        JsonArray jarsWithNames = jsonObject.get(attributeName).getAsJsonArray();
-        return jarsWithNames;
+        return jsonObject.get(attributeName).getAsJsonArray();
+    }
+
+    /**
+     * Create a json array from the retrieved result set for licenses from the database.
+     * { LICENSE_ID : xxx, LICENSE_KEY : xxx, LICENSE_NAME : xxx }
+     *
+     * @param resultSet all licenses
+     * @return json array for licenses
+     * @throws SQLException if the obtaining values from the result set fails.
+     */
+    public static JsonArray createJsonArrayFromLicenseResultSet(ResultSet resultSet) throws SQLException {
+
+        JsonArray licensesJsonArray = new JsonArray();
+        while (resultSet.next()) {
+            JsonObject licenseJson = new JsonObject();
+            licenseJson.addProperty("LICENSE_ID", resultSet.getInt(SqlRelatedConstants.LICENSE_ID));
+            licenseJson.addProperty("LICENSE_KEY", resultSet.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE));
+            licenseJson.addProperty("LICENSE_NAME", resultSet.getString(SqlRelatedConstants.LICENSE_NAME));
+            licensesJsonArray.add(licenseJson);
+        }
+        return licensesJsonArray;
     }
 
 }

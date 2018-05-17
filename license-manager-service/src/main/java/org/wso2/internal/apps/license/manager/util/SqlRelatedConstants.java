@@ -57,9 +57,16 @@ public class SqlRelatedConstants {
             "COMP_KEY = (SELECT COMP_KEY FROM LM_COMPONENT WHERE COMP_NAME=? LIMIT 1)";
     public static final String SELECT_LICENSE_FOR_ANY_LIB = "SELECT LICENSE_KEY FROM LM_LIBRARY_LICENSE WHERE LIB_ID " +
             "= (SELECT LIB_ID FROM LM_LIBRARY WHERE LIB_NAME=? LIMIT 1)";
+    public static final String SELECT_LICENSE_FOR_KEY = "SELECT * FROM LM_LICENSE WHERE LICENSE_KEY=?";
 
     public static final String PRIMARY_KEY_LIBRARY = "LIB_ID";
     public static final String PRIMARY_KEY_COMPONENT = "COMP_ID";
     public static final String PRIMARY_KEY_PRODUCT = "PRODUCT_ID";
     public static final String PRIMARY_KEY_LICENSE = "LICENSE_KEY";
+    public static final String LICENSE_ID = "LICENSE_ID";
+    public static final String LICENSE_NAME = "LICENSE_NAME";
+    public static final String LICENSE_URL = "LICENSE_URL";
+    public static final String COMPONENT_KEY = "COMP_KEY";
+    public static final String COMPONENT_TYPE = "COMP_TYPE";
+
 }
