@@ -10,12 +10,12 @@ target
 *.class
 
 # Ignore security resources
-license-manager-client/src/main/resources
+license-manager-client/src/main/resources/
 
 # Package Files #
 *.war
 *.ear
-*.jar
+*.jarFile
 
 # ignore Intellij-IDEA files
 *.iml
