@@ -21,7 +21,9 @@ package org.wso2.internal.apps.license.manager.impl;
 import com.google.gson.JsonArray;
 import org.wso2.internal.apps.license.manager.datahandler.LicensesDataHandler;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerDataException;
+import org.wso2.internal.apps.license.manager.util.JsonUtils;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
@@ -40,7 +42,8 @@ public class GetAllLicensesApiServiceImpl {
         JsonArray listOfLicensesAsJson;
         try {
             LicensesDataHandler licensesDataHandler = new LicensesDataHandler();
-            listOfLicensesAsJson = licensesDataHandler.selectAllLicense();
+            ResultSet licenses = licensesDataHandler.selectAllLicense();
+            listOfLicensesAsJson = JsonUtils.createJsonArrayFromLicenseResultSet(licenses);
         } catch (SQLException e) {
             throw new LicenseManagerDataException("Failed to retrieve data from the database.", e);
         }

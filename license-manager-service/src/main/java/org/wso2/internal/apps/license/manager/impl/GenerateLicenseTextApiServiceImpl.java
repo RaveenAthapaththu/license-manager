@@ -20,6 +20,7 @@ package org.wso2.internal.apps.license.manager.impl;
 
 import org.wso2.internal.apps.license.manager.datahandler.LicenseTextDataHandler;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerDataException;
+import org.wso2.internal.apps.license.manager.util.SqlRelatedConstants;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -52,29 +53,31 @@ public class GenerateLicenseTextApiServiceImpl {
 
         try {
             LicenseTextDataHandler licenseTextDataHandler = new LicenseTextDataHandler();
-            ResultSet licensesOfJars = licenseTextDataHandler.getLicenssForAllJars(product, version);
+            ResultSet licensesOfJars = licenseTextDataHandler.getLicenseForAllJars(product, version);
             Set<String> keys = new HashSet<String>();
 
             String formatString = String.format("%-80s%-15s%-10s\n", "Name", "Type", "License");
             file += formatString;
-            file += "-----------------------------------------------------------------------------------------------\n";
+            file +=
+                    "----------------------------------------------------------------------------------" +
+                            "-----------------------\n";
             while (licensesOfJars.next()) {
                 formatString = String.format("%-80s%-15s%-10s\n",
-                        licensesOfJars.getString("COMP_KEY"),
-                        licensesOfJars.getString("COMP_TYPE"),
-                        licensesOfJars.getString("LICENSE_KEY") + "");
+                        licensesOfJars.getString(SqlRelatedConstants.COMPONENT_KEY),
+                        licensesOfJars.getString(SqlRelatedConstants.COMPONENT_TYPE),
+                        licensesOfJars.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE));
                 file += formatString;
-                keys.add(licensesOfJars.getString("LICENSE_KEY"));
+                keys.add(licensesOfJars.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE));
             }
             file += "\n\n\nThe license types used by the above libraries and their information is given below:\n\n";
             for (String key : keys) {
                 ResultSet licenseDetail = licenseTextDataHandler.getLicenseDescriptions(key);
                 while (licenseDetail.next()) {
                     formatString = String.format("%-15s%s\n%-15s%s\n",
-                            licenseDetail.getString("LICENSE_KEY"),
-                            licenseDetail.getString("LICENSE_NAME"),
+                            licenseDetail.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE),
+                            licenseDetail.getString(SqlRelatedConstants.LICENSE_NAME),
                             "",
-                            licenseDetail.getString("LICENSE_URL"));
+                            licenseDetail.getString(SqlRelatedConstants.LICENSE_URL));
                 }
 
                 file += formatString;
