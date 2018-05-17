@@ -27,7 +27,8 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContexts;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ import javax.net.ssl.SSLContext;
  */
 public class ServiceUtils {
 
-    private static final Logger log = Logger.getLogger(ServiceUtils.class);
+    private static final Logger log = LoggerFactory.getLogger(PropertyReader.class);
 
     /**
      * Create a trusted http client to initiate a secure connection with micro services.
@@ -58,8 +59,8 @@ public class ServiceUtils {
         PropertyReader properties = new PropertyReader();
 
         // Setting up authentication.
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(properties.getBackendUsername(),
-                properties.getBackendPassword());
+        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(properties.getMicroServiceUsername(),
+                properties.getMicroServicePassword());
         CredentialsProvider provider = new BasicCredentialsProvider();
         provider.setCredentials(AuthScope.ANY, credentials);
 
@@ -84,6 +85,5 @@ public class ServiceUtils {
                 KeyManagementException e) {
             throw new LicenseManagerException("Failed to initiate the connection. ", e);
         }
-
     }
 }

@@ -25,9 +25,9 @@ public class Constants {
     // Constants for accessing configuration details.
     static final String CONFIG_FILE_NAME = "config.properties";
 
-    static final String BACKEND_URL = "backend_url";
-    static final String BACKEND_USERNAME = "backend_username";
-    static final String BACKEND_PASSWORD = "backend_password";
+    static final String MICRO_SERVICE_URL = "micro_service_url";
+    static final String MICRO_SERVICE_USERNAME = "micro_service_username";
+    static final String MICRO_SERVICE_PASSWORD = "micro_service_password";
     static final String KEYSTORE_FILE_NAME = "sso_keystore_file_name";
     static final String KEYSTORE_PASSWORD = "sso_keystore_password";
     static final String CERTIFICATE_ALIAS = "sso_certificate_alias";

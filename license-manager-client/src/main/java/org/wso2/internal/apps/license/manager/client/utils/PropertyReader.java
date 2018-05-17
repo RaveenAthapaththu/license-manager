@@ -18,7 +18,8 @@
 
 package org.wso2.internal.apps.license.manager.client.utils;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,11 +31,11 @@ import java.util.Properties;
  */
 public class PropertyReader {
 
-    private final static Logger logger = Logger.getLogger(PropertyReader.class);
+    private static final Logger log = LoggerFactory.getLogger(PropertyReader.class);
     private final static String configFileName = Constants.CONFIG_FILE_NAME;
-    private String backendUrl;
-    private String backendPassword;
-    private String backendUsername;
+    private String microServiceUrl;
+    private String microServicePassword;
+    private String microServiceUsername;
     private String ssoKeyStoreName;
     private String ssoKeyStorePassword;
     private String ssoCertAlias;
@@ -58,9 +59,9 @@ public class PropertyReader {
         Properties prop = new Properties();
         try {
             prop.load(input);
-            this.backendUrl = prop.getProperty(Constants.BACKEND_URL);
-            this.backendUsername = prop.getProperty(Constants.BACKEND_USERNAME);
-            this.backendPassword = prop.getProperty(Constants.BACKEND_PASSWORD);
+            this.microServiceUrl = prop.getProperty(Constants.MICRO_SERVICE_URL);
+            this.microServiceUsername = prop.getProperty(Constants.MICRO_SERVICE_USERNAME);
+            this.microServicePassword = prop.getProperty(Constants.MICRO_SERVICE_PASSWORD);
             this.ssoKeyStoreName = prop.getProperty(Constants.KEYSTORE_FILE_NAME);
             this.ssoKeyStorePassword = prop.getProperty(Constants.KEYSTORE_PASSWORD);
             this.ssoCertAlias = prop.getProperty(Constants.CERTIFICATE_ALIAS);
@@ -69,34 +70,34 @@ public class PropertyReader {
             this.trustStoreServicePassword = prop.getProperty(Constants.TRUST_STORE_SERVICE_PASSWORD);
 
         } catch (FileNotFoundException e) {
-            logger.error("The configuration file is not found");
+            log.error("The configuration file is not found");
         } catch (IOException e) {
-            logger.error("The File cannot be read");
+            log.error("The File cannot be read");
         } finally {
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    logger.error("The File InputStream is not closed");
+                    log.error("The File InputStream is not closed");
                 }
             }
         }
 
     }
 
-    public String getBackendUrl() {
+    public String getMicroServiceUrl() {
 
-        return this.backendUrl;
+        return this.microServiceUrl;
     }
 
-    String getBackendUsername() {
+    String getMicroServiceUsername() {
 
-        return this.backendUsername;
+        return this.microServiceUsername;
     }
 
-    String getBackendPassword() {
+    String getMicroServicePassword() {
 
-        return this.backendPassword;
+        return this.microServicePassword;
     }
 
     public String getSsoKeyStoreName() {

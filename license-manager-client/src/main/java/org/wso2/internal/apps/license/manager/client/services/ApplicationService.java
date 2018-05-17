@@ -18,14 +18,11 @@
 package org.wso2.internal.apps.license.manager.client.services;
 
 import com.google.gson.JsonObject;
-import org.apache.log4j.Logger;
-import org.json.JSONException;
-import org.wso2.internal.apps.license.manager.client.filters.JWTAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URISyntaxException;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,23 +31,25 @@ import javax.servlet.http.HttpServletResponse;
  * Endpoint for executing backend services of the application.
  */
 public class ApplicationService extends HttpServlet {
-    private static final Logger log = Logger.getLogger(ApplicationService.class);
+
+    private static final Logger log = LoggerFactory.getLogger(ApplicationService.class);
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse response) throws IOException {
+
         String username = String.valueOf(req.getSession().getAttribute("user"));
         response.setContentType("application/json");
         PrintWriter out = response.getWriter();
         JsonObject userDetails = new JsonObject();
         userDetails.addProperty("username", username);
         out.print(userDetails);
-        if(log.isDebugEnabled()){
-            log.debug("Successfully sent the user details for the user "+ username);
+        if (log.isDebugEnabled()) {
+            log.debug("Successfully sent the user details for the user " + username);
         }
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse response) {
         // Do nothing.
     }
 

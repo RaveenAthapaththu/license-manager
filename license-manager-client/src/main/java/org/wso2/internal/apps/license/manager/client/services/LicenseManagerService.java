@@ -17,10 +17,10 @@
  */
 package org.wso2.internal.apps.license.manager.client.services;
 
-import org.apache.log4j.Logger;
 import org.json.JSONException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
-import org.wso2.internal.apps.license.manager.client.filters.JWTAction;
 import org.wso2.internal.apps.license.manager.client.utils.Constants;
 
 import java.io.IOException;
@@ -37,7 +37,7 @@ import javax.ws.rs.core.MediaType;
  */
 public class LicenseManagerService extends HttpServlet {
 
-    private static final Logger log = Logger.getLogger(JWTAction.class);
+    private static final Logger log = LoggerFactory.getLogger(LicenseManagerService.class);
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -50,7 +50,7 @@ public class LicenseManagerService extends HttpServlet {
             if (request.getPathInfo().equals(Constants.DOWNLOAD_ENDPOINT)) {
                 response.setContentType(MediaType.TEXT_HTML);
                 response.setHeader("Content-Disposition", "attachment;filename=LICENSE.txt");
-                InputStream is = ServiceExecuter.executeDownloadService(request.getPathInfo(), username);
+                InputStream is = ServiceExecutor.executeDownloadService(request.getPathInfo(), username);
                 int read;
                 byte[] bytes = new byte[1024];
                 OutputStream out = response.getOutputStream();
@@ -67,7 +67,7 @@ public class LicenseManagerService extends HttpServlet {
             } else {
                 response.setContentType(MediaType.APPLICATION_JSON);
                 PrintWriter out = response.getWriter();
-                out.print(ServiceExecuter.executeGetService(request.getPathInfo(), username));
+                out.print(ServiceExecutor.executeGetService(request.getPathInfo(), username));
                 if (log.isDebugEnabled()) {
                     log.debug("A response is received for GET request sent to {MICROSERVICE}/" + request.getPathInfo()
                             + " by " + username);
@@ -85,7 +85,7 @@ public class LicenseManagerService extends HttpServlet {
         response.setContentType("application/json");
         try {
             PrintWriter out = response.getWriter();
-            out.print(ServiceExecuter.executePostService(request.getPathInfo(), request.getReader().readLine(), username));
+            out.print(ServiceExecutor.executePostService(request.getPathInfo(), request.getReader().readLine(), username));
             if (log.isDebugEnabled()) {
                 log.debug("A response is received for POST request sent to {MICROSERVICE}/" + request.getPathInfo()
                         + " by " + username);

@@ -22,7 +22,8 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.client.utils.PropertyReader;
 
 import java.io.IOException;
@@ -49,7 +50,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class JWTAction implements Filter {
 
-    private static final Logger log = Logger.getLogger(JWTAction.class);
+    private static final Logger log = LoggerFactory.getLogger(JWTAction.class);
     private static final PropertyReader propertyReader = new PropertyReader();
 
     /**
@@ -64,8 +65,8 @@ public class JWTAction implements Filter {
     private static PublicKey getPublicKey() throws IOException, KeyStoreException, CertificateException,
             NoSuchAlgorithmException {
 
-        InputStream file = Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream(propertyReader.getSsoKeyStoreName());
+        InputStream file = Thread.currentThread().getContextClassLoader().getResourceAsStream(propertyReader
+                .getSsoKeyStoreName());
         KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
         keystore.load(file, propertyReader.getSsoKeyStorePassword().toCharArray());
         Certificate cert = keystore.getCertificate(propertyReader.getSsoCertAlias());

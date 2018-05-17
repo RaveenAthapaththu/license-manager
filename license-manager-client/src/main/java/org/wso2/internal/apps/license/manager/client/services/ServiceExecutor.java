@@ -17,8 +17,6 @@
  */
 package org.wso2.internal.apps.license.manager.client.services;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -31,6 +29,8 @@ import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
 import org.wso2.internal.apps.license.manager.client.utils.PropertyReader;
 import org.wso2.internal.apps.license.manager.client.utils.ServiceUtils;
@@ -43,9 +43,9 @@ import javax.ws.rs.core.MediaType;
 /**
  * Call the corresponding micro service.
  */
-public class ServiceExecuter {
+public class ServiceExecutor {
 
-    private static final Log log = LogFactory.getLog(ServiceExecuter.class);
+    private static final Logger log = LoggerFactory.getLogger(ServiceExecutor.class);
 
     /**
      * Call the backend service for the GET requests.
@@ -58,7 +58,7 @@ public class ServiceExecuter {
     public static JSONObject executeGetService(String endpoint, String username) throws JSONException {
 
         PropertyReader properties = new PropertyReader();
-        String url = properties.getBackendUrl() + endpoint;
+        String url = properties.getMicroServiceUrl() + endpoint;
         JSONObject result = null;
 
         try {
@@ -103,7 +103,7 @@ public class ServiceExecuter {
     public static JSONObject executePostService(String endpoint, String payload, String username) throws JSONException {
 
         PropertyReader properties = new PropertyReader();
-        String url = properties.getBackendUrl() + endpoint;
+        String url = properties.getMicroServiceUrl() + endpoint;
         JSONObject result = null;
 
         try {
@@ -153,7 +153,7 @@ public class ServiceExecuter {
     static InputStream executeDownloadService(String endpoint, String username) throws LicenseManagerException {
 
         PropertyReader properties = new PropertyReader();
-        String url = properties.getBackendUrl() + endpoint;
+        String url = properties.getMicroServiceUrl() + endpoint;
         try {
 
             // Setting the HTTP request
