@@ -39,7 +39,7 @@ public class LicenseTextDataHandler {
         connection = databaseConnectionPool.getDataSource().getConnection();
     }
 
-    public ResultSet getLicenssForAllJars(String productName, String version) throws SQLException {
+    public ResultSet getLicenseForAllJars(String productName, String version) throws SQLException {
 
         String query = "SELECT * FROM " +
                 "(SELECT " +
@@ -94,17 +94,17 @@ public class LicenseTextDataHandler {
                 "WHERE PRODUCT_NAME=? AND PRODUCT_VERSION=? ORDER BY COMP_KEY";
         PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, productName);
-        preparedStatement.setString(2,version);
+        preparedStatement.setString(2, version);
         ResultSet resultSet = preparedStatement.executeQuery();
         return resultSet;
     }
 
     public ResultSet getLicenseDescriptions(String key) throws SQLException {
-        String query ="SELECT * FROM LM_LICENSE WHERE LICENSE_KEY=?";
+
+        String query = SqlRelatedConstants.SELECT_LICENSE_FOR_KEY;
         PreparedStatement preparedStatement = connection.prepareStatement(query);
         preparedStatement.setString(1, key);
         ResultSet resultSet = preparedStatement.executeQuery();
         return resultSet;
     }
-
 }

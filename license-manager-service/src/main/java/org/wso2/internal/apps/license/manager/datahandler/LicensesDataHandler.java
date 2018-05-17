@@ -18,8 +18,6 @@
 
 package org.wso2.internal.apps.license.manager.datahandler;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.connector.DatabaseConnectionPool;
@@ -36,32 +34,29 @@ import java.sql.SQLException;
 public class LicensesDataHandler {
 
     private static final Logger log = LoggerFactory.getLogger(LicensesDataHandler.class);
+    private Connection connection;
+
+    public LicensesDataHandler() throws SQLException {
+
+        DatabaseConnectionPool databaseConnectionPool = DatabaseConnectionPool.getDbConnectionPool();
+        connection = databaseConnectionPool.getDataSource().getConnection();
+    }
 
     /**
      * Select all the licenses available from LM_LICENSE table.
      *
-     * @return json array of licenses
+     * @return the result set of licenses
      * @throws SQLException if the sql execution fails
      */
-    public JsonArray selectAllLicense() throws SQLException {
+    public ResultSet selectAllLicense() throws SQLException {
 
-        DatabaseConnectionPool dbConnectionPool = DatabaseConnectionPool.getDbConnectionPool();
-        Connection connection = dbConnectionPool.getDataSource().getConnection();
-
-        JsonArray resultArray = new JsonArray();
         String query = SqlRelatedConstants.SELECT_ALL_LICENSES;
         PreparedStatement preparedStatement = connection.prepareStatement(query);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            JsonObject licenseJson = new JsonObject();
-            licenseJson.addProperty("LICENSE_ID", rs.getInt("LICENSE_ID"));
-            licenseJson.addProperty("LICENSE_KEY", rs.getString("LICENSE_KEY"));
-            licenseJson.addProperty("LICENSE_NAME", rs.getString("LICENSE_NAME"));
-            resultArray.add(licenseJson);
-        }
+        ResultSet resultSet = preparedStatement.executeQuery();
+
         if (log.isDebugEnabled()) {
             log.debug("Licenses are retrieved from the LM_LICENSE table.");
         }
-        return resultArray;
+        return resultSet;
     }
 }

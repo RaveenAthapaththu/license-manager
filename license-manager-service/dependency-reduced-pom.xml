@@ -75,6 +75,7 @@
     <jsch.version>0.1.54</jsch.version>
     <testng.version>6.9.10</testng.version>
     <maven.compiler.plugin.version>3.7.0</maven.compiler.plugin.version>
+    <commons.dbcp.version>1.4</commons.dbcp.version>
     <commons.lang.version>2.6</commons.lang.version>
   </properties>
 </project>
