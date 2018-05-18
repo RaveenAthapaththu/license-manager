@@ -41,7 +41,7 @@ import javax.mail.MessagingException;
  */
 public class AddNewLicenseApiServiceImpl {
 
-    private static final Logger log = LoggerFactory.getLogger(UpdateJarInfoApiServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(AddNewLicenseApiServiceImpl.class);
 
     public void updateLicenses(JarFilesHolder jarFilesHolder, String payload, int productId, String username) throws
             LicenseManagerDataException, MessagingException {
@@ -84,9 +84,9 @@ public class AddNewLicenseApiServiceImpl {
 
         List<NewLicenseEntry> newLicenseEntryComponentList = null;
         List<NewLicenseEntry> newLicenseEntryLibraryList = null;
-
+        NewLicenseOfJarDataHandler newLicenseDAL = null;
         try {
-            NewLicenseOfJarDataHandler newLicenseDAL = new NewLicenseOfJarDataHandler();
+            newLicenseDAL = new NewLicenseOfJarDataHandler();
             newLicenseEntryComponentList = insertComponentLicenses(jarFilesHolder.getLicenseMissingComponents(),
                     productId, newLicenseDAL);
             newLicenseEntryLibraryList = insertLibraryLicenses(jarFilesHolder.getLicenseMissingLibraries(),
@@ -99,6 +99,14 @@ public class AddNewLicenseApiServiceImpl {
             if (newLicenseEntryComponentList.size() > 0 || newLicenseEntryLibraryList.size() > 0) {
                 EmailUtils.sendEmail(username, newLicenseEntryComponentList, newLicenseEntryLibraryList,
                         isInsertionSuccess);
+            }
+            if (newLicenseDAL != null) {
+                try {
+                    newLicenseDAL.closeConnection();
+                } catch (SQLException e) {
+                    log.error("Failed to close the database connection while adding new licenses for the jars. " +
+                            e.getMessage(), e);
+                }
             }
         }
     }

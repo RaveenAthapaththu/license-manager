@@ -45,11 +45,7 @@ public class UpdateJarInfoApiServiceImpl {
 
         updateFaultyNamedListOfJars(jarFilesHolder, jarsWithDefinedNames);
         int productId;
-        try {
-            productId = enterJarsIntoDB(jarFilesHolder);
-        } catch (SQLException e) {
-            throw new LicenseManagerDataException("Failed to add data to the database.", e);
-        }
+        productId = enterJarsIntoDB(jarFilesHolder);
         return productId;
     }
 
@@ -82,61 +78,80 @@ public class UpdateJarInfoApiServiceImpl {
      * @return id of the product in the database
      * @throws SQLException if the data insertion fails
      */
-    private int enterJarsIntoDB(JarFilesHolder jarFilesHolder) throws SQLException {
+    private int enterJarsIntoDB(JarFilesHolder jarFilesHolder) throws LicenseManagerDataException {
 
         List<LicenseMissingJar> licenseMissingLibraries = new ArrayList<>();
         List<LicenseMissingJar> licenseMissingComponents = new ArrayList<>();
-        LicenseExistingJarFileDataHandler licenseExistingJarFileDAL = new LicenseExistingJarFileDataHandler();
-        int productId = licenseExistingJarFileDAL.getProductId(jarFilesHolder.getProductName(),
-                jarFilesHolder.getProductVersion());
+        LicenseExistingJarFileDataHandler licenseExistingJarFileDAL = null;
+        int productId = 0;
+        try {
+            licenseExistingJarFileDAL = new LicenseExistingJarFileDataHandler();
+            productId = licenseExistingJarFileDAL.getProductId(jarFilesHolder.getProductName(),
+                    jarFilesHolder.getProductVersion());
 
-        for (JarFile jarFile : jarFilesHolder.getJarFilesInPack()) {
-            String version = jarFile.getVersion();
-            String name = jarFile.getProjectName();
-            String fileName = jarFile.getJarFile().getName();
-            String type = jarFile.getType();
+            for (JarFile jarFile : jarFilesHolder.getJarFilesInPack()) {
+                String version = jarFile.getVersion();
+                String name = jarFile.getProjectName();
+                String fileName = jarFile.getJarFile().getName();
+                String type = jarFile.getType();
 
-            // If the jarFile type is WSO2 add it as a component.
-            if (type.equals(Constants.JAR_TYPE_WSO2)) {
-                if (!licenseExistingJarFileDAL.isComponentExists(fileName)) {
-                    String licenseForAnyVersion = licenseExistingJarFileDAL.getComponentLicenseForAnyVersion(name);
-                    licenseMissingComponents.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
-                } else if (licenseExistingJarFileDAL.isComponentExists(fileName) && !licenseExistingJarFileDAL
-                        .isComponentLicenseExists
-                                (fileName)) {
-                    String licenseForAnyVersion = licenseExistingJarFileDAL.getComponentLicenseForAnyVersion(name);
-                    licenseMissingComponents.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
-                } else {
-                    licenseExistingJarFileDAL.insertProductComponent(fileName, productId);
-                }
-            } else {  // If jarFile is a third party library.
-                String libraryType = (jarFile.getParent() == null) ?
-                        ((jarFile.isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :
-                        Constants.JAR_TYPE_JAR_IN_BUNDLE;
-                int libraryId = licenseExistingJarFileDAL.selectLibraryId(name, version, libraryType);
-                if (libraryId != -1) {
-                    boolean isLicenseExists = licenseExistingJarFileDAL.isLibraryLicenseExists(libraryId);
-                    // If a jarFile has a parent and if the parent is "wso2", add parent and library to the
-                    // LM_COMPONENT_LIBRARY table.
-                    if (jarFile.getParent() != null && jarFile.getParent().getType().equals(Constants.JAR_TYPE_WSO2)) {
-                        if (licenseExistingJarFileDAL.isComponentExists(jarFile.getParent().getJarFile().getName())) {
-                            licenseExistingJarFileDAL.insertComponentLibrary(jarFile.getParent().getJarFile().getName(),
-                                    libraryId);
+                // If the jarFile type is WSO2 add it as a component.
+                if (type.equals(Constants.JAR_TYPE_WSO2)) {
+                    if (!licenseExistingJarFileDAL.isComponentExists(fileName)) {
+                        String licenseForAnyVersion = licenseExistingJarFileDAL.getComponentLicenseForAnyVersion(name);
+                        licenseMissingComponents.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
+                    } else if (licenseExistingJarFileDAL.isComponentExists(fileName) && !licenseExistingJarFileDAL
+                            .isComponentLicenseExists
+                                    (fileName)) {
+                        String licenseForAnyVersion = licenseExistingJarFileDAL.getComponentLicenseForAnyVersion(name);
+                        licenseMissingComponents.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
+                    } else {
+                        licenseExistingJarFileDAL.insertProductComponent(fileName, productId);
+                    }
+                } else {  // If jarFile is a third party library.
+                    String libraryType = (jarFile.getParent() == null) ?
+                            ((jarFile.isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :
+                            Constants.JAR_TYPE_JAR_IN_BUNDLE;
+                    int libraryId = licenseExistingJarFileDAL.selectLibraryId(name, version, libraryType);
+                    if (libraryId != -1) {
+                        boolean isLicenseExists = licenseExistingJarFileDAL.isLibraryLicenseExists(libraryId);
+                        // If a jarFile has a parent and if the parent is "wso2", add parent and library to the
+                        // LM_COMPONENT_LIBRARY table.
+                        if (jarFile.getParent() != null && jarFile.getParent().getType().equals(Constants
+                                .JAR_TYPE_WSO2)) {
+                            if (licenseExistingJarFileDAL.isComponentExists(jarFile.getParent().getJarFile().getName
+                                    ())) {
+                                licenseExistingJarFileDAL.insertComponentLibrary(jarFile.getParent().getJarFile()
+                                                .getName(),
+                                        libraryId);
+                            } else {
+                                String licenseForAnyVersion = licenseExistingJarFileDAL.getLibraryLicenseForAnyVersion
+                                        (name);
+                                licenseMissingLibraries.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
+                            }
                         } else {
+                            licenseExistingJarFileDAL.insertProductLibrary(libraryId, productId);
+                        }
+                        if (!isLicenseExists) {
                             String licenseForAnyVersion = licenseExistingJarFileDAL.getLibraryLicenseForAnyVersion
                                     (name);
                             licenseMissingLibraries.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
                         }
                     } else {
-                        licenseExistingJarFileDAL.insertProductLibrary(libraryId, productId);
-                    }
-                    if (!isLicenseExists) {
                         String licenseForAnyVersion = licenseExistingJarFileDAL.getLibraryLicenseForAnyVersion(name);
                         licenseMissingLibraries.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
                     }
-                } else {
-                    String licenseForAnyVersion = licenseExistingJarFileDAL.getLibraryLicenseForAnyVersion(name);
-                    licenseMissingLibraries.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
+                }
+            }
+        } catch (SQLException e) {
+            throw new LicenseManagerDataException("Failed to add data to the database.", e);
+        } finally {
+            if (licenseExistingJarFileDAL != null) {
+                try {
+                    licenseExistingJarFileDAL.closeConnection();
+                } catch (SQLException e) {
+                    log.error("Failed to close the database connection while retrieving license details. " +
+                            e.getMessage(), e);
                 }
             }
         }

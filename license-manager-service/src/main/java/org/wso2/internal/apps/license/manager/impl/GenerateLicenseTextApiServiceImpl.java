@@ -18,6 +18,8 @@
 
 package org.wso2.internal.apps.license.manager.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.datahandler.LicenseTextDataHandler;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerDataException;
 import org.wso2.internal.apps.license.manager.util.SqlRelatedConstants;
@@ -35,6 +37,8 @@ import java.util.Set;
  */
 public class GenerateLicenseTextApiServiceImpl {
 
+    private static final Logger log = LoggerFactory.getLogger(GenerateLicenseTextApiServiceImpl.class);
+
     private String file = "\n" +
             "This product is licensed by WSO2 Inc. under Apache License 2.0. The license\n" +
             "can be downloaded from the following locations:\n" +
@@ -51,8 +55,9 @@ public class GenerateLicenseTextApiServiceImpl {
     public void generateLicenseFile(String product, String version, String packPath)
             throws LicenseManagerDataException, IOException {
 
+        LicenseTextDataHandler licenseTextDataHandler = null;
         try {
-            LicenseTextDataHandler licenseTextDataHandler = new LicenseTextDataHandler();
+            licenseTextDataHandler = new LicenseTextDataHandler();
             ResultSet licensesOfJars = licenseTextDataHandler.getLicenseForAllJars(product, version);
             Set<String> keys = new HashSet<String>();
 
@@ -87,6 +92,15 @@ public class GenerateLicenseTextApiServiceImpl {
             fw.close();
         } catch (SQLException e) {
             throw new LicenseManagerDataException("Failed to retrieve licenses from database.", e);
+        } finally {
+            if (licenseTextDataHandler != null) {
+                try {
+                    licenseTextDataHandler.closeConnection();
+                } catch (SQLException e) {
+                    log.error("Failed to close the database connection while retrieving data to generate the license " +
+                            "text." + e.getMessage(),e);
+                }
+            }
         }
     }
 

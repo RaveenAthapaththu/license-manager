@@ -42,6 +42,9 @@ public class LicensesDataHandler {
         connection = databaseConnectionPool.getDataSource().getConnection();
     }
 
+    public void closeConnection() throws SQLException {
+        connection.close();
+    }
     /**
      * Select all the licenses available from LM_LICENSE table.
      *

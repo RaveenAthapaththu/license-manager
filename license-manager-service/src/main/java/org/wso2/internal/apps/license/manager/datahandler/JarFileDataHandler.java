@@ -42,6 +42,10 @@ public class JarFileDataHandler {
         connection = databaseConnectionPool.getDataSource().getConnection();
     }
 
+    public void closeConnection() throws SQLException {
+        connection.close();
+    }
+
     /**
      * Insert a Product - Component relationship into LM_COMPONENT_PRODUCT table unless already exists.
      *

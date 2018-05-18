@@ -39,6 +39,10 @@ public class LicenseTextDataHandler {
         connection = databaseConnectionPool.getDataSource().getConnection();
     }
 
+    public void closeConnection() throws SQLException {
+        connection.close();
+    }
+
     public ResultSet getLicenseForAllJars(String productName, String version) throws SQLException {
 
         String query = "SELECT * FROM " +
