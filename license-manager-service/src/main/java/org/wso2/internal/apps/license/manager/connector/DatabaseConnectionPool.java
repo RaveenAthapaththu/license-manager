@@ -41,8 +41,10 @@ public class DatabaseConnectionPool {
         String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
         String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
         String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+        int maximumNumberOfConnections = Integer.valueOf(SystemVariableUtil.getValue(Constants
+                .DATABASE_CONNECTIONS_MAX_NUMBER, "3"));
         GenericObjectPool connectionPool = new GenericObjectPool();
-        connectionPool.setMaxActive(5);
+        connectionPool.setMaxActive(maximumNumberOfConnections);
         ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(databaseUrl, databaseUsername,
                 databasePassword);
         PoolableConnectionFactory pcf = new PoolableConnectionFactory(connectionFactory, connectionPool, null, null,

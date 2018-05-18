@@ -27,6 +27,7 @@ public class Constants {
     public static final String DATABASE_URL = "DATABASE_URL";
     public static final String DATABASE_USERNAME = "DATABASE_USERNAME";
     public static final String DATABASE_PASSWORD = "DATABASE_PASSWORD";
+    public static final String DATABASE_CONNECTIONS_MAX_NUMBER = "DATABASE_CONNECTIONS_MAX_NUMBER";
 
     // Environment variables for authentication.
     public static final String LICENSE_MANAGER_APP_USERNAME = "LICENSE_MANAGER_APP_USERNAME";
