@@ -29,7 +29,7 @@
   </servlet>
   <servlet>
     <servlet-name>userDetailsEndpoint</servlet-name>
-    <servlet-class>org.wso2.internal.apps.license.manager.client.services.ApplicationService</servlet-class>
+    <servlet-class>org.wso2.internal.apps.license.manager.client.services.ValidateUserService</servlet-class>
   </servlet>
 
   <servlet-mapping>
@@ -39,7 +39,11 @@
 
   <servlet-mapping>
     <servlet-name>userDetailsEndpoint</servlet-name>
-    <url-pattern>/manageUser/*</url-pattern>
+    <url-pattern>/appservices/userdetails</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>userDetailsEndpoint</servlet-name>
+    <url-pattern>/manageUser/ftpCredentials</url-pattern>
   </servlet-mapping>
   <!--<servlet-mapping>-->
     <!--<servlet-name>count</servlet-name>-->

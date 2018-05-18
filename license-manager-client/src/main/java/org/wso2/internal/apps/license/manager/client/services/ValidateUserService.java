@@ -30,9 +30,9 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Endpoint for executing backend services of the application.
  */
-public class ApplicationService extends HttpServlet {
+public class ValidateUserService extends HttpServlet {
 
-    private static final Logger log = LoggerFactory.getLogger(ApplicationService.class);
+    private static final Logger log = LoggerFactory.getLogger(ValidateUserService.class);
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse response) throws IOException {

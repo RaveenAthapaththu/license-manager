@@ -22,9 +22,9 @@ package org.wso2.internal.apps.license.manager.client.utils;
  */
 public class Constants {
 
+    public static final String DOWNLOAD_ENDPOINT = "/license/textToDownload";
     // Constants for accessing configuration details.
     static final String CONFIG_FILE_NAME = "config.properties";
-
     static final String MICRO_SERVICE_URL = "micro_service_url";
     static final String MICRO_SERVICE_USERNAME = "micro_service_username";
     static final String MICRO_SERVICE_PASSWORD = "micro_service_password";
@@ -34,7 +34,9 @@ public class Constants {
     static final String SSO_REDIRECT_URL = "sso_redirect_url";
     static final String TRUST_STORE_SERVICE_NAME = "trust_store_service_name";
     static final String TRUST_STORE_SERVICE_PASSWORD = "trust_store_service_password";
-
-    public static final String DOWNLOAD_ENDPOINT = "/license/textToDownload";
+    static final String FTP_SERVER_ADDRESS = "ftp_server_address";
+    static final String FTP_SERVER_USERNAME = "ftp_server_username";
+    static final String FTP_SERVER_PASSWORD = "ftp_server_password";
+    static final String FTP_SERVER_PORT = "ftp_server_port";
 
 }
