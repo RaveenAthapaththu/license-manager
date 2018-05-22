@@ -267,11 +267,11 @@ public class JarFileExtractor {
 
         boolean containsJars = false;
 
-        try {
-            ZipInputStream zip = new ZipInputStream(new FileInputStream(filePath));
+        try (ZipInputStream zip = new ZipInputStream(new FileInputStream(filePath))) {
             for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
                 if (entry.getName().endsWith(".jar") || entry.getName().endsWith(".mar")) {
                     containsJars = true;
+                    break;
                 }
             }
         } catch (IOException e) {

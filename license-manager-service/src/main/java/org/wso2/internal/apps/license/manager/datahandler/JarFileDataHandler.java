@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.connector.DatabaseConnectionPool;
 import org.wso2.internal.apps.license.manager.util.SqlRelatedConstants;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +33,7 @@ import java.sql.SQLException;
 /**
  * Super class which handles the data transfers related to jar files with the database.
  */
-public class JarFileDataHandler {
+public class JarFileDataHandler implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(LicenseExistingJarFileDataHandler.class);
     Connection connection;
@@ -42,8 +44,14 @@ public class JarFileDataHandler {
         connection = databaseConnectionPool.getDataSource().getConnection();
     }
 
-    public void closeConnection() throws SQLException {
-        connection.close();
+    @Override
+    public void close() throws IOException {
+
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new IOException();
+        }
     }
 
     /**
@@ -56,17 +64,18 @@ public class JarFileDataHandler {
     public void insertProductComponent(String compKey, int productId) throws SQLException {
 
         if (selectProductComponent(compKey, productId) == -1) {
-
             String insertProductComponent = SqlRelatedConstants.INSERT_INTO_COMPONENT_PRODUCT;
-            PreparedStatement preparedStatement;
-            preparedStatement = connection.prepareStatement(insertProductComponent);
-            preparedStatement.setString(1, compKey);
-            preparedStatement.setInt(2, productId);
-            preparedStatement.executeUpdate();
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertProductComponent)) {
 
-            if (log.isDebugEnabled()) {
-                log.debug("Successfully inserted the product - component relationship for the product id " + productId +
-                        " and component key " + compKey + " into LM_COMPONENT_PRODUCT table.");
+                preparedStatement.setString(1, compKey);
+                preparedStatement.setInt(2, productId);
+                preparedStatement.executeUpdate();
+
+                if (log.isDebugEnabled()) {
+                    log.debug("Successfully inserted the product - component relationship for the product id " +
+                            productId +
+                            " and component key " + compKey + " into LM_COMPONENT_PRODUCT table.");
+                }
             }
         }
     }
@@ -79,17 +88,20 @@ public class JarFileDataHandler {
      * @return id of the entry if exists, -1 if not
      * @throws SQLException if the sql execution fails
      */
-    private int selectProductComponent(String compKey, int productId) throws SQLException {
+    public int selectProductComponent(String compKey, int productId) throws SQLException {
 
         int id = -1;
         String selectProductComponent = SqlRelatedConstants.SELECT_FROM_PRODUCT_COMPONENT;
-        PreparedStatement preparedStatement = connection.prepareStatement(selectProductComponent);
-        preparedStatement.setString(1, compKey);
-        preparedStatement.setInt(2, productId);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            id = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_PRODUCT);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(selectProductComponent)) {
+            preparedStatement.setString(1, compKey);
+            preparedStatement.setInt(2, productId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    id = resultSet.getInt(SqlRelatedConstants.PRIMARY_KEY_PRODUCT);
+                }
+            }
         }
+
         return id;
     }
 
@@ -104,15 +116,15 @@ public class JarFileDataHandler {
 
         if (selectProductLibrary(libId, productId) == -1) {
             String insertProductLibrary = SqlRelatedConstants.INSERT_INTO_LIBRARY_PRODUCT;
-            PreparedStatement preparedStatement;
-            preparedStatement = connection.prepareStatement(insertProductLibrary);
-            preparedStatement.setInt(1, libId);
-            preparedStatement.setInt(2, productId);
-            preparedStatement.executeUpdate();
-
-            if (log.isDebugEnabled()) {
-                log.debug("Successfully inserted the product - library relationship for the product id " + productId +
-                        " and library id " + libId + " into LM_LIBRARY_PRODUCT table.");
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertProductLibrary)) {
+                preparedStatement.setInt(1, libId);
+                preparedStatement.setInt(2, productId);
+                preparedStatement.executeUpdate();
+                if (log.isDebugEnabled()) {
+                    log.debug("Successfully inserted the product - library relationship for the product id " +
+                            productId +
+                            " and library id " + libId + " into LM_LIBRARY_PRODUCT table.");
+                }
             }
         }
     }
@@ -130,14 +142,17 @@ public class JarFileDataHandler {
         int id = -1;
 
         String selectProductLibrary = SqlRelatedConstants.SELECT_FROM_PRODUCT_LIBRARY;
-        PreparedStatement preparedStatement = connection.prepareStatement(selectProductLibrary);
-        preparedStatement.setInt(1, libId);
-        preparedStatement.setInt(2, productId);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            id = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_LIBRARY);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(selectProductLibrary)) {
+            preparedStatement.setInt(1, libId);
+            preparedStatement.setInt(2, productId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    id = resultSet.getInt(SqlRelatedConstants.PRIMARY_KEY_LIBRARY);
+                }
+                return id;
+            }
         }
-        return id;
     }
 
     /**
@@ -151,15 +166,15 @@ public class JarFileDataHandler {
 
         if (selectComponentLibrary(compKey, libraryId) == -1) {
             String insertComponentLibrary = SqlRelatedConstants.INSERT_INTO_COMPONENT_LIBRARY;
-            PreparedStatement preparedStatement;
-            preparedStatement = connection.prepareStatement(insertComponentLibrary);
-            preparedStatement.setInt(1, libraryId);
-            preparedStatement.setString(2, compKey);
-            preparedStatement.executeUpdate();
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertComponentLibrary)) {
+                preparedStatement.setInt(1, libraryId);
+                preparedStatement.setString(2, compKey);
+                preparedStatement.executeUpdate();
 
-            if (log.isDebugEnabled()) {
-                log.debug("Successfully inserted the component - library relationship for the component key " +
-                        compKey + " and library id " + libraryId + " into LM_COMPONENT_LIBRARY table.");
+                if (log.isDebugEnabled()) {
+                    log.debug("Successfully inserted the component - library relationship for the component key " +
+                            compKey + " and library id " + libraryId + " into LM_COMPONENT_LIBRARY table.");
+                }
             }
         }
     }
@@ -176,14 +191,16 @@ public class JarFileDataHandler {
 
         int id = -1;
         String query = SqlRelatedConstants.SELECT_FROM_COMPONENT_LIBRARY;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setInt(1, libraryId);
-        preparedStatement.setString(2, compKey);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            id = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_LIBRARY);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, libraryId);
+            preparedStatement.setString(2, compKey);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    id = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_LIBRARY);
+                }
+                return id;
+            }
         }
-        return id;
     }
 
     /**
@@ -199,15 +216,17 @@ public class JarFileDataHandler {
 
         int libraryId = -1;
         String query = SqlRelatedConstants.SELECT_LIBRARY;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setString(1, name);
-        preparedStatement.setString(2, version);
-        preparedStatement.setString(3, type);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            libraryId = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_LIBRARY);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, version);
+            preparedStatement.setString(3, type);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    libraryId = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_LIBRARY);
+                }
+                return libraryId;
+            }
         }
-        return libraryId;
     }
 
     /**
@@ -221,12 +240,14 @@ public class JarFileDataHandler {
 
         boolean isExist = false;
         String query = SqlRelatedConstants.SELECT_COMPONENT;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setString(1, compKey);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            isExist = true;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, compKey);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    isExist = true;
+                }
+                return isExist;
+            }
         }
-        return isExist;
     }
 }

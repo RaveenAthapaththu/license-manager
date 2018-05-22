@@ -31,6 +31,7 @@ import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.EmailUtils;
 import org.wso2.internal.apps.license.manager.util.JsonUtils;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,14 +44,14 @@ public class AddNewLicenseApiServiceImpl {
 
     private static final Logger log = LoggerFactory.getLogger(AddNewLicenseApiServiceImpl.class);
 
-    public void updateLicenses(JarFilesHolder jarFilesHolder, String payload, int productId, String username) throws
+    public void updateLicenses(JarFilesHolder jarFilesHolder, String payload, String username) throws
             LicenseManagerDataException, MessagingException {
 
         JsonArray componentsJson = JsonUtils.getAttributesFromRequestBody(payload, "components");
         JsonArray librariesJson = JsonUtils.getAttributesFromRequestBody(payload, "libraries");
         updateLicensesOfLicenseMissingJars(jarFilesHolder.getLicenseMissingComponents(), componentsJson);
         updateLicensesOfLicenseMissingJars(jarFilesHolder.getLicenseMissingComponents(), librariesJson);
-        insertNewLicensesToDb(jarFilesHolder, productId, username);
+        insertNewLicensesToDb(jarFilesHolder, username);
     }
 
     /**
@@ -72,41 +73,33 @@ public class AddNewLicenseApiServiceImpl {
     /**
      * Insert new licenses for the jars into the database and send mail to the admin.
      *
-     * @param productId product id which the jars belong to
      * @param username  user who added the licenses
      * @throws LicenseManagerDataException if the data insertion fails
      * @throws MessagingException          if sending mail fails
      */
-    private void insertNewLicensesToDb(JarFilesHolder jarFilesHolder, int productId, String username)
+    private void insertNewLicensesToDb(JarFilesHolder jarFilesHolder, String username)
             throws LicenseManagerDataException, MessagingException {
 
         Boolean isInsertionSuccess = false;
 
         List<NewLicenseEntry> newLicenseEntryComponentList = null;
         List<NewLicenseEntry> newLicenseEntryLibraryList = null;
-        NewLicenseOfJarDataHandler newLicenseDAL = null;
-        try {
-            newLicenseDAL = new NewLicenseOfJarDataHandler();
+        try (NewLicenseOfJarDataHandler newLicenseDAL = new NewLicenseOfJarDataHandler()) {
             newLicenseEntryComponentList = insertComponentLicenses(jarFilesHolder.getLicenseMissingComponents(),
-                    productId, newLicenseDAL);
+                    jarFilesHolder.getProductId(), newLicenseDAL);
             newLicenseEntryLibraryList = insertLibraryLicenses(jarFilesHolder.getLicenseMissingLibraries(),
-                    productId, newLicenseDAL);
+                    jarFilesHolder.getProductId(), newLicenseDAL);
             isInsertionSuccess = true;
         } catch (SQLException e) {
             throw new LicenseManagerDataException("Failed to add licenses.", e);
+        } catch (IOException e) {
+            log.error("Failed to close the database connection while adding new licenses for the jars. " +
+                    e.getMessage(), e);
         } finally {
             // Send an email to the admin if there are any new licenses added.
             if (newLicenseEntryComponentList.size() > 0 || newLicenseEntryLibraryList.size() > 0) {
                 EmailUtils.sendEmail(username, newLicenseEntryComponentList, newLicenseEntryLibraryList,
                         isInsertionSuccess);
-            }
-            if (newLicenseDAL != null) {
-                try {
-                    newLicenseDAL.closeConnection();
-                } catch (SQLException e) {
-                    log.error("Failed to close the database connection while adding new licenses for the jars. " +
-                            e.getMessage(), e);
-                }
             }
         }
     }

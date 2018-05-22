@@ -50,7 +50,7 @@ class InitialPage extends Component {
                         <Paper style={{fontWeight: 'bold'}}>WSO2 License Manager</Paper>
                     </div>
 
-                    <div style={{textAlign: "center", fontSize: '100%', padding:'5%'}}>
+                    <div style={{textAlign: "center", fontSize: '100%', padding:'5%', color : '#5e6469'}}>
                         <p>
                             Please upload the pack to the FTP Server before starting
                         </p>

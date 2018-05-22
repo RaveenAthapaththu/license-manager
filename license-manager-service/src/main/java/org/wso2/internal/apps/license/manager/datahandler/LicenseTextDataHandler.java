@@ -21,6 +21,8 @@ package org.wso2.internal.apps.license.manager.datahandler;
 import org.wso2.internal.apps.license.manager.connector.DatabaseConnectionPool;
 import org.wso2.internal.apps.license.manager.util.SqlRelatedConstants;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,7 +31,7 @@ import java.sql.SQLException;
 /**
  * Handle the data transfer operations when retrieving all the components in a pack while generating the license text.
  */
-public class LicenseTextDataHandler {
+public class LicenseTextDataHandler implements Closeable {
 
     private Connection connection;
 
@@ -39,8 +41,14 @@ public class LicenseTextDataHandler {
         connection = databaseConnectionPool.getDataSource().getConnection();
     }
 
-    public void closeConnection() throws SQLException {
-        connection.close();
+    @Override
+    public void close() throws IOException {
+
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new IOException();
+        }
     }
 
     public ResultSet getLicenseForAllJars(String productName, String version) throws SQLException {
@@ -96,19 +104,23 @@ public class LicenseTextDataHandler {
                 "INNER JOIN LM_LIBRARY AS LM_LIBRARY2 ON LM_COMPONENT_LIBRARY.LIB_ID=LM_LIBRARY2.LIB_ID) " +
                 "INNER JOIN LM_LIBRARY_LICENSE ON LM_LIBRARY_LICENSE.LIB_ID=LM_COMPONENT_LIBRARY.LIB_ID))AS BS " +
                 "WHERE PRODUCT_NAME=? AND PRODUCT_VERSION=? ORDER BY COMP_KEY";
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setString(1, productName);
-        preparedStatement.setString(2, version);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        return resultSet;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, productName);
+            preparedStatement.setString(2, version);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            return resultSet;
+
+        }
     }
 
     public ResultSet getLicenseDescriptions(String key) throws SQLException {
 
         String query = SqlRelatedConstants.SELECT_LICENSE_FOR_KEY;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setString(1, key);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        return resultSet;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, key);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            return resultSet;
+
+        }
     }
 }

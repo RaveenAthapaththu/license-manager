@@ -20,6 +20,8 @@ import org.json.JSONException;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Test the email sending
@@ -37,9 +39,15 @@ public class MicroserviceTest {
 
     @Test
     public void testService2() throws JSONException {
-//
-//        System.out.println(ServiceExecutor.executePostService("/enterJars",
-//                "{asdf}"));
-//            ServiceExecutor.executeGetService("/pack/list", "pamodaaw@wso2.com");
+
+        String roles = "IS-WSO2.COM/wso2.engineering-1,IS-WSO2.COM/wso2.engineering-4,Internal/everyone," +
+                "IS-WSO2.COM/wso2.eng,IS-WSO2.COM/wso2.all.employees";
+        if (roles != null) {
+            List<String> listOfRoles = Arrays.asList(roles.split(","));
+            if (!listOfRoles.contains("IS-WSO2.COM/wso2.all.employees")) {
+                System.out.println("invalid role");
+            }
+        }
     }
+
 }

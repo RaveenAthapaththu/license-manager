@@ -25,10 +25,10 @@ export default {
     // Styles for notes.
     initialNote:{
         align:'center',
-        backgroundColor: '#f8cdc1',
+        backgroundColor: '#7a8b8e1f',
         padding: '20px',
-        color: '#d62c1a',
-        marginBottom: '15px'
+        color: '#4fbcd4',
+        marginBottom: '15px',
     },
 
     welcomeNote:{

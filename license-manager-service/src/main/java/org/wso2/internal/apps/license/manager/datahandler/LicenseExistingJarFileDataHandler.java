@@ -71,14 +71,16 @@ public class LicenseExistingJarFileDataHandler extends JarFileDataHandler {
         int productId = -1;
 
         String query = SqlRelatedConstants.SELECT_PRODUCT;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setString(1, product);
-        preparedStatement.setString(2, version);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            productId = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_PRODUCT);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, product);
+            preparedStatement.setString(2, version);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    productId = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_PRODUCT);
+                }
+                return productId;
+            }
         }
-        return productId;
     }
 
     /**
@@ -92,20 +94,22 @@ public class LicenseExistingJarFileDataHandler extends JarFileDataHandler {
     private int insertProduct(String product, String version) throws SQLException {
 
         String insertProduct = SqlRelatedConstants.INSERT_PRODUCT;
-        PreparedStatement preparedStatement;
-        preparedStatement = connection.prepareStatement(insertProduct, Statement.RETURN_GENERATED_KEYS);
-        preparedStatement.setString(1, product);
-        preparedStatement.setString(2, version);
-        preparedStatement.executeUpdate();
-        ResultSet resultSet = preparedStatement.getGeneratedKeys();
-        int id = -1;
-        while (resultSet.next()) {
-            id = resultSet.getInt("GENERATED_KEY");
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertProduct, Statement
+                .RETURN_GENERATED_KEYS)) {
+            preparedStatement.setString(1, product);
+            preparedStatement.setString(2, version);
+            preparedStatement.executeUpdate();
+            try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
+                int id = -1;
+                while (resultSet.next()) {
+                    id = resultSet.getInt("GENERATED_KEY");
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug("Successfully inserted the product " + product + " into LM_PRODUCT table.");
+                }
+                return id;
+            }
         }
-        if (log.isDebugEnabled()) {
-            log.debug("Successfully inserted the product " + product + " into LM_PRODUCT table.");
-        }
-        return id;
     }
 
     /**
@@ -119,13 +123,15 @@ public class LicenseExistingJarFileDataHandler extends JarFileDataHandler {
 
         boolean isExist = false;
         String query = SqlRelatedConstants.SELECT_LICENSE_FOR_LIB;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setInt(1, libraryId);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            isExist = true;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, libraryId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    isExist = true;
+                }
+                return isExist;
+            }
         }
-        return isExist;
     }
 
     /**
@@ -139,13 +145,15 @@ public class LicenseExistingJarFileDataHandler extends JarFileDataHandler {
 
         boolean isExist = false;
         String query = SqlRelatedConstants.SELECT_LICENSE_FOR_COMP;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setString(1, compKey);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            isExist = true;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, compKey);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    isExist = true;
+                }
+                return isExist;
+            }
         }
-        return isExist;
     }
 
     /**
@@ -159,13 +167,15 @@ public class LicenseExistingJarFileDataHandler extends JarFileDataHandler {
 
         String licenseKey = "NEW";
         String query = SqlRelatedConstants.SELECT_LICENSE_FOR_ANY_COMP;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setString(1, compName);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            licenseKey = rs.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, compName);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    licenseKey = rs.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE);
+                }
+                return licenseKey;
+            }
         }
-        return licenseKey;
     }
 
     /**
@@ -179,13 +189,15 @@ public class LicenseExistingJarFileDataHandler extends JarFileDataHandler {
 
         String licenseKey = "NEW";
         String query = SqlRelatedConstants.SELECT_LICENSE_FOR_ANY_LIB;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        preparedStatement.setString(1, libraryName);
-        ResultSet rs = preparedStatement.executeQuery();
-        while (rs.next()) {
-            licenseKey = rs.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, libraryName);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    licenseKey = rs.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE);
+                }
+                return licenseKey;
+            }
         }
-        return licenseKey;
     }
 
 }

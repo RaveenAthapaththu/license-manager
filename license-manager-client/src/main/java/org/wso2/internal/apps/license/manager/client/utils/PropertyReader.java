@@ -39,6 +39,7 @@ public class PropertyReader {
     private String ssoKeyStoreName;
     private String ssoKeyStorePassword;
     private String ssoCertAlias;
+    private String allowedUserRole;
     private String ssoRedirectUrl;
     private String trustStoreServiceName;
     private String trustStoreServicePassword;
@@ -66,6 +67,7 @@ public class PropertyReader {
             this.ssoKeyStorePassword = prop.getProperty(Constants.KEYSTORE_PASSWORD);
             this.ssoCertAlias = prop.getProperty(Constants.CERTIFICATE_ALIAS);
             this.ssoRedirectUrl = prop.getProperty(Constants.SSO_REDIRECT_URL);
+            this.allowedUserRole = prop.getProperty(Constants.ALLOWED_USER_ROLE);
             this.trustStoreServiceName = prop.getProperty(Constants.TRUST_STORE_SERVICE_NAME);
             this.trustStoreServicePassword = prop.getProperty(Constants.TRUST_STORE_SERVICE_PASSWORD);
 
@@ -120,14 +122,14 @@ public class PropertyReader {
         return this.ssoRedirectUrl;
     }
 
+    public String getAllowedUserRole() {
+
+        return this.allowedUserRole;
+    }
+
     String getTrustStoreServiceName() {
 
         return trustStoreServiceName;
-    }
-
-    public void setTrustStoreServiceName(String trustStoreServiceName) {
-
-        this.trustStoreServiceName = trustStoreServiceName;
     }
 
     String getTrustStoreServicePassword() {
@@ -135,8 +137,4 @@ public class PropertyReader {
         return trustStoreServicePassword;
     }
 
-    public void setTrustStoreServicePassword(String trustStoreServicePassword) {
-
-        this.trustStoreServicePassword = trustStoreServicePassword;
-    }
 }

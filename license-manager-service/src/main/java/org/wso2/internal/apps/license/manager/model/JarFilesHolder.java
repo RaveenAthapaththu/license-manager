@@ -29,6 +29,7 @@ public class JarFilesHolder {
     private List<JarFile> faultyNamedJars;
     private List<LicenseMissingJar> licenseMissingLibraries;
     private List<LicenseMissingJar> licenseMissingComponents;
+    private int productId;
     private String productName;
     private String productVersion;
 
@@ -90,5 +91,15 @@ public class JarFilesHolder {
     public void setLicenseMissingComponents(List<LicenseMissingJar> licenseMissingComponents) {
 
         this.licenseMissingComponents = licenseMissingComponents;
+    }
+
+    public int getProductId() {
+
+        return productId;
+    }
+
+    public void setProductId(int productId) {
+
+        this.productId = productId;
     }
 }

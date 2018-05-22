@@ -17,7 +17,7 @@
  */
 
 import React, {Component} from 'react';
-import ValidateUser from '../services/authentication/ValidateUser';
+import ValidateUser from '../services/appServices/ValidateUser';
 import logo from '../assets/images/logo-inverse.svg';
 
 /**
@@ -41,7 +41,7 @@ class AppHeader extends Component {
         ValidateUser.getUserDetails().then((response) => {
             this.setState(() => {
                 return {
-                    username: response.username,
+                    username: response.data.username,
                 };
             });
         })

@@ -26,7 +26,7 @@ public class TaskProgress {
     private String taskId;
     private String status;
     private String message;
-    private Object data;
+    private JarFilesHolder data;
 
     public TaskProgress(String username, String taskId, String status) {
 
@@ -75,12 +75,12 @@ public class TaskProgress {
         this.message = message;
     }
 
-    public Object getData() {
+    public JarFilesHolder getData() {
 
         return data;
     }
 
-    public void setData(Object data) {
+    public void setData(JarFilesHolder data) {
 
         this.data = data;
     }

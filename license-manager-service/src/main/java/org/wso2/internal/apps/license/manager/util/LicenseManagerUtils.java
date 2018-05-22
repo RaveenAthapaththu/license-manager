@@ -57,10 +57,8 @@ public class LicenseManagerUtils {
     public static void unzip(String infile, String outFolder) throws LicenseManagerRuntimeException {
 
         Enumeration entries;
-        ZipFile zipFile;
 
-        try {
-            zipFile = new ZipFile(infile);
+        try (ZipFile zipFile = new ZipFile(infile)) {
             entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = (ZipEntry) entries.nextElement();
@@ -71,7 +69,6 @@ public class LicenseManagerUtils {
                             .getAbsolutePath())));
                 }
             }
-            zipFile.close();
         } catch (IOException e) {
             throw new LicenseManagerRuntimeException("Failed to unzip the file. ", e);
         }
@@ -85,7 +82,6 @@ public class LicenseManagerUtils {
         while ((len = in.read(buffer)) >= 0) {
             out.write(buffer, 0, len);
         }
-
         in.close();
         out.close();
     }

@@ -52,23 +52,24 @@ public class NewLicenseOfJarDataHandler extends JarFileDataHandler {
     private int insertLibrary(String name, String fileName, String version, String type) throws SQLException {
 
         String insertLibrary = SqlRelatedConstants.INSERT_LIBRARY;
-        PreparedStatement preparedStatement;
-        preparedStatement = connection.prepareStatement(insertLibrary, Statement.RETURN_GENERATED_KEYS);
-        preparedStatement.setString(1, name);
-        preparedStatement.setString(2, fileName);
-        preparedStatement.setString(3, type);
-        preparedStatement.setString(4, version);
-        preparedStatement.executeUpdate();
-        ResultSet resultSet = preparedStatement.getGeneratedKeys();
-        int id = -1;
-        while (resultSet.next()) {
-            id = resultSet.getInt("GENERATED_KEY");
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertLibrary, Statement
+                .RETURN_GENERATED_KEYS)) {
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, fileName);
+            preparedStatement.setString(3, type);
+            preparedStatement.setString(4, version);
+            preparedStatement.executeUpdate();
+            try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
+                int id = -1;
+                while (resultSet.next()) {
+                    id = resultSet.getInt("GENERATED_KEY");
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug("Successfully inserted the component with the key " + name + " into LM_LIBRARY table.");
+                }
+                return id;
+            }
         }
-        if (log.isDebugEnabled()) {
-            log.debug("Successfully inserted the component with the key " + name + " into LM_LIBRARY table.");
-        }
-
-        return id;
     }
 
     /**
@@ -83,17 +84,17 @@ public class NewLicenseOfJarDataHandler extends JarFileDataHandler {
 
         if (!isComponentExists(fileName)) {
             String insertComponent = SqlRelatedConstants.INSERT_COMPONENT;
-            PreparedStatement preparedStatement;
-            preparedStatement = connection.prepareStatement(insertComponent);
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, fileName);
-            preparedStatement.setString(3, fileName);
-            preparedStatement.setString(4, "bundle");
-            preparedStatement.setString(5, version);
-            preparedStatement.executeUpdate();
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertComponent)) {
+                preparedStatement.setString(1, name);
+                preparedStatement.setString(2, fileName);
+                preparedStatement.setString(3, fileName);
+                preparedStatement.setString(4, "bundle");
+                preparedStatement.setString(5, version);
+                preparedStatement.executeUpdate();
 
-            if (log.isDebugEnabled()) {
-                log.debug("Successfully inserted the component with the key " + name + " into LM_COMPONENT table.");
+                if (log.isDebugEnabled()) {
+                    log.debug("Successfully inserted the component with the key " + name + " into LM_COMPONENT table.");
+                }
             }
         }
     }
@@ -108,15 +109,15 @@ public class NewLicenseOfJarDataHandler extends JarFileDataHandler {
     public void insertComponentLicense(String compKey, String licenseKey) throws SQLException {
 
         String insertQuery = SqlRelatedConstants.INSERT_COMPONENT_LICENSE;
-        PreparedStatement preparedStatement;
-        preparedStatement = connection.prepareStatement(insertQuery);
-        preparedStatement.setString(1, compKey);
-        preparedStatement.setString(2, licenseKey);
-        preparedStatement.executeUpdate();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+            preparedStatement.setString(1, compKey);
+            preparedStatement.setString(2, licenseKey);
+            preparedStatement.executeUpdate();
 
-        if (log.isDebugEnabled()) {
-            log.debug("Successfully inserted the licenses for the component " + compKey +
-                    " into LM_COMPONENT_LICENSE table.");
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully inserted the licenses for the component " + compKey +
+                        " into LM_COMPONENT_LICENSE table.");
+            }
         }
     }
 
@@ -130,15 +131,15 @@ public class NewLicenseOfJarDataHandler extends JarFileDataHandler {
     public void insertLibraryLicense(String licenseKey, int libId) throws SQLException {
 
         String insertQuery = SqlRelatedConstants.INSERT_LIBRARY_LICENSE;
-        PreparedStatement preparedStatement;
-        preparedStatement = connection.prepareStatement(insertQuery);
-        preparedStatement.setInt(1, libId);
-        preparedStatement.setString(2, licenseKey);
-        preparedStatement.executeUpdate();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+            preparedStatement.setInt(1, libId);
+            preparedStatement.setString(2, licenseKey);
+            preparedStatement.executeUpdate();
 
-        if (log.isDebugEnabled()) {
-            log.debug("Successfully inserted the licenses for the library of id " + libId +
-                    " into LM_LIBRARY_LICENSE table.");
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully inserted the licenses for the library of id " + libId +
+                        " into LM_LIBRARY_LICENSE table.");
+            }
         }
     }
 

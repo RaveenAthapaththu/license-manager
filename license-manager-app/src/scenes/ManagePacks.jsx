@@ -22,6 +22,7 @@ import FlatButton from 'material-ui/FlatButton';
 import RaisedButton from 'material-ui/RaisedButton';
 import Dialog from 'material-ui/Dialog';
 import ServiceManager from '../services/msf4j/ServiceManager';
+import FtpCredentialProvider from '../services/appServices/FtpCredentials'
 import styles from '../styles';
 import {Paper, RadioButton, RadioButtonGroup} from "material-ui";
 import HeaderComponent from "../components/HeaderComponent";
@@ -43,6 +44,7 @@ class ManagePacks extends Component {
             displayForm: 'none',
             displayErrorBox: 'none',
             buttonState: false,
+            ftpCredential : null
         };
         this.selectPack = this.selectPack.bind(this);
         this.reloadPage = this.reloadPage.bind(this);
@@ -66,6 +68,16 @@ class ManagePacks extends Component {
         }).catch(() => {
             this.handleError('Network Error');
         });
+
+        FtpCredentialProvider.getFtpCredentials().then((response) => {
+            if(response.data.responseType === 'done'){
+                this.setState(() => {
+                    return {
+                        ftpCredential: response.data.responseData,
+                    };
+                });
+            }
+        })
     }
 
     /**
@@ -139,14 +151,25 @@ class ManagePacks extends Component {
                 label={pack.name}
             />
         );
+        const ftpDetails =[];
+        if (this.state.ftpCredential !==null){
+            ftpDetails.push(<p> &nbsp; FTP Server Address : {this.state.ftpCredential.address} <br/>
+                &nbsp; FTP Username : {this.state.ftpCredential.username} <br/>
+                &nbsp; FTP Password : {this.state.ftpCredential.password} <br/>
+                &nbsp; FTP Server Port : {this.state.ftpCredential.port}<br/>
+                <br/> Recommended FTP Clients : Filezilla/ WinSCP/ gFTP </p>)
+
+        }
         const path = this.state.buttonState ? '/jarManager' : '/packManager';
         return (
 
-            <div className="container col-md-8">
+            <div className="container col-md-10">
                 <HeaderComponent header="Select a Pack to Generate Licence"/>
                 <div>
                     <Paper style={styles.initialNote}>
-                        <strong>Note: </strong> Please upload your pack to the given location.
+                        <strong>Please upload your pack to the given FTP server using following credentials.</strong>
+                        <br/>
+                        {ftpDetails}
                     </Paper>
 
                 </div>

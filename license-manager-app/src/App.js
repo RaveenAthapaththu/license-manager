@@ -22,7 +22,7 @@ import ManagePacks from './scenes/ManagePacks';
 import ManageJars from './scenes/ManageJars';
 import AddLicense from './scenes/AddLicense';
 import GenerateLicense from './scenes/GenerateLicense';
-import frontPage from './scenes/InitialPage'
+import FrontPage from './scenes/InitialPage'
 import lightBaseTheme from "material-ui/styles/baseThemes/lightBaseTheme";
 import getMuiTheme from "material-ui/styles/getMuiTheme";
 import {MuiThemeProvider} from "material-ui";
@@ -49,7 +49,7 @@ class App extends Component {
                                     <Route path={'/jarManager'} component={ManageJars}/>
                                     <Route path={'/licenseGenerator'} component={GenerateLicense}/>
                                     <Route path={'/licenseAdder'} component={AddLicense}/>
-                                    <Route path={'/'} component={frontPage}/>
+                                    <Route path={'/'} component={FrontPage}/>
                                 </Switch>
                             </BrowserRouter>
                         </div>

@@ -18,11 +18,15 @@
 
 package org.wso2.internal.apps.license.manager.datahandler;
 
+import com.google.gson.JsonArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.connector.DatabaseConnectionPool;
+import org.wso2.internal.apps.license.manager.util.JsonUtils;
 import org.wso2.internal.apps.license.manager.util.SqlRelatedConstants;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +35,7 @@ import java.sql.SQLException;
 /**
  * Handles the data transferring operations related to licenses.
  */
-public class LicensesDataHandler {
+public class LicensesDataHandler implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(LicensesDataHandler.class);
     private Connection connection;
@@ -42,24 +46,33 @@ public class LicensesDataHandler {
         connection = databaseConnectionPool.getDataSource().getConnection();
     }
 
-    public void closeConnection() throws SQLException {
-        connection.close();
+    @Override
+    public void close() throws IOException {
+
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new IOException();
+        }
     }
+
     /**
      * Select all the licenses available from LM_LICENSE table.
      *
      * @return the result set of licenses
      * @throws SQLException if the sql execution fails
      */
-    public ResultSet selectAllLicense() throws SQLException {
+    public JsonArray selectAllLicense() throws SQLException {
 
         String query = SqlRelatedConstants.SELECT_ALL_LICENSES;
-        PreparedStatement preparedStatement = connection.prepareStatement(query);
-        ResultSet resultSet = preparedStatement.executeQuery();
-
-        if (log.isDebugEnabled()) {
-            log.debug("Licenses are retrieved from the LM_LICENSE table.");
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                JsonArray licenseArray = JsonUtils.createJsonArrayFromLicenseResultSet(resultSet);
+                if (log.isDebugEnabled()) {
+                    log.debug("Licenses are retrieved from the LM_LICENSE table.");
+                }
+                return licenseArray;
+            }
         }
-        return resultSet;
     }
 }

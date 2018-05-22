@@ -32,6 +32,7 @@ public class Constants {
     static final String KEYSTORE_PASSWORD = "sso_keystore_password";
     static final String CERTIFICATE_ALIAS = "sso_certificate_alias";
     static final String SSO_REDIRECT_URL = "sso_redirect_url";
+    static final String ALLOWED_USER_ROLE = "allowed_user_role";
     static final String TRUST_STORE_SERVICE_NAME = "trust_store_service_name";
     static final String TRUST_STORE_SERVICE_PASSWORD = "trust_store_service_password";
     static final String FTP_SERVER_ADDRESS = "ftp_server_address";

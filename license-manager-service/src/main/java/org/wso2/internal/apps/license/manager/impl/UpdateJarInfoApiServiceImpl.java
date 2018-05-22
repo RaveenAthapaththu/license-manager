@@ -29,6 +29,7 @@ import org.wso2.internal.apps.license.manager.model.JarFilesHolder;
 import org.wso2.internal.apps.license.manager.model.LicenseMissingJar;
 import org.wso2.internal.apps.license.manager.util.Constants;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,16 +77,14 @@ public class UpdateJarInfoApiServiceImpl {
      * Recursively insert the information of all jars extracted from the pack into the database.
      *
      * @return id of the product in the database
-     * @throws SQLException if the data insertion fails
+     * @throws LicenseManagerDataException if the data insertion fails
      */
     private int enterJarsIntoDB(JarFilesHolder jarFilesHolder) throws LicenseManagerDataException {
 
         List<LicenseMissingJar> licenseMissingLibraries = new ArrayList<>();
         List<LicenseMissingJar> licenseMissingComponents = new ArrayList<>();
-        LicenseExistingJarFileDataHandler licenseExistingJarFileDAL = null;
         int productId = 0;
-        try {
-            licenseExistingJarFileDAL = new LicenseExistingJarFileDataHandler();
+        try (LicenseExistingJarFileDataHandler licenseExistingJarFileDAL = new LicenseExistingJarFileDataHandler()) {
             productId = licenseExistingJarFileDAL.getProductId(jarFilesHolder.getProductName(),
                     jarFilesHolder.getProductVersion());
 
@@ -101,8 +100,7 @@ public class UpdateJarInfoApiServiceImpl {
                         String licenseForAnyVersion = licenseExistingJarFileDAL.getComponentLicenseForAnyVersion(name);
                         licenseMissingComponents.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
                     } else if (licenseExistingJarFileDAL.isComponentExists(fileName) && !licenseExistingJarFileDAL
-                            .isComponentLicenseExists
-                                    (fileName)) {
+                            .isComponentLicenseExists(fileName)) {
                         String licenseForAnyVersion = licenseExistingJarFileDAL.getComponentLicenseForAnyVersion(name);
                         licenseMissingComponents.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
                     } else {
@@ -122,8 +120,7 @@ public class UpdateJarInfoApiServiceImpl {
                             if (licenseExistingJarFileDAL.isComponentExists(jarFile.getParent().getJarFile().getName
                                     ())) {
                                 licenseExistingJarFileDAL.insertComponentLibrary(jarFile.getParent().getJarFile()
-                                                .getName(),
-                                        libraryId);
+                                        .getName(), libraryId);
                             } else {
                                 String licenseForAnyVersion = licenseExistingJarFileDAL.getLibraryLicenseForAnyVersion
                                         (name);
@@ -145,15 +142,10 @@ public class UpdateJarInfoApiServiceImpl {
             }
         } catch (SQLException e) {
             throw new LicenseManagerDataException("Failed to add data to the database.", e);
-        } finally {
-            if (licenseExistingJarFileDAL != null) {
-                try {
-                    licenseExistingJarFileDAL.closeConnection();
-                } catch (SQLException e) {
-                    log.error("Failed to close the database connection while retrieving license details. " +
-                            e.getMessage(), e);
-                }
-            }
+        } catch (IOException e) {
+            log.error("Failed to close the database connection while retrieving license details. " +
+                    e.getMessage(), e);
+
         }
         jarFilesHolder.setLicenseMissingComponents(licenseMissingComponents);
         jarFilesHolder.setLicenseMissingLibraries(licenseMissingLibraries);

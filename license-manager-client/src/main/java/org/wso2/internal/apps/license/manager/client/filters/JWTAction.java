@@ -36,6 +36,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.Arrays;
+import java.util.List;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -108,9 +110,16 @@ public class JWTAction implements Filter {
                 }
                 username = signedJWT.getJWTClaimsSet().getClaim("http://wso2.org/claims/emailaddress").toString();
                 roles = signedJWT.getJWTClaimsSet().getClaim("http://wso2.org/claims/role").toString();
-                if (log.isDebugEnabled()) {
-                    log.debug("User = {" + username + "} | Roles = " + roles);
+
+                if (roles != null) {
+                    List<String> listOfRoles = Arrays.asList(roles.split(","));
+                    if (!listOfRoles.contains(propertyReader.getAllowedUserRole())) {
+                        log.error("User does not have a valid role permissions.");
+                        response.sendError(401);
+                        return;
+                    }
                 }
+
             } else {
                 log.error("JWT validation failed for token: {" + jwt + "}");
                 response.sendRedirect(ssoRedirectUrl);

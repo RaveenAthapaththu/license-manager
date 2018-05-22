@@ -55,10 +55,11 @@ public class GenerateLicenseTextApiServiceImpl {
     public void generateLicenseFile(String product, String version, String packPath)
             throws LicenseManagerDataException, IOException {
 
-        LicenseTextDataHandler licenseTextDataHandler = null;
-        try {
-            licenseTextDataHandler = new LicenseTextDataHandler();
-            ResultSet licensesOfJars = licenseTextDataHandler.getLicenseForAllJars(product, version);
+        ResultSet licensesOfJars = null;
+        ResultSet licenseDetail = null;
+        try (LicenseTextDataHandler licenseTextDataHandler = new LicenseTextDataHandler()) {
+
+            licensesOfJars = licenseTextDataHandler.getLicenseForAllJars(product, version);
             Set<String> keys = new HashSet<String>();
 
             String formatString = String.format("%-80s%-15s%-10s\n", "Name", "Type", "License");
@@ -76,7 +77,7 @@ public class GenerateLicenseTextApiServiceImpl {
             }
             file += "\n\n\nThe license types used by the above libraries and their information is given below:\n\n";
             for (String key : keys) {
-                ResultSet licenseDetail = licenseTextDataHandler.getLicenseDescriptions(key);
+                licenseDetail = licenseTextDataHandler.getLicenseDescriptions(key);
                 while (licenseDetail.next()) {
                     formatString = String.format("%-15s%s\n%-15s%s\n",
                             licenseDetail.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE),
@@ -93,13 +94,15 @@ public class GenerateLicenseTextApiServiceImpl {
         } catch (SQLException e) {
             throw new LicenseManagerDataException("Failed to retrieve licenses from database.", e);
         } finally {
-            if (licenseTextDataHandler != null) {
-                try {
-                    licenseTextDataHandler.closeConnection();
-                } catch (SQLException e) {
-                    log.error("Failed to close the database connection while retrieving data to generate the license " +
-                            "text." + e.getMessage(),e);
+            try {
+                if (licenseDetail != null) {
+                    licenseDetail.close();
                 }
+                if (licensesOfJars != null) {
+                    licensesOfJars.close();
+                }
+            } catch (SQLException e) {
+                log.error("Failed to close the data sets while retrieving data for license generation.");
             }
         }
     }

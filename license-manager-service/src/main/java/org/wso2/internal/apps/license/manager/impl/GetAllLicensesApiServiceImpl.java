@@ -23,9 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.datahandler.LicensesDataHandler;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerDataException;
-import org.wso2.internal.apps.license.manager.util.JsonUtils;
 
-import java.sql.ResultSet;
+import java.io.IOException;
 import java.sql.SQLException;
 
 /**
@@ -43,25 +42,16 @@ public class GetAllLicensesApiServiceImpl {
      */
     public JsonArray getListOfAllLicenses() throws LicenseManagerDataException {
 
-        JsonArray listOfLicensesAsJson;
-        LicensesDataHandler licensesDataHandler = null;
-        try {
-            licensesDataHandler = new LicensesDataHandler();
-            ResultSet licenses = licensesDataHandler.selectAllLicense();
-            listOfLicensesAsJson = JsonUtils.createJsonArrayFromLicenseResultSet(licenses);
+        JsonArray listOfLicensesAsJson = null;
+        try (LicensesDataHandler licensesDataHandler = new LicensesDataHandler()) {
+            listOfLicensesAsJson = licensesDataHandler.selectAllLicense();
         } catch (SQLException e) {
             throw new LicenseManagerDataException("Failed to retrieve data from the database.", e);
-        } finally {
-            if (licensesDataHandler != null) {
-                try {
-                    licensesDataHandler.closeConnection();
-                } catch (SQLException e) {
-                    log.error("Failed to close the database connection while retrieving license details. " +
-                            e.getMessage(), e);
-                }
-            }
+        } catch (IOException e) {
+            log.error("Failed to close the database connection while retrieving license details. " +
+                    e.getMessage(), e);
         }
-
         return listOfLicensesAsJson;
+
     }
 }

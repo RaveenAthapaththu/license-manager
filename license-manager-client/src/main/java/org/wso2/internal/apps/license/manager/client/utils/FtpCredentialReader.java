@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -62,7 +61,7 @@ public class FtpCredentialReader {
             this.ftpServerPort = prop.getProperty(Constants.FTP_SERVER_PORT);
 
         } catch (IOException e) {
-            throw  new LicenseManagerException("Can not read ftp server configurations.", e);
+            throw new LicenseManagerException("Can not read ftp server configurations.", e);
         } finally {
             if (input != null) {
                 try {

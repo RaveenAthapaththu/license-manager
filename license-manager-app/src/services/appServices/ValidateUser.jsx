@@ -18,7 +18,8 @@
 
 import { Component } from 'react';
 import axios from 'axios';
-import MainData from '../MainData';
+import Config from "../../configuration"
+
 
 /**
 * @class ValidateUser
@@ -31,10 +32,10 @@ class ValidateUser extends Component {
     * @returns {Promise} promise
     */
     getUserDetails() {
-        const url = MainData.appServiceURL + "userdetails";
+        const url = Config.URL_VALIDATE_USER + "userdetails";
         const requestHeaders = { withCredentials: true };
         return axios.get(url, requestHeaders).then((response) => {
-            return response.data;
+            return response;
         }).catch((error) => {
             throw error;
         });

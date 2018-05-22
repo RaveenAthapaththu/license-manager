@@ -18,7 +18,9 @@
 
 import { Component } from 'react';
 import axios from 'axios';
-import MainData from '../MainData';
+import Config from "../../configuration"
+
+//URL_FETCH_SERVICES
 
 /**
 * @class ServiceManager
@@ -32,7 +34,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     getUploadedPacks() {
-        const url = MainData.microServiceURL + 'pack/uploadedPacks';
+        const url = Config.URL_FETCH_SERVICES + 'pack/uploadedPacks';
         const requestConfig = { withCredentials: true, timeout: 40000000 };
 
         return axios.get(url, requestConfig).then((response) => {
@@ -47,7 +49,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     selectLicense() {
-        const url = MainData.microServiceURL + 'license/availableLicenses';
+        const url = Config.URL_FETCH_SERVICES+ 'license/availableLicenses';
         const requestConfig = { withCredentials: true };
         return axios.get(url, requestConfig).then((response) => {
             return response;
@@ -61,7 +63,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     getLicense() {
-        const url = MainData.microServiceURL + 'license/text';
+        const url = Config.URL_FETCH_SERVICES+ 'license/text';
         const requestConfig = { withCredentials: true, timeout: 40000000 };
         return axios.post(url, requestConfig).then((response) => {
             return response;
@@ -75,7 +77,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     downloadLicense() {
-        const url = MainData.microServiceURL + 'license/textToDownload';
+        const url = Config.URL_FETCH_SERVICES + 'license/textToDownload';
         const requestConfig = { withCredentials: true, timeout: 30000 };
         return axios.get(url, requestConfig).then((response) => {
             return response;
@@ -90,7 +92,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     extractJars(selectedPack) {
-        const url = MainData.microServiceURL + 'pack/selectedPack';
+        const url = Config.URL_FETCH_SERVICES + 'pack/selectedPack';
         const requestConfig = {
             withCredentials: true,
         };
@@ -107,7 +109,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     enterJars(data) {
-        const url = MainData.microServiceURL + 'pack/nameDefinedJars';
+        const url = Config.URL_FETCH_SERVICES + 'pack/nameDefinedJars';
         const requestConfig = {
             withCredentials: true,
         };
@@ -128,7 +130,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     addLicense(components, libraries) {
-        const url = MainData.microServiceURL + 'license/newLicenses';
+        const url = Config.URL_FETCH_SERVICES + 'license/newLicenses';
         const requestConfig = {
             withCredentials: true,
         };
@@ -148,7 +150,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     checkProgress() {
-        const url = MainData.microServiceURL + 'packExtraction/progress';
+        const url = Config.URL_FETCH_SERVICES + 'packExtraction/progress';
         const requestConfig = {
             withCredentials: true,
         };
@@ -160,7 +162,7 @@ class ServiceManager extends Component {
     }
 
     getFaultyNamedJars(){
-        const url = MainData.microServiceURL + 'pack/faultyNamedJars';
+        const url = Config.URL_FETCH_SERVICES + 'pack/faultyNamedJars';
         const requestConfig = {
             withCredentials: true,
         };

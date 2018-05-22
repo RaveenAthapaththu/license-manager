@@ -19,7 +19,6 @@
 package org.wso2.internal.apps.license.manager.client.services;
 
 import com.google.gson.JsonObject;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
@@ -39,21 +38,23 @@ public class FtpCredentialService extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse response) throws IOException {
 
         JsonObject ftpCredentials = new JsonObject();
+        JsonObject responseObject = new JsonObject();
         try {
             FtpCredentialReader ftpCredentialReader = new FtpCredentialReader();
-            ftpCredentials.addProperty("responseType", "Done");
             ftpCredentials.addProperty("address", ftpCredentialReader.getFtpServerAddress());
             ftpCredentials.addProperty("username", ftpCredentialReader.getFtpServerUsername());
             ftpCredentials.addProperty("password", ftpCredentialReader.getFtpServerPassword());
             ftpCredentials.addProperty("port", ftpCredentialReader.getFtpServerPort());
+            responseObject.addProperty("responseType", "done");
+            responseObject.add("responseData", ftpCredentials);
 
             PrintWriter out = response.getWriter();
-            out.print(ftpCredentials);
+            out.print(responseObject);
             if (log.isDebugEnabled()) {
                 log.debug("Obtained the FTP server credentials successfully from the configuration file.");
             }
         } catch (LicenseManagerException e) {
-            ftpCredentials.addProperty("responseType", "Error");
+            ftpCredentials.addProperty("responseType", "error");
             ftpCredentials.addProperty("responseMessage", e.getMessage());
             PrintWriter out = response.getWriter();
             out.print(ftpCredentials);
