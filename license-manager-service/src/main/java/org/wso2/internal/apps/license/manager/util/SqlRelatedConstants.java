@@ -24,20 +24,20 @@ package org.wso2.internal.apps.license.manager.util;
 public class SqlRelatedConstants {
 
     public static final String INSERT_PRODUCT = "INSERT INTO LM_PRODUCT (PRODUCT_NAME, PRODUCT_VERSION) VALUES (?,?)";
-    public static final String INSERT_COMPONENT = "INSERT INTO LM_COMPONENT (COMP_NAME, COMP_FILE_NAME, COMP_KEY, " +
-            "COMP_TYPE,COMP_VERSION) VALUES (?,?,?,?,?)";
+    public static final String INSERT_COMPONENT = "INSERT IGNORE INTO LM_COMPONENT (COMP_NAME, COMP_FILE_NAME, " +
+            "COMP_KEY, COMP_TYPE,COMP_VERSION) VALUES (?,?,?,?,?)";
     public static final String INSERT_LIBRARY = "INSERT INTO  LM_LIBRARY (LIB_NAME, LIB_FILE_NAME, LIB_TYPE, " +
             "LIB_VERSION) VALUES (?,?,?,?)";
-    public static final String INSERT_INTO_COMPONENT_PRODUCT = "INSERT INTO  LM_COMPONENT_PRODUCT (COMP_KEY, " +
+    public static final String INSERT_INTO_COMPONENT_PRODUCT = "INSERT IGNORE INTO  LM_COMPONENT_PRODUCT (COMP_KEY, " +
             "PRODUCT_ID) VALUES (?,?)";
-    public static final String INSERT_INTO_LIBRARY_PRODUCT = "INSERT INTO  LM_LIBRARY_PRODUCT (LIB_ID, PRODUCT_ID) " +
-            "VALUES (?,?)";
-    public static final String INSERT_INTO_COMPONENT_LIBRARY = "INSERT INTO  LM_COMPONENT_LIBRARY (LIB_ID, COMP_KEY) " +
-            "VALUES (?,?)";
-    public static final String INSERT_COMPONENT_LICENSE = "INSERT INTO  LM_COMPONENT_LICENSE (COMP_KEY, LICENSE_KEY) " +
-            "VALUES (?,?)";
-    public static final String INSERT_LIBRARY_LICENSE = "INSERT INTO  LM_LIBRARY_LICENSE (LIB_ID, LICENSE_KEY) VALUES" +
-            " (?,?)";
+    public static final String INSERT_INTO_LIBRARY_PRODUCT = "INSERT IGNORE INTO LM_LIBRARY_PRODUCT (LIB_ID, " +
+            "PRODUCT_ID) VALUES (?,?)";
+    public static final String INSERT_INTO_COMPONENT_LIBRARY = "INSERT IGNORE INTO  LM_COMPONENT_LIBRARY (LIB_ID, " +
+            "COMP_KEY) VALUES (?,?)";
+    public static final String INSERT_COMPONENT_LICENSE = "INSERT IGNORE INTO  LM_COMPONENT_LICENSE (COMP_KEY, " +
+            "LICENSE_KEY) VALUES (?,?)";
+    public static final String INSERT_LIBRARY_LICENSE = "INSERT IGNORE INTO  LM_LIBRARY_LICENSE (LIB_ID, LICENSE_KEY)" +
+            " VALUES (?,?)";
     public static final String SELECT_ALL_LICENSES = "SELECT * FROM LM_LICENSE";
     public static final String SELECT_PRODUCT = "SELECT PRODUCT_ID FROM LM_PRODUCT WHERE PRODUCT_NAME=? AND " +
             "PRODUCT_VERSION=?";

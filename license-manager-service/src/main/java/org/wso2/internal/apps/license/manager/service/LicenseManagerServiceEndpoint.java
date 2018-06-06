@@ -44,7 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
-import javax.mail.MessagingException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -62,8 +61,6 @@ import javax.ws.rs.core.Response;
 public class LicenseManagerServiceEndpoint {
 
     private static final Logger log = LoggerFactory.getLogger(LicenseManagerServiceEndpoint.class);
-    //    private static final ConcurrentHashMap<String, JarFilesHolder> sessionObjectHolderMap = new
-//            ConcurrentHashMap<>();
     private static final GenerateLicenseTextApiServiceImpl generateLicenseService = new
             GenerateLicenseTextApiServiceImpl();
     private static final AddNewLicenseApiServiceImpl addNewLicenseService = new AddNewLicenseApiServiceImpl();
@@ -94,7 +91,7 @@ public class LicenseManagerServiceEndpoint {
         } catch (LicenseManagerConfigurationException e) {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, e.getMessage());
-            log.error("Failed to get the list of uploaded pack. " + e.getMessage(), e);
+            log.error("Failed to get the list of uploaded packs. ", e);
         }
 
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
@@ -159,50 +156,6 @@ public class LicenseManagerServiceEndpoint {
     }
 
     /**
-     * Get the report progress.
-     *
-     * @param request  HTTP request object.
-     * @param username Username of the user.
-     * @return The API response
-     */
-    @GET
-    @Path("/packExtraction/progress")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getPackExtractionTaskStatus(@Context Request request,
-                                                @QueryParam("username") String username) {
-
-        TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
-        JsonObject responseJson = new JsonObject();
-        String statusMessage = taskProgress.getMessage();
-
-        // Build the response based on the status of the task.
-        switch (taskProgress.getStatus()) {
-
-            case Constants.COMPLETE:
-                responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
-                responseJson.addProperty(Constants.RESPONSE_STATUS, Constants.COMPLETE);
-                responseJson.addProperty(Constants.RESPONSE_MESSAGE, statusMessage);
-                break;
-
-            case Constants.RUNNING:
-                responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
-                responseJson.addProperty(Constants.RESPONSE_STATUS, Constants.RUNNING);
-                responseJson.addProperty(Constants.RESPONSE_MESSAGE, statusMessage);
-                break;
-
-            default:
-                responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
-                responseJson.addProperty(Constants.RESPONSE_STATUS, Constants.FAILED);
-                responseJson.addProperty(Constants.RESPONSE_MESSAGE, statusMessage);
-                break;
-        }
-
-        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
-                .header("Access-Control-Allow-Credentials", true)
-                .build();
-    }
-
-    /**
      * Get the jars with name and version unidentified.
      *
      * @param request  HTTP request object.
@@ -227,7 +180,7 @@ public class LicenseManagerServiceEndpoint {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, statusMessage);
             responseJson.add(Constants.RESPONSE_DATA, faultyNamedJars);
-        } else {
+        } else  {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Failed to get data");
         }
@@ -253,28 +206,92 @@ public class LicenseManagerServiceEndpoint {
                                                @QueryParam("username") String username,
                                                String stringPayload) {
 
+        TaskProgress taskProgress = updateJarInfoService.startUpdatingDatabase(username, JsonUtils
+                .getAttributesFromRequestBody(stringPayload, "jars"));
         JsonObject responseJson = new JsonObject();
-        JarFilesHolder jarFilesHolder = ProgressTracker.getTaskProgress(username).getData();
+        responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
+        responseJson.addProperty(Constants.RESPONSE_STATUS, Constants.RUNNING);
+        responseJson.addProperty(Constants.RESPONSE_MESSAGE, taskProgress.getMessage());
 
-        try {
+        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
+                .header("Access-Control-Allow-Credentials", true)
+                .build();
+    }
 
-            int productId = updateJarInfoService.updateJarInfo(jarFilesHolder, JsonUtils.getAttributesFromRequestBody
-                    (stringPayload, "jars"));
+    /**
+     * Get the long running task progress.
+     *
+     * @param request  HTTP request object.
+     * @param username Username of the user.
+     * @return The API response
+     */
+    @GET
+//    @Path("/packExtraction/progress")
+    @Path("/longRunningTask/progress")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getStatusOfLongRunningTasks(@Context Request request,
+                                                @QueryParam("username") String username) {
 
-            // Get the license missing jars ( components and libraries)
-            jarFilesHolder.setProductId(productId);
+        TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
+        JsonObject responseJson = new JsonObject();
+        String statusMessage = taskProgress.getMessage();
 
+        // Build the response based on the status of the task.
+        switch (taskProgress.getStatus()) {
+
+            case Constants.COMPLETE:
+                responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
+                responseJson.addProperty(Constants.RESPONSE_STATUS, Constants.COMPLETE);
+                responseJson.addProperty(Constants.RESPONSE_MESSAGE, statusMessage);
+                break;
+
+            case Constants.RUNNING:
+                responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
+                responseJson.addProperty(Constants.RESPONSE_STATUS, Constants.RUNNING);
+                responseJson.addProperty(Constants.RESPONSE_MESSAGE, statusMessage);
+                break;
+
+            default:
+                responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
+                responseJson.addProperty(Constants.RESPONSE_STATUS, Constants.FAILED);
+                responseJson.addProperty(Constants.RESPONSE_MESSAGE, statusMessage);
+                ProgressTracker.deleteTaskProgress(username);
+                break;
+        }
+
+        return Response.ok(responseJson, MediaType.APPLICATION_JSON)
+                .header("Access-Control-Allow-Credentials", true)
+                .build();
+    }
+
+    /**
+     * Get the jars for which the licenses are undefined.
+     *
+     * @param request  HTTP request object.
+     * @param username Username of the user.
+     * @return The API response
+     */
+    @GET
+    @Path("/pack/licenseMissingJars")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLicenseMissingJars(@Context Request request,
+                                          @QueryParam("username") String username) {
+
+        TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
+        JsonObject responseJson = new JsonObject();
+        JarFilesHolder jarFilesHolder = taskProgress.getData();
+
+        if (taskProgress.getStatus().equals(Constants.COMPLETE)) {
             // Create the response if success
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "License missing jars were identified.");
-            responseJson.add(Constants.LICENSE_MISSING_COMPONENTS, JsonUtils.getComponentsListAsJson(jarFilesHolder
-                    .getLicenseMissingComponents()));
-            responseJson.add(Constants.LICENSE_MISSING_LIBRARIES, JsonUtils.getLibraryListAsJson(jarFilesHolder
-                    .getLicenseMissingLibraries()));
-        } catch (LicenseManagerDataException e) {
+            responseJson.add(Constants.LICENSE_MISSING_COMPONENTS, JsonUtils.getLicenseMissingJarsAsJsonArray
+                    (jarFilesHolder.getLicenseMissingComponents()));
+            responseJson.add(Constants.LICENSE_MISSING_LIBRARIES, JsonUtils.getLicenseMissingJarsAsJsonArray
+                    (jarFilesHolder.getLicenseMissingLibraries()));
+        } else {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
-            responseJson.addProperty(Constants.RESPONSE_MESSAGE, e.getMessage());
-            log.error("Error while inserting jar information into the database. " + e.getMessage(), e);
+            responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Failed to get data");
         }
 
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
@@ -298,25 +315,12 @@ public class LicenseManagerServiceEndpoint {
                                          @QueryParam("username") String username,
                                          String stringPayload) {
 
+        TaskProgress taskProgress = addNewLicenseService.startInsertingNewLicenses(stringPayload, username);
+
         JsonObject responseJson = new JsonObject();
-
-        JarFilesHolder jarFilesHolder = ProgressTracker.getTaskProgress(username).getData();
-
-        try {
-            addNewLicenseService.updateLicenses(jarFilesHolder, stringPayload, username);
-
-            responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
-            responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Licenses were added successfully.");
-        } catch (LicenseManagerDataException e) {
-            responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
-            responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Failed to add licenses." +
-                    "Please contact application admin");
-            log.error("Failed to add licenses. " + e.getMessage(), e);
-        } catch (MessagingException e) {
-            responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
-            responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Failed to send email to the admin.");
-            log.error("Error while sending email to application admins. " + e.getMessage(), e);
-        }
+        responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
+        responseJson.addProperty(Constants.RESPONSE_STATUS, Constants.RUNNING);
+        responseJson.addProperty(Constants.RESPONSE_MESSAGE, taskProgress.getMessage());
 
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)
                 .header("Access-Control-Allow-Credentials", true)
@@ -352,13 +356,11 @@ public class LicenseManagerServiceEndpoint {
         } catch (IOException e) {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Could not generate the license text.");
-            log.error("Failed to generate licenses for the product" + productName + "-" + productVersion +
-                    e.getMessage(), e);
+            log.error("Failed to generate licenses for the product " + productName + "-" + productVersion, e);
         } catch (LicenseManagerDataException e) {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, e.getMessage());
-            log.error("Failed to generate licenses for the product" + productName + "-" + productVersion +
-                    e.getMessage(), e);
+            log.error("Failed to generate licenses for the product " + productName + "-" + productVersion, e);
         }
 
         return Response.ok(responseJson, MediaType.APPLICATION_JSON)

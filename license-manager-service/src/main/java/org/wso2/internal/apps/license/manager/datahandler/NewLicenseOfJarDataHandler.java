@@ -81,9 +81,7 @@ public class NewLicenseOfJarDataHandler extends JarFileDataHandler {
      * @throws SQLException if the sql execution fails
      */
     public void insertComponent(String name, String fileName, String version) throws SQLException {
-
-        if (!isComponentExists(fileName)) {
-            String insertComponent = SqlRelatedConstants.INSERT_COMPONENT;
+         String insertComponent = SqlRelatedConstants.INSERT_COMPONENT;
             try (PreparedStatement preparedStatement = connection.prepareStatement(insertComponent)) {
                 preparedStatement.setString(1, name);
                 preparedStatement.setString(2, fileName);
@@ -96,7 +94,6 @@ public class NewLicenseOfJarDataHandler extends JarFileDataHandler {
                     log.debug("Successfully inserted the component with the key " + name + " into LM_COMPONENT table.");
                 }
             }
-        }
     }
 
     /**

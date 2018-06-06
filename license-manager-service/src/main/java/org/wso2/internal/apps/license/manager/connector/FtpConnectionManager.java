@@ -36,14 +36,14 @@ import java.util.Vector;
 /**
  * Create a connection with the FTP server and execute functions.
  */
-public class FtpConnector {
+public class FtpConnectionManager {
 
-    private static final Logger log = LoggerFactory.getLogger(FtpConnector.class);
-    private static FtpConnector ftpConnector = null;
+    private static final Logger log = LoggerFactory.getLogger(FtpConnectionManager.class);
+    private static FtpConnectionManager ftpConnectionManager = null;
     private static Session session = null;
     private static ChannelSftp sftpChannel = null;
 
-    private FtpConnector() throws LicenseManagerConfigurationException {
+    private FtpConnectionManager() throws LicenseManagerConfigurationException {
 
         String ftpHost = SystemVariableUtil.getValue(Constants.FTP_HOST, null);
         int ftpPort = Integer.valueOf(SystemVariableUtil.getValue(Constants.FTP_PORT, null));
@@ -66,14 +66,23 @@ public class FtpConnector {
         }
     }
 
-    public static synchronized FtpConnector getFtpConnector() throws LicenseManagerConfigurationException {
+    public static synchronized FtpConnectionManager getFtpConnectionManager() throws
+            LicenseManagerConfigurationException {
 
-        if (ftpConnector == null || !session.isConnected()) {
-            ftpConnector = new FtpConnector();
+        if (ftpConnectionManager == null || !session.isConnected()) {
+            ftpConnectionManager = new FtpConnectionManager();
+        } else if (sftpChannel.isClosed() || !sftpChannel.isConnected()) {
+            try {
+                sftpChannel = (ChannelSftp) session.openChannel("sftp");
+                sftpChannel.connect();
+            } catch (JSchException e) {
+                throw new LicenseManagerConfigurationException("Failed to initiate a connection with FTP server", e);
+            }
         }
-        return ftpConnector;
+        return ftpConnectionManager;
 
     }
+
     public void closeSftpConnection() {
 
         if (session != null) {
@@ -115,6 +124,7 @@ public class FtpConnector {
             }
             return listOfPacks;
         } catch (SftpException e) {
+            sftpChannel.exit();
             throw new LicenseManagerConfigurationException("Failed to get the list of files from FTP server", e);
         }
     }
@@ -130,6 +140,7 @@ public class FtpConnector {
                 log.debug("The file " + fileName + ".zip" + " is removed from the FTP server");
             }
         } catch (SftpException e) {
+            sftpChannel.exit();
             throw new LicenseManagerConfigurationException("Failed to delete file from FTP server", e);
         }
     }

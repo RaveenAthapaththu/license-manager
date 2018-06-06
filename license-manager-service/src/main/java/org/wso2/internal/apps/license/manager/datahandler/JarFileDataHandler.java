@@ -41,7 +41,7 @@ public class JarFileDataHandler implements Closeable {
     JarFileDataHandler() throws SQLException {
 
         DatabaseConnectionPool databaseConnectionPool = DatabaseConnectionPool.getDbConnectionPool();
-        connection = databaseConnectionPool.getDataSource().getConnection();
+        connection = databaseConnectionPool.getConnection();
     }
 
     @Override
@@ -63,19 +63,17 @@ public class JarFileDataHandler implements Closeable {
      */
     public void insertProductComponent(String compKey, int productId) throws SQLException {
 
-        if (selectProductComponent(compKey, productId) == -1) {
-            String insertProductComponent = SqlRelatedConstants.INSERT_INTO_COMPONENT_PRODUCT;
-            try (PreparedStatement preparedStatement = connection.prepareStatement(insertProductComponent)) {
+        String insertProductComponent = SqlRelatedConstants.INSERT_INTO_COMPONENT_PRODUCT;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertProductComponent)) {
 
-                preparedStatement.setString(1, compKey);
-                preparedStatement.setInt(2, productId);
-                preparedStatement.executeUpdate();
+            preparedStatement.setString(1, compKey);
+            preparedStatement.setInt(2, productId);
+            preparedStatement.executeUpdate();
 
-                if (log.isDebugEnabled()) {
-                    log.debug("Successfully inserted the product - component relationship for the product id " +
-                            productId +
-                            " and component key " + compKey + " into LM_COMPONENT_PRODUCT table.");
-                }
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully inserted the product - component relationship for the product id " +
+                        productId +
+                        " and component key " + compKey + " into LM_COMPONENT_PRODUCT table.");
             }
         }
     }
@@ -114,17 +112,15 @@ public class JarFileDataHandler implements Closeable {
      */
     public void insertProductLibrary(int libId, int productId) throws SQLException {
 
-        if (selectProductLibrary(libId, productId) == -1) {
-            String insertProductLibrary = SqlRelatedConstants.INSERT_INTO_LIBRARY_PRODUCT;
-            try (PreparedStatement preparedStatement = connection.prepareStatement(insertProductLibrary)) {
-                preparedStatement.setInt(1, libId);
-                preparedStatement.setInt(2, productId);
-                preparedStatement.executeUpdate();
-                if (log.isDebugEnabled()) {
-                    log.debug("Successfully inserted the product - library relationship for the product id " +
-                            productId +
-                            " and library id " + libId + " into LM_LIBRARY_PRODUCT table.");
-                }
+        String insertProductLibrary = SqlRelatedConstants.INSERT_INTO_LIBRARY_PRODUCT;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertProductLibrary)) {
+            preparedStatement.setInt(1, libId);
+            preparedStatement.setInt(2, productId);
+            preparedStatement.executeUpdate();
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully inserted the product - library relationship for the product id " +
+                        productId +
+                        " and library id " + libId + " into LM_LIBRARY_PRODUCT table.");
             }
         }
     }
@@ -164,19 +160,18 @@ public class JarFileDataHandler implements Closeable {
      */
     public void insertComponentLibrary(String compKey, int libraryId) throws SQLException {
 
-        if (selectComponentLibrary(compKey, libraryId) == -1) {
-            String insertComponentLibrary = SqlRelatedConstants.INSERT_INTO_COMPONENT_LIBRARY;
-            try (PreparedStatement preparedStatement = connection.prepareStatement(insertComponentLibrary)) {
-                preparedStatement.setInt(1, libraryId);
-                preparedStatement.setString(2, compKey);
-                preparedStatement.executeUpdate();
+        String insertComponentLibrary = SqlRelatedConstants.INSERT_INTO_COMPONENT_LIBRARY;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertComponentLibrary)) {
+            preparedStatement.setInt(1, libraryId);
+            preparedStatement.setString(2, compKey);
+            preparedStatement.executeUpdate();
 
-                if (log.isDebugEnabled()) {
-                    log.debug("Successfully inserted the component - library relationship for the component key " +
-                            compKey + " and library id " + libraryId + " into LM_COMPONENT_LIBRARY table.");
-                }
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully inserted the component - library relationship for the component key " +
+                        compKey + " and library id " + libraryId + " into LM_COMPONENT_LIBRARY table.");
             }
         }
+
     }
 
     /**

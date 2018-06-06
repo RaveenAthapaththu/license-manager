@@ -23,6 +23,7 @@ import org.op4j.Op;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
 import org.wso2.internal.apps.license.manager.model.JarFile;
 import org.wso2.internal.apps.license.manager.model.JarFilesHolder;
+import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.LicenseManagerUtils;
 import org.wso2.internal.apps.license.manager.util.crawler.FolderCrawler;
 
@@ -174,7 +175,7 @@ public class JarFileExtractor {
                 extractTo.mkdir();
                 LicenseManagerUtils.unzip(fileToBeExtracted.getAbsolutePath(), extractTo.getAbsolutePath());
                 List<File> listOfInnerFiles = Op.onArray(extractTo
-                        .listFiles(file -> file.getName().endsWith(".jar") || file.getName().endsWith(".mar")))
+                        .listFiles(file -> (file.getName().endsWith(".jar") || file.getName().endsWith(".mar"))))
                         .toList().get();
                 for (File nextFile : listOfInnerFiles) {
                     zipStack.add(createJarObjectFromFile(nextFile, jarFile));
@@ -200,7 +201,8 @@ public class JarFileExtractor {
                 || jarFile.getVersion().contains("wso2")) {
             return "wso2";
         } else {
-            return "outside";
+            return (jarFile.getParent() == null) ? ((jarFile.isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants
+                    .JAR_TYPE_JAR) : Constants.JAR_TYPE_JAR_IN_BUNDLE;
         }
     }
 

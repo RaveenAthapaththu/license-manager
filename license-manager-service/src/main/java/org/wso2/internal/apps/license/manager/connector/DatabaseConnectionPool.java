@@ -26,6 +26,8 @@ import org.apache.commons.pool.impl.GenericObjectPool;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import javax.sql.DataSource;
 
 /**
@@ -62,15 +64,13 @@ public class DatabaseConnectionPool {
 
     }
 
-    public DataSource getDataSource() {
+    public synchronized Connection getConnection() throws SQLException {
 
-        return dataSource;
+        Connection connection = dataSource.getConnection();
+        while (connection.isClosed()) {
+            connection = dataSource.getConnection();
+        }
+        return connection;
     }
 
 }
-
-
-
-
-
-

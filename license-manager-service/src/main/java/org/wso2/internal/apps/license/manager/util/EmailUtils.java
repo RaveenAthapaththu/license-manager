@@ -50,11 +50,10 @@ public class EmailUtils {
                                  boolean isComplete) throws MessagingException {
 
         Properties props = new Properties();
-        props.put("mail.smtp.host", "smtp.gmail.com");
-        props.put("mail.smtp.socketFactory.port", "465");
-        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
         props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.port", "465");
+        props.put("mail.smtp.starttls.enable", "false");
+        props.put("mail.smtp.host", "tygra.wso2.com");
+        props.put("mail.smtp.port", "25");
 
         final String username = SystemVariableUtil.getValue(Constants.EMAIL_USERNAME, null);
         final String password = SystemVariableUtil.getValue(Constants.EMAIL_PASSWORD, null);
@@ -77,6 +76,8 @@ public class EmailUtils {
         message.setRecipients(Message.RecipientType.TO, adminEmails);
         message.setSubject("New licenses added");
         message.setContent(body, "text/html");
+        Transport transport = session.getTransport("smtp");
+        transport.connect(props.getProperty("mail.smtp.host"), username, password);
         Transport.send(message);
 
     }

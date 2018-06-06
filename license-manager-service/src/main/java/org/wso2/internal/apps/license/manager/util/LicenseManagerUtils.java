@@ -21,7 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.connector.FtpConnector;
+import org.wso2.internal.apps.license.manager.connector.FtpConnectionManager;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerConfigurationException;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
 import org.wso2.internal.apps.license.manager.impl.JarFileExtractor;
@@ -155,8 +155,8 @@ public class LicenseManagerUtils {
         LicenseManagerUtils.deleteFolder(fileName + ".zip");
         LicenseManagerUtils.deleteFolder(fileName);
         try {
-            FtpConnector ftpConnector = FtpConnector.getFtpConnector();
-            ftpConnector.deleteFileFromFtpServer(fileName);
+            FtpConnectionManager ftpConnectionManager = FtpConnectionManager.getFtpConnectionManager();
+            ftpConnectionManager.deleteFileFromFtpServer(fileName);
         } catch (LicenseManagerConfigurationException e) {
             log.error("Failed to remove the zip file from the FTP server. " + e.getMessage(), e);
         }

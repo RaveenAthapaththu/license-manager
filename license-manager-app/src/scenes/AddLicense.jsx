@@ -30,7 +30,7 @@ import styles from '../styles';
 import StepComponent from "../components/StepComponent";
 import ProgressComponent from "../components/ProgressComponent";
 import HeaderComponent from "../components/HeaderComponent";
-import {Checkbox} from "material-ui";
+import {Checkbox, Paper} from "material-ui";
 
 /**
  * @class AddLicense
@@ -42,8 +42,8 @@ class AddLicense extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            nameDefinedJars: props.location.state ? props.location.state.nameMissingJars: null,
-            packName: props.location.state ? props.location.state.packName: null,
+            nameDefinedJars: props.location.state ? props.location.state.nameMissingJars : null,
+            packName: props.location.state ? props.location.state.packName : null,
             errorMessageOpened: false,
             confirmMessageOpened: false,
             recheckMessageOpened: false,
@@ -58,7 +58,9 @@ class AddLicense extends Component {
             licenseMissingLibraries: [],
             license: [],
             stepIndex: 2,
-            errorMessage: ''
+            errorMessage: '',
+            statusMessage: ''
+
         };
         this.handleAddLicense = this.handleAddLicense.bind(this);
         this.handleComponentSelect = this.handleComponentSelect.bind(this);
@@ -75,43 +77,78 @@ class AddLicense extends Component {
     }
 
     componentWillMount() {
-        if(this.state.nameDefinedJars ==='' || this.state.packName === ''){
+        if (this.state.nameDefinedJars === '' || this.state.packName === '') {
             this.backToMain();
         }
-        ServiceManager.selectLicense().then((response) => {
-            if (response.data.responseType === "done") {
-                if (response.data.responseData.length !== 0) {
-                    this.setState(() => {
-                        return {
-                            license: response.data.responseData,
-                        };
-                    });
-                }
-            } else {
-                this.handleError(response.data.responseMessage);
-            }
-        }).catch(() => {
-            this.handleError("Network Error");
-        });
+
         ServiceManager.enterJars(this.state.nameDefinedJars).then((response) => {
-            if (response.data.responseType === "done") {
-                if (response.data.component.length === 0 && response.data.library.length === 0) {
-                    this.redirectToNext();
-                } else {
-                    this.setState(() => {
-                        return {
-                            displayFormLicense: 'block',
-                            displayProgress: 'none',
-                            header: 'Add Licenses for the jars',
-                            licenseMissingComponents: response.data.component,
-                            licenseMissingLibraries: response.data.library,
-                            stepIndex: 2,
-                        };
+            if (response.data.responseType === 'done') {
+                this.setState(() => {
+                    return {
+                        statusMessage: response.data.responseMessage,
+                    };
+                });
+                let intervalID = setInterval(function () {
+                    ServiceManager.checkProgress().then((responseNext) => {
+                        if (responseNext.data.responseStatus === 'complete' && responseNext.data.responseType === 'done') {
+                            ServiceManager.getLicenseMissingJars().then((responseJars) => {
+                                if (responseJars.data.responseType === 'done') {
+                                    if (responseJars.data.component.length === 0 && responseJars.data.library.length === 0) {
+                                        this.redirectToNext();
+                                    } else {
+                                        ServiceManager.selectLicense().then((response) => {
+                                            if (response.data.responseType === "done") {
+                                                if (response.data.responseData.length !== 0) {
+                                                    this.setState(() => {
+                                                        return {
+                                                            license: response.data.responseData,
+                                                        };
+                                                    });
+                                                }
+                                            } else {
+                                                this.handleError(response.data.responseMessage);
+                                            }
+                                        }).catch(() => {
+                                            this.handleError("Network Error while loading licenses");
+                                        });
+                                        this.setState(() => {
+                                            return {
+                                                displayFormLicense: 'block',
+                                                displayProgress: 'none',
+                                                header: 'Add Licenses for the jars',
+                                                licenseMissingComponents: responseJars.data.component,
+                                                licenseMissingLibraries: responseJars.data.library,
+                                                stepIndex: 2,
+                                            };
+                                        });
+                                    }
+                                } else {
+                                    this.handleError(responseJars.data.responseMessage)
+                                }
+                            }).catch(() => {
+                                this.handleError("Network Error");
+                                clearTimeout(intervalID);
+                            });
+                            clearTimeout(intervalID);
+                        } else if (responseNext.data.responseStatus === 'running' && responseNext.data.responseType === 'done') {
+                            this.setState(() => {
+                                return {
+                                    statusMessage: responseNext.data.responseMessage,
+                                };
+                            });
+                        } else {
+                            this.handleError(responseNext.data.responseMessage);
+                            clearTimeout(intervalID);
+                        }
+                    }).catch(() => {
+                        this.handleError("Network Error");
+                        clearTimeout(intervalID);
                     });
-                }
+                }.bind(this), 5000);
             } else {
                 this.handleError(response.data.responseMessage);
             }
+
         }).catch(() => {
             this.handleError("Network Error");
         });
@@ -146,11 +183,26 @@ class AddLicense extends Component {
             };
         });
         ServiceManager.addLicense(this.state.licenseMissingComponents, this.state.licenseMissingLibraries).then((response) => {
-            if (response.data.responseType === 'done') {
-                this.redirectToNext();
-            } else {
-                this.handleError(response.data.responseMessage)
-            }
+            let intervalID = setInterval(function () {
+                ServiceManager.checkProgress().then((responseNext) => {
+                    if (responseNext.data.responseStatus === 'complete' && responseNext.data.responseType === 'done') {
+                        this.redirectToNext();
+                        clearTimeout(intervalID);
+                    } else if (responseNext.data.responseStatus === 'running' && responseNext.data.responseType === 'done') {
+                        this.setState(() => {
+                            return {
+                                statusMessage: responseNext.data.responseMessage,
+                            };
+                        });
+                    } else {
+                        this.handleError(responseNext.data.responseMessage);
+                        clearTimeout(intervalID);
+                    }
+                }).catch(() => {
+                    this.handleError("Network Error");
+                    clearTimeout(intervalID);
+                });
+            }.bind(this), 5000);
         }).catch(() => {
             this.handleError("Network Error");
         });
@@ -557,6 +609,10 @@ class AddLicense extends Component {
                 </Dialog>
 
                 <div className="container-fluid" style={{display: this.state.displayProgress}}>
+                    <Paper style={styles.statusNote}>
+                        <strong>Please Wait</strong><br/>
+                        <p>{this.state.statusMessage}</p>
+                    </Paper>
                     <ProgressComponent/>
                 </div>
 

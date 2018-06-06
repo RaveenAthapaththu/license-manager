@@ -27,9 +27,11 @@ import org.wso2.internal.apps.license.manager.model.JarFile;
 import org.wso2.internal.apps.license.manager.model.JarFilesHolder;
 import org.wso2.internal.apps.license.manager.model.LicenseMissingJar;
 import org.wso2.internal.apps.license.manager.model.NewLicenseEntry;
+import org.wso2.internal.apps.license.manager.model.TaskProgress;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.internal.apps.license.manager.util.EmailUtils;
 import org.wso2.internal.apps.license.manager.util.JsonUtils;
+import org.wso2.internal.apps.license.manager.util.ProgressTracker;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -44,13 +46,36 @@ public class AddNewLicenseApiServiceImpl {
 
     private static final Logger log = LoggerFactory.getLogger(AddNewLicenseApiServiceImpl.class);
 
-    public void updateLicenses(JarFilesHolder jarFilesHolder, String payload, String username) throws
+    public TaskProgress startInsertingNewLicenses(String payload, String username) {
+
+        TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
+        taskProgress.setStatus(Constants.RUNNING);
+        taskProgress.setMessage("Start inserting new licenses");
+        taskProgress.setStepNumber(Constants.INSERT_LICENSE_STEP_ID);
+        new Thread(() -> {
+            try {
+                taskProgress.setExecutingThreadId(Thread.currentThread().getId());
+                JarFilesHolder jarFilesHolder = taskProgress.getData();
+                updateLicenses(jarFilesHolder, payload, username);
+                taskProgress.setStatus(Constants.COMPLETE);
+            } catch (LicenseManagerDataException e) {
+                taskProgress.setStatus(Constants.FAILED);
+                taskProgress.setMessage("Failed to add jar information into the database.");
+            } catch (MessagingException e) {
+                taskProgress.setStatus(Constants.COMPLETE);
+                taskProgress.setMessage("Failed to send the email to admin.");
+            }
+        }).start();
+        return taskProgress;
+    }
+
+    private void updateLicenses(JarFilesHolder jarFilesHolder, String payload, String username) throws
             LicenseManagerDataException, MessagingException {
 
         JsonArray componentsJson = JsonUtils.getAttributesFromRequestBody(payload, "components");
         JsonArray librariesJson = JsonUtils.getAttributesFromRequestBody(payload, "libraries");
         updateLicensesOfLicenseMissingJars(jarFilesHolder.getLicenseMissingComponents(), componentsJson);
-        updateLicensesOfLicenseMissingJars(jarFilesHolder.getLicenseMissingComponents(), librariesJson);
+        updateLicensesOfLicenseMissingJars(jarFilesHolder.getLicenseMissingLibraries(), librariesJson);
         insertNewLicensesToDb(jarFilesHolder, username);
     }
 
@@ -73,7 +98,7 @@ public class AddNewLicenseApiServiceImpl {
     /**
      * Insert new licenses for the jars into the database and send mail to the admin.
      *
-     * @param username  user who added the licenses
+     * @param username user who added the licenses
      * @throws LicenseManagerDataException if the data insertion fails
      * @throws MessagingException          if sending mail fails
      */
@@ -97,7 +122,8 @@ public class AddNewLicenseApiServiceImpl {
                     e.getMessage(), e);
         } finally {
             // Send an email to the admin if there are any new licenses added.
-            if (newLicenseEntryComponentList.size() > 0 || newLicenseEntryLibraryList.size() > 0) {
+            if (newLicenseEntryComponentList != null && newLicenseEntryComponentList.size() > 0 ||
+                    newLicenseEntryLibraryList != null && newLicenseEntryLibraryList.size() > 0) {
                 EmailUtils.sendEmail(username, newLicenseEntryComponentList, newLicenseEntryLibraryList,
                         isInsertionSuccess);
             }

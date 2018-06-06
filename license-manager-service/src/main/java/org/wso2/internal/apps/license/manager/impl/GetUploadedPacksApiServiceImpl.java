@@ -19,7 +19,7 @@
 package org.wso2.internal.apps.license.manager.impl;
 
 import com.google.gson.JsonArray;
-import org.wso2.internal.apps.license.manager.connector.FtpConnector;
+import org.wso2.internal.apps.license.manager.connector.FtpConnectionManager;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerConfigurationException;
 import org.wso2.internal.apps.license.manager.util.JsonUtils;
 
@@ -40,8 +40,8 @@ public class GetUploadedPacksApiServiceImpl {
 
         ArrayList<String> listOfPacks;
         JsonArray listOfPacksAsJson;
-        FtpConnector ftpConnector = FtpConnector.getFtpConnector();
-        listOfPacks = ftpConnector.listFilesInFtpServer();
+        FtpConnectionManager ftpConnectionManager = FtpConnectionManager.getFtpConnectionManager();
+        listOfPacks = ftpConnectionManager.listFilesInFtpServer();
         listOfPacksAsJson = JsonUtils.getListOfPacksUploadedAsJson(listOfPacks);
         return listOfPacksAsJson;
     }

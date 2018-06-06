@@ -39,51 +39,26 @@ public class JsonUtils {
      * Create an array of json objects containing the license missing components.
      * { index : xxx, name : xxx, version : xxx, type : xxx, previousLicense : xxx, licenseKey : xxx }
      *
-     * @param componentList array list of components
-     * @return json array of components
+     * @param licenseMissingJars array list of components
+     * @return json array of jars
      */
-    public static JsonArray getComponentsListAsJson(List<LicenseMissingJar> componentList) {
+    public static JsonArray getLicenseMissingJarsAsJsonArray(List<LicenseMissingJar> licenseMissingJars) {
 
         JsonArray componentJsonArray = new JsonArray();
-
-        for (int i = 0; i < componentList.size(); i++) {
-            JsonObject component = new JsonObject();
-            component.addProperty("index", i);
-            component.addProperty("name", componentList.get(i).getJarFile().getProjectName());
-            component.addProperty("version", componentList.get(i).getJarFile().getVersion());
-            component.addProperty("type", componentList.get(i).getJarFile().getType());
-            component.addProperty("previousLicense", componentList.get(i).getLicenseKey());
-            component.addProperty("licenseKey", componentList.get(i).getLicenseKey());
-            componentJsonArray.add(component);
+        for (int i = 0; i < licenseMissingJars.size(); i++) {
+            JsonObject licenseMissingJar = new JsonObject();
+            licenseMissingJar.addProperty("index", i);
+            licenseMissingJar.addProperty("name", licenseMissingJars.get(i).getJarFile().getProjectName());
+            licenseMissingJar.addProperty("version", licenseMissingJars.get(i).getJarFile().getVersion());
+            licenseMissingJar.addProperty("type", licenseMissingJars.get(i).getJarFile().getType());
+            licenseMissingJar.addProperty("previousLicense", licenseMissingJars.get(i).getLicenseKey());
+            licenseMissingJar.addProperty("licenseKey", licenseMissingJars.get(i).getLicenseKey());
+            componentJsonArray.add(licenseMissingJar);
         }
         return componentJsonArray;
     }
 
-    /**
-     * Create an array of json objects containing the license missing libraries.
-     * { index : xxx, name : xxx, version : xxx, type : xxx, previousLicense : xxx, licenseKey : xxx }
-     *
-     * @param libraryList array list of libraries
-     * @return json array of libraries
-     */
-    public static JsonArray getLibraryListAsJson(List<LicenseMissingJar> libraryList) {
 
-        JsonArray libraryJsonArray = new JsonArray();
-        for (int i = 0; i < libraryList.size(); i++) {
-            JsonObject library = new JsonObject();
-            String libraryType = (libraryList.get(i).getJarFile().getParent() == null) ?
-                    ((libraryList.get(i).getJarFile().isBundle()) ? Constants.JAR_TYPE_BUNDLE :
-                            Constants.JAR_TYPE_JAR) : Constants.JAR_TYPE_JAR_IN_BUNDLE;
-            library.addProperty("index", i);
-            library.addProperty("name", libraryList.get(i).getJarFile().getProjectName());
-            library.addProperty("version", libraryList.get(i).getJarFile().getVersion());
-            library.addProperty("type", libraryType);
-            library.addProperty("previousLicense", libraryList.get(i).getLicenseKey());
-            library.addProperty("licenseKey", libraryList.get(i).getLicenseKey());
-            libraryJsonArray.add(library);
-        }
-        return libraryJsonArray;
-    }
 
     /**
      * Create a json array from the list of faulty named jars.

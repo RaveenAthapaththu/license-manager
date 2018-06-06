@@ -73,9 +73,16 @@ public class ServiceUtils {
             // Make the trusted connection.
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(file, properties.getTrustStoreServicePassword().toCharArray());
-            HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
+
             SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(keyStore, null).build();
+
+//            // Only for staging tests
+            HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
             SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
+
+            // Only for production
+//            SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext);
+
             httpClientBuilder.setSSLSocketFactory(sslSocketFactory);
             if (log.isDebugEnabled()) {
                 log.debug("A secure connection is established with the micro service. ");

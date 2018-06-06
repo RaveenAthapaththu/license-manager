@@ -16,28 +16,32 @@
  * under the License.
  */
 
-import { Component } from 'react';
+import {Component} from 'react';
 import axios from 'axios';
 import Config from "../../configuration"
+import {unregister} from "../../registerServiceWorker";
 
 
 /**
-* @class ValidateUser
-* @extends {Component}
-* @description validate user details
-*/
+ * @class ValidateUser
+ * @extends {Component}
+ * @description validate user details
+ */
 class ValidateUser extends Component {
     /**
-    * Get valid user details
-    * @returns {Promise} promise
-    */
+     * Get valid user details
+     * @returns {Promise} promise
+     */
     getUserDetails() {
         const url = Config.URL_VALIDATE_USER + "userdetails";
-        const requestHeaders = { withCredentials: true };
+        const requestHeaders = {withCredentials: true};
         return axios.get(url, requestHeaders).then((response) => {
             return response;
-        }).catch((error) => {
-            throw error;
+        }).catch(() => {
+            setTimeout(() => {
+                unregister();
+                window.location.href = Config.URL_SSO_REDIRECT;
+            }, 3000);
         });
     }
 }

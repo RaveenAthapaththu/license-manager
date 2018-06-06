@@ -43,7 +43,7 @@ public class LicensesDataHandler implements Closeable {
     public LicensesDataHandler() throws SQLException {
 
         DatabaseConnectionPool databaseConnectionPool = DatabaseConnectionPool.getDbConnectionPool();
-        connection = databaseConnectionPool.getDataSource().getConnection();
+        connection = databaseConnectionPool.getConnection();
     }
 
     @Override

@@ -78,7 +78,7 @@ class ServiceManager extends Component {
      */
     downloadLicense() {
         const url = Config.URL_FETCH_SERVICES + 'license/textToDownload';
-        const requestConfig = { withCredentials: true, timeout: 30000 };
+        const requestConfig = { withCredentials: true, timeout: 40000000 };
         return axios.get(url, requestConfig).then((response) => {
             return response;
         }).catch((error) => {
@@ -110,9 +110,7 @@ class ServiceManager extends Component {
      */
     enterJars(data) {
         const url = Config.URL_FETCH_SERVICES + 'pack/nameDefinedJars';
-        const requestConfig = {
-            withCredentials: true,
-        };
+        const requestConfig = { withCredentials: true, timeout: 40000000 };
         const requestData = {
             jars : data,
         };
@@ -131,9 +129,7 @@ class ServiceManager extends Component {
      */
     addLicense(components, libraries) {
         const url = Config.URL_FETCH_SERVICES + 'license/newLicenses';
-        const requestConfig = {
-            withCredentials: true,
-        };
+        const requestConfig = { withCredentials: true, timeout: 40000000 };
         const licenseData = {
             components: components,
             libraries: libraries,
@@ -150,7 +146,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     checkProgress() {
-        const url = Config.URL_FETCH_SERVICES + 'packExtraction/progress';
+        const url = Config.URL_FETCH_SERVICES + 'longRunningTask/progress';
         const requestConfig = {
             withCredentials: true,
         };
@@ -163,6 +159,18 @@ class ServiceManager extends Component {
 
     getFaultyNamedJars(){
         const url = Config.URL_FETCH_SERVICES + 'pack/faultyNamedJars';
+        const requestConfig = {
+            withCredentials: true,
+        };
+        return axios.get(url, requestConfig).then((response) => {
+            return response;
+        }).catch((error) => {
+            throw error
+        });
+    }
+
+    getLicenseMissingJars(){
+        const url = Config.URL_FETCH_SERVICES + 'pack/licenseMissingJars';
         const requestConfig = {
             withCredentials: true,
         };

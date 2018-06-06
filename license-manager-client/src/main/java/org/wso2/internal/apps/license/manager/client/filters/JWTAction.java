@@ -84,64 +84,73 @@ public class JWTAction implements Filter {
 
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
-
-        String jwt = request.getHeader("X-JWT-Assertion");
         String ssoRedirectUrl = propertyReader.getSsoRedirectUrl();
 
-        if (jwt == null || "".equals(jwt)) {
+        String jwtString = request.getHeader("X-JWT-Assertion");
+
+        if (jwtString == null || jwtString.equals("")) {
             if (log.isDebugEnabled()) {
                 log.debug("Redirecting to {}");
             }
             response.sendRedirect(ssoRedirectUrl);
-            return;
-        }
+        } else {
+            String username = null;
+            String roles = null;
 
-        String username = null;
-        String roles = null;
+            try {
 
-        try {
+                SignedJWT signedJWT = SignedJWT.parse(jwtString);
+                PublicKey publicKey = getPublicKey();
+                if (publicKey != null) {
+                    JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
 
-            SignedJWT signedJWT = SignedJWT.parse(jwt);
-            JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) getPublicKey());
+                    if (signedJWT.verify(verifier)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("JWT validation success for token: {}", jwtString);
+                        }
+                        username = signedJWT.getJWTClaimsSet().getClaim("http://wso2.org/claims/emailaddress")
+                                .toString();
+                        roles = signedJWT.getJWTClaimsSet().getClaim("http://wso2.org/claims/role").toString();
 
-            if (signedJWT.verify(verifier)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("JWT validation success for token: {}");
-                }
-                username = signedJWT.getJWTClaimsSet().getClaim("http://wso2.org/claims/emailaddress").toString();
-                roles = signedJWT.getJWTClaimsSet().getClaim("http://wso2.org/claims/role").toString();
+                        if (roles != null) {
+                            List<String> listOfRoles = Arrays.asList(roles.split(","));
+                            if (!listOfRoles.contains(propertyReader.getAllowedUserRole())) {
+                                log.error("User does not have a valid role permissions.");
+                                response.sendError(403);
+                                return;
+                            }
+                        }
 
-                if (roles != null) {
-                    List<String> listOfRoles = Arrays.asList(roles.split(","));
-                    if (!listOfRoles.contains(propertyReader.getAllowedUserRole())) {
-                        log.error("User does not have a valid role permissions.");
-                        response.sendError(401);
+                    } else {
+                        log.error("JWT validation failed for token: {" + jwtString + "}");
+                        response.sendRedirect(ssoRedirectUrl);
                         return;
+                    }
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Declining access to " + " since SSO Identity Provider public key does not exist");
                     }
                 }
 
-            } else {
-                log.error("JWT validation failed for token: {" + jwt + "}");
-                response.sendRedirect(ssoRedirectUrl);
-                return;
+            } catch (ParseException | JOSEException | CertificateException | NoSuchAlgorithmException |
+                    KeyStoreException e) {
+                log.error("Declining access to " + request.getRequestURL() + " since JWT token " + jwtString +
+                        " validation failed", e);
+                response.sendError(401);
+
             }
-        } catch (ParseException e) {
-            log.error("Parsing JWT token failed");
-        } catch (JOSEException e) {
-            log.error("Verification of jwt failed");
-        } catch (Exception e) {
-            log.error("Failed to validate the jwt {" + jwt + "}");
-        }
 
-        if (username != null && roles != null) {
-            request.getSession().setAttribute("user", username);
-            request.getSession().setAttribute("roles", roles);
-        }
-
-        try {
-            filterChain.doFilter(servletRequest, servletResponse);
-        } catch (ServletException e) {
-            log.error("Failed to pass the request, response objects through filters", e);
+            if (username != null && roles != null) {
+                request.getSession().setAttribute("user", username);
+                request.getSession().setAttribute("roles", roles);
+                try {
+                    filterChain.doFilter(servletRequest, servletResponse);
+                } catch (ServletException e) {
+                    log.error("Failed to pass the request, response objects through filters", e);
+                }
+            } else {
+                response.sendRedirect(ssoRedirectUrl);
+            }
         }
     }
 

@@ -19,6 +19,8 @@
 package org.wso2.internal.apps.license.manager.datahandler;
 
 import org.wso2.internal.apps.license.manager.connector.DatabaseConnectionPool;
+import org.wso2.internal.apps.license.manager.model.ComponentDto;
+import org.wso2.internal.apps.license.manager.model.LicenseDto;
 import org.wso2.internal.apps.license.manager.util.SqlRelatedConstants;
 
 import java.io.Closeable;
@@ -27,6 +29,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 /**
  * Handle the data transfer operations when retrieving all the components in a pack while generating the license text.
@@ -38,7 +41,7 @@ public class LicenseTextDataHandler implements Closeable {
     public LicenseTextDataHandler() throws SQLException {
 
         DatabaseConnectionPool databaseConnectionPool = DatabaseConnectionPool.getDbConnectionPool();
-        connection = databaseConnectionPool.getDataSource().getConnection();
+        connection = databaseConnectionPool.getConnection();
     }
 
     @Override
@@ -51,7 +54,7 @@ public class LicenseTextDataHandler implements Closeable {
         }
     }
 
-    public ResultSet getLicenseForAllJars(String productName, String version) throws SQLException {
+    public ArrayList getLicenseForAllJars(String productName, String version) throws SQLException {
 
         String query = "SELECT * FROM " +
                 "(SELECT " +
@@ -104,23 +107,36 @@ public class LicenseTextDataHandler implements Closeable {
                 "INNER JOIN LM_LIBRARY AS LM_LIBRARY2 ON LM_COMPONENT_LIBRARY.LIB_ID=LM_LIBRARY2.LIB_ID) " +
                 "INNER JOIN LM_LIBRARY_LICENSE ON LM_LIBRARY_LICENSE.LIB_ID=LM_COMPONENT_LIBRARY.LIB_ID))AS BS " +
                 "WHERE PRODUCT_NAME=? AND PRODUCT_VERSION=? ORDER BY COMP_KEY";
+        ArrayList<ComponentDto> componentsWithJars = new ArrayList<>();
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, productName);
             preparedStatement.setString(2, version);
             ResultSet resultSet = preparedStatement.executeQuery();
-            return resultSet;
+            while (resultSet.next()) {
+                ComponentDto component = new ComponentDto();
+                component.setName(resultSet.getString(SqlRelatedConstants.COMPONENT_KEY));
+                component.setType(resultSet.getString(SqlRelatedConstants.COMPONENT_TYPE));
+                component.setLicense(resultSet.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE));
+                componentsWithJars.add(component);
+            }
+            return componentsWithJars;
 
         }
     }
 
-    public ResultSet getLicenseDescriptions(String key) throws SQLException {
+    public LicenseDto getLicenseDescriptions(String key) throws SQLException {
 
+        LicenseDto license = new LicenseDto();
         String query = SqlRelatedConstants.SELECT_LICENSE_FOR_KEY;
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, key);
             ResultSet resultSet = preparedStatement.executeQuery();
-            return resultSet;
-
+            while (resultSet.next()) {
+                license.setShortName(resultSet.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE));
+                license.setFullName(resultSet.getString(SqlRelatedConstants.LICENSE_NAME));
+                license.setUrl(resultSet.getString(SqlRelatedConstants.LICENSE_URL));
+            }
+            return license;
         }
     }
 }

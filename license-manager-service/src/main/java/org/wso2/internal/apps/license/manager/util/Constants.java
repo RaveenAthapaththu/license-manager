@@ -68,6 +68,11 @@ public class Constants {
     public static final String EMAIL_PASSWORD = "LICENSE_MANAGER_EMAIL_PASSWORD";
     public static final String LICENSE_MANAGER_ADMINS = "LICENSE_MANAGER_ADMINS";
 
+    //
+    public static final int PACK_EXTRACTION_STEP_ID = 1;
+    public static final int UPDATE_DB_STEP_ID = 2;
+    public static final int INSERT_LICENSE_STEP_ID = 3;
+
     public Constants() {
         // Do nothing.
     }

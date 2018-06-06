@@ -20,7 +20,7 @@ package org.wso2.internal.apps.license.manager.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.internal.apps.license.manager.connector.FtpConnector;
+import org.wso2.internal.apps.license.manager.connector.FtpConnectionManager;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerConfigurationException;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerRuntimeException;
 import org.wso2.internal.apps.license.manager.model.JarFilesHolder;
@@ -31,6 +31,7 @@ import org.wso2.internal.apps.license.manager.util.ProgressTracker;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.io.File;
+import java.util.Set;
 
 /**
  * Implementation of the API service to get the list of jars with faulty names from which the name and version can
@@ -49,20 +50,23 @@ public class GetFaultyNamedJarsApiServiceImpl {
      */
     public TaskProgress startPackExtractionProcess(String username, final String packName) {
 
-        final TaskProgress taskProgress = ProgressTracker.createNewTaskProgress(username);
+        // Stop if there are threads running for the same user.
+        endAnyExistingTasks(username);
+        TaskProgress taskProgress = ProgressTracker.createNewTaskProgress(username);
+        taskProgress.setStepNumber(Constants.PACK_EXTRACTION_STEP_ID);
         taskProgress.setMessage("Pack extraction process started");
 
         // Starting a new thread to extract the pack
         new Thread(() -> {
-
+            taskProgress.setExecutingThreadId(Thread.currentThread().getId());
             String pathToStorage = SystemVariableUtil.getValue(Constants.FILE_DOWNLOAD_PATH, null);
 
             try {
                 taskProgress.setMessage("Downloading the pack");
 
                 // Initiate SFTP connection and download file
-                FtpConnector ftpConnector = FtpConnector.getFtpConnector();
-                ftpConnector.downloadFileFromFtpServer(packName);
+                FtpConnectionManager ftpConnectionManager = FtpConnectionManager.getFtpConnectionManager();
+                ftpConnectionManager.downloadFileFromFtpServer(packName);
 
                 // Unzip the downloaded file.
                 String zipFilePath = pathToStorage + packName;
@@ -100,5 +104,24 @@ public class GetFaultyNamedJarsApiServiceImpl {
             }
         }).start();
         return taskProgress;
+    }
+
+    private void endAnyExistingTasks(String username) {
+        // Create a new object to track the progress.
+        TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
+
+        if (taskProgress != null) {
+            long previousThreadId = taskProgress.getExecutingThreadId();
+            //Take the set of running threads
+            Set<Thread> setOfThread = Thread.getAllStackTraces().keySet();
+
+            //Iterate over set to the relevant thread
+            for (Thread thread : setOfThread) {
+                if (thread.getId() == previousThreadId) {
+                    thread.interrupt();
+                }
+            }
+            ProgressTracker.deleteTaskProgress(username);
+        }
     }
 }

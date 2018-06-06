@@ -27,7 +27,9 @@ import org.wso2.internal.apps.license.manager.exception.LicenseManagerDataExcept
 import org.wso2.internal.apps.license.manager.model.JarFile;
 import org.wso2.internal.apps.license.manager.model.JarFilesHolder;
 import org.wso2.internal.apps.license.manager.model.LicenseMissingJar;
+import org.wso2.internal.apps.license.manager.model.TaskProgress;
 import org.wso2.internal.apps.license.manager.util.Constants;
+import org.wso2.internal.apps.license.manager.util.ProgressTracker;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -41,13 +43,32 @@ public class UpdateJarInfoApiServiceImpl {
 
     private static final Logger log = LoggerFactory.getLogger(UpdateJarInfoApiServiceImpl.class);
 
-    public int updateJarInfo(JarFilesHolder jarFilesHolder, JsonArray jarsWithDefinedNames) throws
+    public TaskProgress startUpdatingDatabase(String username, JsonArray jarsWithDefinedNames) {
+
+        TaskProgress taskProgress = ProgressTracker.getTaskProgress(username);
+        taskProgress.setStatus(Constants.RUNNING);
+        taskProgress.setStepNumber(Constants.UPDATE_DB_STEP_ID);
+        taskProgress.setMessage("Start updating the database");
+        new Thread(() -> {
+            try {
+                taskProgress.setExecutingThreadId(Thread.currentThread().getId());
+                updateJarInfo(jarsWithDefinedNames, taskProgress);
+                taskProgress.setStatus(Constants.COMPLETE);
+            } catch (LicenseManagerDataException e) {
+                taskProgress.setStatus(Constants.FAILED);
+                taskProgress.setMessage("Failed to add jar information into the database.");
+            }
+        }).start();
+        return taskProgress;
+
+    }
+
+    private void updateJarInfo(JsonArray jarsWithDefinedNames, TaskProgress taskProgress) throws
             LicenseManagerDataException {
 
-        updateFaultyNamedListOfJars(jarFilesHolder, jarsWithDefinedNames);
-        int productId;
-        productId = enterJarsIntoDB(jarFilesHolder);
-        return productId;
+        updateFaultyNamedListOfJars(taskProgress.getData(), jarsWithDefinedNames);
+        enterJarsIntoDB(taskProgress);
+
     }
 
     /**
@@ -76,11 +97,11 @@ public class UpdateJarInfoApiServiceImpl {
     /**
      * Recursively insert the information of all jars extracted from the pack into the database.
      *
-     * @return id of the product in the database
      * @throws LicenseManagerDataException if the data insertion fails
      */
-    private int enterJarsIntoDB(JarFilesHolder jarFilesHolder) throws LicenseManagerDataException {
+    private void enterJarsIntoDB(TaskProgress taskProgress) throws LicenseManagerDataException {
 
+        JarFilesHolder jarFilesHolder = taskProgress.getData();
         List<LicenseMissingJar> licenseMissingLibraries = new ArrayList<>();
         List<LicenseMissingJar> licenseMissingComponents = new ArrayList<>();
         int productId = 0;
@@ -88,6 +109,9 @@ public class UpdateJarInfoApiServiceImpl {
             productId = licenseExistingJarFileDAL.getProductId(jarFilesHolder.getProductName(),
                     jarFilesHolder.getProductVersion());
 
+            double progress;
+            double count = 0;
+            int totalNumberOfJars = jarFilesHolder.getJarFilesInPack().size();
             for (JarFile jarFile : jarFilesHolder.getJarFilesInPack()) {
                 String version = jarFile.getVersion();
                 String name = jarFile.getProjectName();
@@ -107,10 +131,7 @@ public class UpdateJarInfoApiServiceImpl {
                         licenseExistingJarFileDAL.insertProductComponent(fileName, productId);
                     }
                 } else {  // If jarFile is a third party library.
-                    String libraryType = (jarFile.getParent() == null) ?
-                            ((jarFile.isBundle()) ? Constants.JAR_TYPE_BUNDLE : Constants.JAR_TYPE_JAR) :
-                            Constants.JAR_TYPE_JAR_IN_BUNDLE;
-                    int libraryId = licenseExistingJarFileDAL.selectLibraryId(name, version, libraryType);
+                       int libraryId = licenseExistingJarFileDAL.selectLibraryId(name, version, type);
                     if (libraryId != -1) {
                         boolean isLicenseExists = licenseExistingJarFileDAL.isLibraryLicenseExists(libraryId);
                         // If a jarFile has a parent and if the parent is "wso2", add parent and library to the
@@ -139,17 +160,22 @@ public class UpdateJarInfoApiServiceImpl {
                         licenseMissingLibraries.add(new LicenseMissingJar(jarFile, licenseForAnyVersion));
                     }
                 }
+                count += 1;
+                progress = count / totalNumberOfJars * 100;
+                taskProgress.setMessage("Updating the database \n Progress : " + Math.round(progress) + "% ");
             }
+
         } catch (SQLException e) {
             throw new LicenseManagerDataException("Failed to add data to the database.", e);
         } catch (IOException e) {
             log.error("Failed to close the database connection while retrieving license details. " +
                     e.getMessage(), e);
-
         }
+
+        jarFilesHolder.setProductId(productId);
         jarFilesHolder.setLicenseMissingComponents(licenseMissingComponents);
         jarFilesHolder.setLicenseMissingLibraries(licenseMissingLibraries);
-        return productId;
+
     }
 
 }

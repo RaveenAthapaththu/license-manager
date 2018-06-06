@@ -23,6 +23,8 @@ package org.wso2.internal.apps.license.manager.model;
 public class TaskProgress {
 
     private String username;
+    private int stepNumber;
+    private long executingThreadId;
     private String taskId;
     private String status;
     private String message;
@@ -83,5 +85,25 @@ public class TaskProgress {
     public void setData(JarFilesHolder data) {
 
         this.data = data;
+    }
+
+    public int getStepNumber() {
+
+        return stepNumber;
+    }
+
+    public void setStepNumber(int stepNumber) {
+
+        this.stepNumber = stepNumber;
+    }
+
+    public long getExecutingThreadId() {
+
+        return executingThreadId;
+    }
+
+    public void setExecutingThreadId(long executingThreadId) {
+
+        this.executingThreadId = executingThreadId;
     }
 }

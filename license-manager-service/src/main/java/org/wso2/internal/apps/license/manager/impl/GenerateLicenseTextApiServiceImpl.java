@@ -22,13 +22,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.datahandler.LicenseTextDataHandler;
 import org.wso2.internal.apps.license.manager.exception.LicenseManagerDataException;
-import org.wso2.internal.apps.license.manager.util.SqlRelatedConstants;
+import org.wso2.internal.apps.license.manager.model.ComponentDto;
+import org.wso2.internal.apps.license.manager.model.LicenseDto;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -55,11 +56,10 @@ public class GenerateLicenseTextApiServiceImpl {
     public void generateLicenseFile(String product, String version, String packPath)
             throws LicenseManagerDataException, IOException {
 
-        ResultSet licensesOfJars = null;
-        ResultSet licenseDetail = null;
+        ArrayList<ComponentDto> jarsWithLicense;
         try (LicenseTextDataHandler licenseTextDataHandler = new LicenseTextDataHandler()) {
 
-            licensesOfJars = licenseTextDataHandler.getLicenseForAllJars(product, version);
+            jarsWithLicense = licenseTextDataHandler.getLicenseForAllJars(product, version);
             Set<String> keys = new HashSet<String>();
 
             String formatString = String.format("%-80s%-15s%-10s\n", "Name", "Type", "License");
@@ -67,23 +67,23 @@ public class GenerateLicenseTextApiServiceImpl {
             file +=
                     "----------------------------------------------------------------------------------" +
                             "-----------------------\n";
-            while (licensesOfJars.next()) {
+            for (ComponentDto componentDto : jarsWithLicense) {
                 formatString = String.format("%-80s%-15s%-10s\n",
-                        licensesOfJars.getString(SqlRelatedConstants.COMPONENT_KEY),
-                        licensesOfJars.getString(SqlRelatedConstants.COMPONENT_TYPE),
-                        licensesOfJars.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE));
+                        componentDto.getName(),
+                        componentDto.getType(),
+                        componentDto.getLicense());
                 file += formatString;
-                keys.add(licensesOfJars.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE));
+                keys.add(componentDto.getLicense());
             }
             file += "\n\n\nThe license types used by the above libraries and their information is given below:\n\n";
             for (String key : keys) {
-                licenseDetail = licenseTextDataHandler.getLicenseDescriptions(key);
-                while (licenseDetail.next()) {
+                LicenseDto licenseDetail = licenseTextDataHandler.getLicenseDescriptions(key);
+                if (licenseDetail != null) {
                     formatString = String.format("%-15s%s\n%-15s%s\n",
-                            licenseDetail.getString(SqlRelatedConstants.PRIMARY_KEY_LICENSE),
-                            licenseDetail.getString(SqlRelatedConstants.LICENSE_NAME),
+                            licenseDetail.getShortName(),
+                            licenseDetail.getFullName(),
                             "",
-                            licenseDetail.getString(SqlRelatedConstants.LICENSE_URL));
+                            licenseDetail.getUrl());
                 }
 
                 file += formatString;
@@ -93,17 +93,6 @@ public class GenerateLicenseTextApiServiceImpl {
             fw.close();
         } catch (SQLException e) {
             throw new LicenseManagerDataException("Failed to retrieve licenses from database.", e);
-        } finally {
-            try {
-                if (licenseDetail != null) {
-                    licenseDetail.close();
-                }
-                if (licensesOfJars != null) {
-                    licensesOfJars.close();
-                }
-            } catch (SQLException e) {
-                log.error("Failed to close the data sets while retrieving data for license generation.");
-            }
         }
     }
 

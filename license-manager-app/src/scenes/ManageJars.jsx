@@ -73,7 +73,6 @@ class ManageJars extends Component {
                 this.setState(() => {
                     return {
                         statusMessage: response.data.responseMessage,
-                        displayStatus: 'block',
                     };
                 });
                 let intervalID = setInterval(function () {
@@ -88,7 +87,6 @@ class ManageJars extends Component {
                                             return {
                                                 nameMissingJars: responseForFaultyJars.data.responseData,
                                                 displayProgress: 'none',
-                                                displayStatus: 'none',
                                                 displayForm: 'block',
                                             };
                                         });
@@ -97,21 +95,23 @@ class ManageJars extends Component {
                                     this.handleError(responseForFaultyJars.data.responseMessage)
                                 }
                             }).catch(() => {
-                                this.handleError("Network Error")
+                                this.handleError("Network Error");
+                                clearTimeout(intervalID);
                             });
                             clearTimeout(intervalID);
                         } else if (responseNext.data.responseStatus === 'running' && responseNext.data.responseType === 'done') {
                             this.setState(() => {
                                 return {
                                     statusMessage: responseNext.data.responseMessage,
-                                    displayStatus: 'block',
                                 };
                             });
                         } else {
-                            this.handleError(responseNext.data.responseMessage)
+                            this.handleError(responseNext.data.responseMessage);
+                            clearTimeout(intervalID);
                         }
                     }).catch(() => {
-                        this.handleError("Network Error")
+                        this.handleError("Network Error");
+                        clearTimeout(intervalID);
                     });
                 }.bind(this), 5000);
             } else {

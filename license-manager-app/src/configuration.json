@@ -1,4 +1,5 @@
 {
     "URL_VALIDATE_USER" : "https://identity-gateway.cloud.wso2.com/t/wso2internalstg/licenseManager/appservices/",
-    "URL_FETCH_SERVICES" :"https://identity-gateway.cloud.wso2.com/t/wso2internalstg/licenseManager/manageLicense/"
+    "URL_FETCH_SERVICES" :"https://identity-gateway.cloud.wso2.com/t/wso2internalstg/licenseManager/manageLicense/",
+    "URL_SSO_REDIRECT" : "https://identity-gateway.cloud.wso2.com/t/wso2internalstg/licenseManager"
 }
