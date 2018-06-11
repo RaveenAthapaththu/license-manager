@@ -58,8 +58,6 @@ public class JsonUtils {
         return componentJsonArray;
     }
 
-
-
     /**
      * Create a json array from the list of faulty named jars.
      * { index : xxx, jarFileName : xxx, name : xxx, version : xxx }

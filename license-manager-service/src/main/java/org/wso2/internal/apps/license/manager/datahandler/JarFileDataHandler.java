@@ -126,32 +126,6 @@ public class JarFileDataHandler implements Closeable {
     }
 
     /**
-     * Get the id of a product-library relationship from the LM_LIBRARY_PRODUCT table.
-     *
-     * @param libId     primary key for the library
-     * @param productId primary key for the product
-     * @return id of the entry if exists, -1 if not
-     * @throws SQLException if the sql execution fails
-     */
-    private int selectProductLibrary(int libId, int productId) throws SQLException {
-
-        int id = -1;
-
-        String selectProductLibrary = SqlRelatedConstants.SELECT_FROM_PRODUCT_LIBRARY;
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectProductLibrary)) {
-            preparedStatement.setInt(1, libId);
-            preparedStatement.setInt(2, productId);
-
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    id = resultSet.getInt(SqlRelatedConstants.PRIMARY_KEY_LIBRARY);
-                }
-                return id;
-            }
-        }
-    }
-
-    /**
      * Insert a Component - Library relationship into LM_COMPONENT_LIBRARY table unless already exists.
      *
      * @param compKey   primary key for the component
@@ -172,30 +146,6 @@ public class JarFileDataHandler implements Closeable {
             }
         }
 
-    }
-
-    /**
-     * Get the id of a component-library relationship from LM_COMPONENT_LIBRARY table.
-     *
-     * @param compKey   primary key for the component
-     * @param libraryId primary key for the library
-     * @return id of the entry if exists, -1 if not
-     * @throws SQLException if the sql execution fails
-     */
-    private int selectComponentLibrary(String compKey, int libraryId) throws SQLException {
-
-        int id = -1;
-        String query = SqlRelatedConstants.SELECT_FROM_COMPONENT_LIBRARY;
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setInt(1, libraryId);
-            preparedStatement.setString(2, compKey);
-            try (ResultSet rs = preparedStatement.executeQuery()) {
-                while (rs.next()) {
-                    id = rs.getInt(SqlRelatedConstants.PRIMARY_KEY_LIBRARY);
-                }
-                return id;
-            }
-        }
     }
 
     /**

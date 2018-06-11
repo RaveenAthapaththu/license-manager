@@ -46,10 +46,6 @@ public class SqlRelatedConstants {
     public static final String SELECT_COMPONENT = "SELECT COMP_KEY FROM LM_COMPONENT_LICENSE WHERE COMP_KEY=?";
     public static final String SELECT_FROM_PRODUCT_COMPONENT = "SELECT PRODUCT_ID FROM LM_COMPONENT_PRODUCT WHERE " +
             "COMP_KEY=? AND PRODUCT_ID=?";
-    public static final String SELECT_FROM_PRODUCT_LIBRARY = "SELECT LIB_ID FROM LM_LIBRARY_PRODUCT WHERE LIB_ID=? " +
-            "AND PRODUCT_ID=?";
-    public static final String SELECT_FROM_COMPONENT_LIBRARY = "SELECT LIB_ID FROM LM_COMPONENT_LIBRARY WHERE " +
-            "LIB_ID=? AND COMP_KEY=?";
     public static final String SELECT_LICENSE_FOR_COMP = "SELECT COMP_KEY FROM LM_COMPONENT_LICENSE WHERE COMP_KEY=?";
 
     public static final String SELECT_LICENSE_FOR_LIB = "SELECT LIB_ID FROM LM_LIBRARY_LICENSE WHERE LIB_ID=?";
@@ -60,7 +56,6 @@ public class SqlRelatedConstants {
     public static final String SELECT_LICENSE_FOR_KEY = "SELECT * FROM LM_LICENSE WHERE LICENSE_KEY=?";
 
     public static final String PRIMARY_KEY_LIBRARY = "LIB_ID";
-    public static final String PRIMARY_KEY_COMPONENT = "COMP_ID";
     public static final String PRIMARY_KEY_PRODUCT = "PRODUCT_ID";
     public static final String PRIMARY_KEY_LICENSE = "LICENSE_KEY";
     public static final String LICENSE_ID = "LICENSE_ID";

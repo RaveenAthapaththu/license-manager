@@ -199,31 +199,4 @@ public class LicenseExistingJarFileDataHandler extends JarFileDataHandler {
             }
         }
     }
-
-    public String callSpToAddLibraryIfLicenseExists() {
-
-        String licenseForAnyVersion = null;
-        try {
-            PreparedStatement pstmt = connection.prepareStatement("{call insertLibraryIfLicenseExists(?,?,?,?,?,?)}");
-            pstmt.setString(1, "mysql-connector-java");
-            pstmt.setString(2, "5.1.45-bin");
-            pstmt.setString(3, "bundle");
-            pstmt.setString(4, null);
-            pstmt.setString(5, null);
-            pstmt.setInt(6, 2);
-            pstmt.execute();
-            ResultSet rs = pstmt.getResultSet();
-            while (rs.next()) {
-                if (rs.getInt("isExist") == 0) {
-                    licenseForAnyVersion = rs.getString("license_key_for_any");
-                }
-            }
-            rs.close();
-            pstmt.close();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-        return licenseForAnyVersion;
-    }
-
 }
