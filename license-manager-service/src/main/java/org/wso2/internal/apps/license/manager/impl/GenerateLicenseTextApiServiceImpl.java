@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
- * Version 2.0 (the "License"); you may not use this file except
+ * WSO2 Inc. licenses this licenseText to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this licenseText except
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -40,7 +40,7 @@ public class GenerateLicenseTextApiServiceImpl {
 
     private static final Logger log = LoggerFactory.getLogger(GenerateLicenseTextApiServiceImpl.class);
 
-    private String file = "\n" +
+    private String licenseHeader= "\n" +
             "This product is licensed by WSO2 Inc. under Apache License 2.0. The license\n" +
             "can be downloaded from the following locations:\n" +
             "\thttp://www.apache.org/licenses/LICENSE-2.0.html\n" +
@@ -50,7 +50,7 @@ public class GenerateLicenseTextApiServiceImpl {
             "all the contained libraries (jar files) and the license under which they are \n" +
             "provided to you.\n\n" +
 
-            "At the bottom of this file is a table that shows what each license indicated\n" +
+            "At the bottom of this licenseText is a table that shows what each license indicated\n" +
             "below is and where the actual text of the license can be found.\n\n";
 
     public void generateLicenseFile(String product, String version, String packPath)
@@ -58,13 +58,14 @@ public class GenerateLicenseTextApiServiceImpl {
 
         ArrayList<ComponentDto> jarsWithLicense;
         try (LicenseTextDataHandler licenseTextDataHandler = new LicenseTextDataHandler()) {
+            String licenseText = licenseHeader;
 
             jarsWithLicense = licenseTextDataHandler.getLicenseForAllJars(product, version);
             Set<String> keys = new HashSet<String>();
 
             String formatString = String.format("%-80s%-15s%-10s\n", "Name", "Type", "License");
-            file += formatString;
-            file +=
+            licenseText += formatString;
+            licenseText +=
                     "----------------------------------------------------------------------------------" +
                             "-----------------------\n";
             for (ComponentDto componentDto : jarsWithLicense) {
@@ -72,10 +73,10 @@ public class GenerateLicenseTextApiServiceImpl {
                         componentDto.getName(),
                         componentDto.getType(),
                         componentDto.getLicense());
-                file += formatString;
+                licenseText += formatString;
                 keys.add(componentDto.getLicense());
             }
-            file += "\n\n\nThe license types used by the above libraries and their information is given below:\n\n";
+            licenseText += "\n\n\nThe license types used by the above libraries and their information is given below:\n\n";
             for (String key : keys) {
                 LicenseDto licenseDetail = licenseTextDataHandler.getLicenseDescriptions(key);
                 if (licenseDetail != null) {
@@ -86,10 +87,10 @@ public class GenerateLicenseTextApiServiceImpl {
                             licenseDetail.getUrl());
                 }
 
-                file += formatString;
+                licenseText += formatString;
             }
             FileWriter fw = new FileWriter(packPath + File.separator + "LICENSE(" + product + "-" + version + ").TXT");
-            fw.write(file);
+            fw.write(licenseText);
             fw.close();
         } catch (SQLException e) {
             throw new LicenseManagerDataException("Failed to retrieve licenses from database.", e);
