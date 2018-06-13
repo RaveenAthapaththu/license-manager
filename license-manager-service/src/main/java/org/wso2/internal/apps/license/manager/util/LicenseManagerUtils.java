@@ -150,10 +150,10 @@ public class LicenseManagerUtils {
      *
      * @param fileName product name for which the licenses were generated
      */
-    public static void cleanFileStorage(String fileName) {
+    public static void cleanFileStorage(String fileName, String localFilePath) {
 
-        LicenseManagerUtils.deleteFolder(fileName + ".zip");
-        LicenseManagerUtils.deleteFolder(fileName);
+        LicenseManagerUtils.deleteFolder(localFilePath + fileName + ".zip");
+        LicenseManagerUtils.deleteFolder(localFilePath + fileName);
         try {
             FtpConnectionManager ftpConnectionManager = FtpConnectionManager.getFtpConnectionManager();
             ftpConnectionManager.deleteFileFromFtpServer(fileName);

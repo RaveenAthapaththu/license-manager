@@ -180,7 +180,7 @@ public class LicenseManagerServiceEndpoint {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.SUCCESS);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, statusMessage);
             responseJson.add(Constants.RESPONSE_DATA, faultyNamedJars);
-        } else  {
+        } else {
             responseJson.addProperty(Constants.RESPONSE_TYPE, Constants.ERROR);
             responseJson.addProperty(Constants.RESPONSE_MESSAGE, "Failed to get data");
         }
@@ -388,7 +388,7 @@ public class LicenseManagerServiceEndpoint {
         File file = Paths.get(mountPath, fileName).toFile();
         if (file.exists()) {
             // Clean the storage.
-            LicenseManagerUtils.cleanFileStorage(productName + "-" + productVersion);
+            LicenseManagerUtils.cleanFileStorage(productName + "-" + productVersion, mountPath);
             ProgressTracker.deleteTaskProgress(username);
 
             return Response.ok(file)
