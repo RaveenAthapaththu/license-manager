@@ -18,24 +18,19 @@
 
 package org.wso2.internal.apps.license.manager.connector;
 
-import org.apache.commons.dbcp.ConnectionFactory;
-import org.apache.commons.dbcp.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp.PoolableConnectionFactory;
-import org.apache.commons.dbcp.PoolingDataSource;
-import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.wso2.internal.apps.license.manager.util.Constants;
 import org.wso2.msf4j.util.SystemVariableUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import javax.sql.DataSource;
 
 /**
  * A singleton class to create a database connection pool of 5 connections.
  */
 public class DatabaseConnectionPool {
 
-    private static DataSource dataSource = null;
+    private static BasicDataSource dataSource = null;
     private static DatabaseConnectionPool databaseConnectionPool = null;
 
     private DatabaseConnectionPool() {
@@ -45,13 +40,21 @@ public class DatabaseConnectionPool {
         String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
         int maximumNumberOfConnections = Integer.valueOf(SystemVariableUtil.getValue(Constants
                 .DATABASE_CONNECTIONS_MAX_NUMBER, "3"));
-        GenericObjectPool connectionPool = new GenericObjectPool();
-        connectionPool.setMaxActive(maximumNumberOfConnections);
-        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(databaseUrl, databaseUsername,
-                databasePassword);
-        PoolableConnectionFactory pcf = new PoolableConnectionFactory(connectionFactory, connectionPool, null, null,
-                false, true);
-        dataSource = new PoolingDataSource(connectionPool);
+
+        dataSource = new BasicDataSource();
+        dataSource.setUrl(databaseUrl);
+        dataSource.setUsername(databaseUsername);
+        dataSource.setPassword(databasePassword);
+        dataSource.setInitialSize(maximumNumberOfConnections);
+//        GenericObjectPool connectionPool = new GenericObjectPool();
+//        connectionPool.setMaxActive(maximumNumberOfConnections);
+//        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(databaseUrl, databaseUsername,
+//                databasePassword);
+//        PoolableConnectionFactory pcf = new PoolableConnectionFactory(connectionFactory, connectionPool, null, null,
+//                false, true);
+//        dataSource = new PoolingDataSource(connectionPool);
+        System.out.println("============= " + dataSource.getValidationQuery() + ", " + dataSource
+                .getValidationQueryTimeout());
 
     }
 
@@ -65,12 +68,21 @@ public class DatabaseConnectionPool {
     }
 
     public synchronized Connection getConnection() throws SQLException {
+//
+            return dataSource.getConnection();
 
-        Connection connection = dataSource.getConnection();
-        while (connection.isClosed()) {
-            connection = dataSource.getConnection();
-        }
-        return connection;
+//        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
+//        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
+//        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
+//        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
+//        Connection connection;
+//        try {
+//            Class.forName(databaseDriver);
+//            connection = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
+//        } catch (ClassNotFoundException e) {
+//            throw new SQLException("cannot create connection", e);
+//        }
+//        return connection;
     }
 
 }
