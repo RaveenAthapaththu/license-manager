@@ -79,31 +79,6 @@ public class JarFileDataHandler implements Closeable {
     }
 
     /**
-     * Get the id of a product-component relationship from the LM_COMPONENT_TABLE.
-     *
-     * @param compKey   primary key for the component
-     * @param productId primary key for the product
-     * @return id of the entry if exists, -1 if not
-     * @throws SQLException if the sql execution fails
-     */
-    public int selectProductComponent(String compKey, int productId) throws SQLException {
-
-        int id = -1;
-        String selectProductComponent = SqlRelatedConstants.SELECT_FROM_PRODUCT_COMPONENT;
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectProductComponent)) {
-            preparedStatement.setString(1, compKey);
-            preparedStatement.setInt(2, productId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    id = resultSet.getInt(SqlRelatedConstants.PRIMARY_KEY_PRODUCT);
-                }
-            }
-        }
-
-        return id;
-    }
-
-    /**
      * Insert a Product - Library relationship into LM_LIBRARY_PRODUCT table unless already exists.
      *
      * @param libId     primary key for the library
