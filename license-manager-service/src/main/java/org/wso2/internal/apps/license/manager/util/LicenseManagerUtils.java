@@ -157,6 +157,7 @@ public class LicenseManagerUtils {
         try {
             FtpConnectionManager ftpConnectionManager = FtpConnectionManager.getFtpConnectionManager();
             ftpConnectionManager.deleteFileFromFtpServer(fileName);
+            ftpConnectionManager.closeSftpChannel();
         } catch (LicenseManagerConfigurationException e) {
             log.error("Failed to remove the zip file from the FTP server. " + e.getMessage(), e);
         }
