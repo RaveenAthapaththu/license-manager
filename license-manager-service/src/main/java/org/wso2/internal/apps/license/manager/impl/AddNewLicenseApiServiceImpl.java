@@ -61,9 +61,11 @@ public class AddNewLicenseApiServiceImpl {
             } catch (LicenseManagerDataException e) {
                 taskProgress.setStatus(Constants.FAILED);
                 taskProgress.setMessage("Failed to add jar information into the database.");
+                log.error("Failed to add jar information into the database.", e);
             } catch (MessagingException e) {
                 taskProgress.setStatus(Constants.COMPLETE);
                 taskProgress.setMessage("Failed to send the email to admin.");
+                log.error("Failed to send the email to admin.", e);
             }
         }).start();
         return taskProgress;

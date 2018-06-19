@@ -57,6 +57,7 @@ public class UpdateJarInfoApiServiceImpl {
             } catch (LicenseManagerDataException e) {
                 taskProgress.setStatus(Constants.FAILED);
                 taskProgress.setMessage("Failed to add jar information into the database.");
+                log.error("Failed to add jar information into the database.", e);
             }
         }).start();
         return taskProgress;
