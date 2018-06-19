@@ -49,6 +49,7 @@ public class EmailUtils {
     public static void sendEmail(String addedBy, List<NewLicenseEntry> components, List<NewLicenseEntry> libraries,
                                  boolean isComplete) throws MessagingException {
 
+        // Configured for tygra server. If you want to send by gmail this should be changed
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "false");

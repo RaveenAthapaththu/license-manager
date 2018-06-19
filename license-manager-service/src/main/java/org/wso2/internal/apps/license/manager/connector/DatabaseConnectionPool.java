@@ -53,9 +53,6 @@ public class DatabaseConnectionPool {
 //        PoolableConnectionFactory pcf = new PoolableConnectionFactory(connectionFactory, connectionPool, null, null,
 //                false, true);
 //        dataSource = new PoolingDataSource(connectionPool);
-        System.out.println("============= " + dataSource.getValidationQuery() + ", " + dataSource
-                .getValidationQueryTimeout());
-
     }
 
     public static synchronized DatabaseConnectionPool getDbConnectionPool() {
@@ -68,21 +65,9 @@ public class DatabaseConnectionPool {
     }
 
     public synchronized Connection getConnection() throws SQLException {
-//
-            return dataSource.getConnection();
 
-//        String databaseUrl = SystemVariableUtil.getValue(Constants.DATABASE_URL, null);
-//        String databaseDriver = SystemVariableUtil.getValue(Constants.DATABASE_DRIVER, null);
-//        String databaseUsername = SystemVariableUtil.getValue(Constants.DATABASE_USERNAME, null);
-//        String databasePassword = SystemVariableUtil.getValue(Constants.DATABASE_PASSWORD, null);
-//        Connection connection;
-//        try {
-//            Class.forName(databaseDriver);
-//            connection = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
-//        } catch (ClassNotFoundException e) {
-//            throw new SQLException("cannot create connection", e);
-//        }
-//        return connection;
+        return dataSource.getConnection();
+
     }
 
 }
