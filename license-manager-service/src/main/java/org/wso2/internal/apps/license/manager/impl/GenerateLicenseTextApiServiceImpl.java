@@ -40,7 +40,7 @@ public class GenerateLicenseTextApiServiceImpl {
 
     private static final Logger log = LoggerFactory.getLogger(GenerateLicenseTextApiServiceImpl.class);
 
-    private String licenseHeader= "\n" +
+    private String licenseHeader = "\n" +
             "This product is licensed by WSO2 Inc. under Apache License 2.0. The license\n" +
             "can be downloaded from the following locations:\n" +
             "\thttp://www.apache.org/licenses/LICENSE-2.0.html\n" +
@@ -76,7 +76,8 @@ public class GenerateLicenseTextApiServiceImpl {
                 licenseText += formatString;
                 keys.add(componentDto.getLicense());
             }
-            licenseText += "\n\n\nThe license types used by the above libraries and their information is given below:\n\n";
+            licenseText += "\n\n\nThe license types used by the above libraries and their information is given " +
+                    "below:\n\n";
             for (String key : keys) {
                 LicenseDto licenseDetail = licenseTextDataHandler.getLicenseDescriptions(key);
                 if (licenseDetail != null) {
