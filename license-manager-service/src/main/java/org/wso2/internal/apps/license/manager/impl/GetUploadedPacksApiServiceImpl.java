@@ -42,6 +42,7 @@ public class GetUploadedPacksApiServiceImpl {
         JsonArray listOfPacksAsJson;
         FtpConnectionManager ftpConnectionManager = FtpConnectionManager.getFtpConnectionManager();
         listOfPacks = ftpConnectionManager.listFilesInFtpServer();
+        ftpConnectionManager.closeSftpChannel();
         listOfPacksAsJson = JsonUtils.getListOfPacksUploadedAsJson(listOfPacks);
         return listOfPacksAsJson;
     }

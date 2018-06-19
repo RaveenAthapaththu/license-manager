@@ -67,6 +67,7 @@ public class GetFaultyNamedJarsApiServiceImpl {
                 // Initiate SFTP connection and download file
                 FtpConnectionManager ftpConnectionManager = FtpConnectionManager.getFtpConnectionManager();
                 ftpConnectionManager.downloadFileFromFtpServer(packName);
+                ftpConnectionManager.closeSftpChannel();
 
                 // Unzip the downloaded file.
                 String zipFilePath = pathToStorage + packName;
