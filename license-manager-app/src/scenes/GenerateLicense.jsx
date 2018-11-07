@@ -65,13 +65,13 @@ class GenerateLicense extends Component {
         e.stopPropagation();
         e.nativeEvent.stopImmediatePropagation();
 
-        ServiceManager.getLicense().then((response) => {
+        ServiceManager.getLicense(this.state.packName).then((response) => {
             if (response.data.responseType === "done") {
-                ServiceManager.downloadLicense().then((responseFile) => {
+                ServiceManager.downloadLicense(this.state.packName).then((responseFile) => {
                     const url = window.URL.createObjectURL(new Blob([responseFile.data]));
                     const link = document.createElement('a');
                     const fileNameLength = this.state.packName.length;
-                    const fileName = 'License(' + this.state.packName.substring(0, fileNameLength - 4) + ').TXT';
+                    const fileName = 'LICENSE-' + this.state.packName.substring(0, fileNameLength - 4) + '.txt';
                     link.href = url;
                     link.setAttribute('download', fileName);
                     document.body.appendChild(link);
@@ -163,7 +163,7 @@ class GenerateLicense extends Component {
                         <img src={textFile} style={styles.textFile} alt=""/>
                         <br/>
                         <span>
-                            <b>{'License(' + this.state.packName.substring(0, this.state.packName.length - 4) + ').TXT'}</b>
+                            <b>{'LICENSE-' + this.state.packName.substring(0, this.state.packName.length - 4) + '.txt'}</b>
                         </span>
                     </div>
                     <br/>

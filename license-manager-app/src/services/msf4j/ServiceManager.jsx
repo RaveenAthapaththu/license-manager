@@ -49,7 +49,7 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     selectLicense() {
-        const url = Config.URL_FETCH_SERVICES+ 'license/availableLicenses';
+        const url = Config.URL_FETCH_SERVICES+ 'licenses';
         const requestConfig = { withCredentials: true };
         return axios.get(url, requestConfig).then((response) => {
             return response;
@@ -62,10 +62,11 @@ class ServiceManager extends Component {
      * Call the micro service to generate the license text.
      * @returns {Promise<AxiosResponse<any>>}
      */
-    getLicense() {
-        const url = Config.URL_FETCH_SERVICES+ 'license/text';
+    getLicense(packName) {
+        const url = Config.URL_FETCH_SERVICES+ 'license/generate';
         const requestConfig = { withCredentials: true, timeout: 40000000 };
-        return axios.post(url, requestConfig).then((response) => {
+        const requestData ={packName:packName};
+        return axios.post(url, requestData, requestConfig).then((response) => {
             return response;
         }).catch((error) => {
             throw error
@@ -76,9 +77,10 @@ class ServiceManager extends Component {
      * Call the micro service to download the license text.
      * @returns {Promise<AxiosResponse<any>>}
      */
-    downloadLicense() {
-        const url = Config.URL_FETCH_SERVICES + 'license/textToDownload';
+    downloadLicense(packName) {
+        const url = Config.URL_FETCH_SERVICES + 'license/download/' + packName;
         const requestConfig = { withCredentials: true, timeout: 40000000 };
+
         return axios.get(url, requestConfig).then((response) => {
             return response;
         }).catch((error) => {
@@ -92,11 +94,15 @@ class ServiceManager extends Component {
      * @returns {Promise<AxiosResponse<any>>}
      */
     extractJars(selectedPack) {
-        const url = Config.URL_FETCH_SERVICES + 'pack/selectedPack';
+        const url = Config.URL_FETCH_SERVICES + 'pack/extract';
         const requestConfig = {
             withCredentials: true,
         };
-        return axios.post(url, selectedPack, requestConfig).then((response) => {
+        const requestData = {
+            packName:selectedPack,
+        };
+
+        return axios.post(url, requestData, requestConfig).then((response) => {
             return response;
         }).catch((error) => {
             throw error
@@ -108,11 +114,13 @@ class ServiceManager extends Component {
      * @param data  name and version defined jars.
      * @returns {Promise<AxiosResponse<any>>}
      */
-    enterJars(data) {
-        const url = Config.URL_FETCH_SERVICES + 'pack/nameDefinedJars';
+    enterJars(data, packName) {
+        const url = Config.URL_FETCH_SERVICES + 'pack/add';
         const requestConfig = { withCredentials: true, timeout: 40000000 };
         const requestData = {
             jars : data,
+            packName:packName
+
         };
         return axios.post(url, requestData, requestConfig).then((response) => {
             return response;
@@ -127,12 +135,13 @@ class ServiceManager extends Component {
      * @param libraries     libraries for which the licenses are added.
      * @returns {Promise<AxiosResponse<any>>}
      */
-    addLicense(components, libraries) {
-        const url = Config.URL_FETCH_SERVICES + 'license/newLicenses';
+    addLicense(components, libraries, packName) {
+        const url = Config.URL_FETCH_SERVICES + 'license/add';
         const requestConfig = { withCredentials: true, timeout: 40000000 };
         const licenseData = {
             components: components,
             libraries: libraries,
+            packName: packName,
         };
         return axios.post(url, JSON.stringify(licenseData), requestConfig).then((response) => {
             return response;
@@ -145,11 +154,12 @@ class ServiceManager extends Component {
      * Call the micro service to check the progress of the jar extraction task.
      * @returns {Promise<AxiosResponse<any>>}
      */
-    checkProgress() {
-        const url = Config.URL_FETCH_SERVICES + 'longRunningTask/progress';
+    checkProgress(packName) {
+        const url = Config.URL_FETCH_SERVICES + 'longRunningTask/progress/'+ packName;
         const requestConfig = {
             withCredentials: true,
         };
+
         return axios.get(url, requestConfig).then((response) => {
             return response;
         }).catch((error) => {
@@ -157,24 +167,27 @@ class ServiceManager extends Component {
         });
     }
 
-    getFaultyNamedJars(){
-        const url = Config.URL_FETCH_SERVICES + 'pack/faultyNamedJars';
+    getFaultyNamedJars(packname){
+        const url = Config.URL_FETCH_SERVICES + 'pack/faultyNamedJars/' + packname;
         const requestConfig = {
-            withCredentials: true,
+            withCredentials: true, timeout: 40000000
         };
-        return axios.get(url, requestConfig).then((response) => {
+
+        return axios.get(url, requestConfig
+        ).then((response) => {
             return response;
         }).catch((error) => {
             throw error
         });
     }
 
-    getLicenseMissingJars(){
-        const url = Config.URL_FETCH_SERVICES + 'pack/licenseMissingJars';
+    getLicenseMissingJars(packname){
+        const url = Config.URL_FETCH_SERVICES + 'pack/licenseMissingJars/' + packname;
         const requestConfig = {
-            withCredentials: true,
+            withCredentials: true, timeout: 40000000
         };
-        return axios.get(url, requestConfig).then((response) => {
+        return axios.get(url, requestConfig
+        ).then((response) => {
             return response;
         }).catch((error) => {
             throw error

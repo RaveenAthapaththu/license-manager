@@ -23,10 +23,13 @@ import org.slf4j.LoggerFactory;
 import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerException;
 import org.wso2.internal.apps.license.manager.client.utils.Constants;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,27 +47,20 @@ public class LicenseManagerService extends HttpServlet {
 
         String username = String.valueOf(request.getSession().getAttribute("user"));
 
-        try {
-
-            // If the request is for downloading the license text file.
-            if (request.getPathInfo().equals(Constants.DOWNLOAD_ENDPOINT)) {
-                response.setContentType(MediaType.TEXT_HTML);
-                response.setHeader("Content-Disposition", "attachment;filename=LICENSE.txt");
-                InputStream is = ServiceExecutor.executeDownloadService(request.getPathInfo(), username);
-                int read;
-                byte[] bytes = new byte[1024];
+        // If the request is for downloading the license text file.
+        if (request.getPathInfo().contains(Constants.DOWNLOAD_ENDPOINT)) {
+            response.setContentType(MediaType.TEXT_HTML);
+            response.setHeader("Content-Disposition", "attachment;filename=LICENSE.txt");
+            try (InputStream is = ServiceExecutor.executeDownloadService(request.getPathInfo(), username)) {
                 OutputStream out = response.getOutputStream();
-                if (is != null) {
-                    while ((read = is.read(bytes)) != -1) {
-                        out.write(bytes, 0, read);
-                    }
-                }
-                out.flush();
-                out.close();
-                if (log.isDebugEnabled()) {
-                    log.debug("Successfully downloaded license text.");
-                }
-            } else {
+                String result = new BufferedReader(new InputStreamReader(is))
+                        .lines().collect(Collectors.joining("\n"));
+                out.write(result.getBytes());
+            } catch (LicenseManagerException e) {
+                log.info(String.format("Error Occurred %s", e.getMessage()));
+            }
+        } else {
+            try {
                 response.setContentType(MediaType.APPLICATION_JSON);
                 PrintWriter out = response.getWriter();
                 out.print(ServiceExecutor.executeGetService(request.getPathInfo(), username));
@@ -72,9 +68,9 @@ public class LicenseManagerService extends HttpServlet {
                     log.debug("A response is received for GET request sent to {MICROSERVICE}/" + request.getPathInfo()
                             + " by " + username);
                 }
+            } catch (JSONException e) {
+                log.info("Error occurred:", e.getMessage());
             }
-        } catch (JSONException | LicenseManagerException e) {
-            log.error("Failed to get the response from the backend service. " + e.getMessage(), e);
         }
     }
 

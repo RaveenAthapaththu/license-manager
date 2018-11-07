@@ -122,8 +122,7 @@ class GenerateLicense extends Component {
         ServiceManager.extractJars(this.state.packName).then((response) => {
             if (response.data.responseType === 'Done') {
                 let intervalID = setInterval(function () {
-
-                    ServiceManager.checkProgress().then((response) => {
+                    ServiceManager.checkProgress(this.state.packName).then((response) => {
                         if (response.data.responseStatus === "complete") {
                             if (response.data.responseData.length === 0) {
                                 this.enterJarFunction();
@@ -340,7 +339,7 @@ class GenerateLicense extends Component {
                 const url = window.URL.createObjectURL(new Blob([responseFile.data]));
                 const link = document.createElement('a');
                 const fileNameLength = this.state.packName.length;
-                const fileName = 'License(' + this.state.packName.substring(0, fileNameLength - 4) + ').TXT';
+                const fileName = 'LICENSE ' + this.state.packName.substring(0, fileNameLength - 4) + '.txt';
                 link.href = url;
                 link.setAttribute('download', fileName);
                 document.body.appendChild(link);
@@ -765,7 +764,7 @@ class GenerateLicense extends Component {
                         <br/>
                         <span>
                             <b>
-                                {'License(' + this.state.packName.substring(0, this.state.packName.length - 4) + ').TXT'}
+                                {'LICENSE ' + this.state.packName.substring(0, this.state.packName.length - 4) + '.txt'}
                             </b>
                         </span>
                     </div>

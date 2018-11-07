@@ -80,8 +80,7 @@ class AddLicense extends Component {
         if (this.state.nameDefinedJars === '' || this.state.packName === '') {
             this.backToMain();
         }
-
-        ServiceManager.enterJars(this.state.nameDefinedJars).then((response) => {
+        ServiceManager.enterJars(this.state.nameDefinedJars, this.state.packName).then((response) => {
             if (response.data.responseType === 'done') {
                 this.setState(() => {
                     return {
@@ -89,9 +88,9 @@ class AddLicense extends Component {
                     };
                 });
                 let intervalID = setInterval(function () {
-                    ServiceManager.checkProgress().then((responseNext) => {
+                    ServiceManager.checkProgress(this.state.packName).then((responseNext) => {
                         if (responseNext.data.responseStatus === 'complete' && responseNext.data.responseType === 'done') {
-                            ServiceManager.getLicenseMissingJars().then((responseJars) => {
+                            ServiceManager.getLicenseMissingJars(this.state.packName).then((responseJars) => {
                                 if (responseJars.data.responseType === 'done') {
                                     if (responseJars.data.component.length === 0 && responseJars.data.library.length === 0) {
                                         this.redirectToNext();
@@ -144,7 +143,7 @@ class AddLicense extends Component {
                         this.handleError("Network Error");
                         clearTimeout(intervalID);
                     });
-                }.bind(this), 5000);
+                }.bind(this), 9000);
             } else {
                 this.handleError(response.data.responseMessage);
             }
@@ -152,6 +151,20 @@ class AddLicense extends Component {
         }).catch(() => {
             this.handleError("Network Error");
         });
+    }
+
+    componentDidMount() {
+        /**
+         * This is to stop the session expiration while
+         * user is filling out versions of the missing Jars.
+         */
+        //this.interval = setInterval(() => ServiceManager.checkProgress(this.state.packName), 10000);
+    }
+    componentWillUnmount() {
+        /**
+         * Clearing out the interval to avoid memory leaks
+         */
+        //clearInterval(this.interval);
     }
 
     /**
@@ -182,9 +195,11 @@ class AddLicense extends Component {
                 confirmMessageOpened: false,
             };
         });
-        ServiceManager.addLicense(this.state.licenseMissingComponents, this.state.licenseMissingLibraries).then((response) => {
-            let intervalID = setInterval(function () {
-                ServiceManager.checkProgress().then((responseNext) => {
+
+        ServiceManager.addLicense(this.state.licenseMissingComponents, this.state.licenseMissingLibraries,
+            this.state.packName).then((response) => {
+            let intervalID = setInterval(() => {
+                ServiceManager.checkProgress(this.state.packName).then((responseNext) => {
                     if (responseNext.data.responseStatus === 'complete' && responseNext.data.responseType === 'done') {
                         this.redirectToNext();
                         clearTimeout(intervalID);
@@ -202,7 +217,7 @@ class AddLicense extends Component {
                     this.handleError("Network Error");
                     clearTimeout(intervalID);
                 });
-            }.bind(this), 5000);
+            }, 5000);
         }).catch(() => {
             this.handleError("Network Error");
         });

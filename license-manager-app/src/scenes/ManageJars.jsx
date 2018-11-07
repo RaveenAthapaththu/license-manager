@@ -76,9 +76,9 @@ class ManageJars extends Component {
                     };
                 });
                 let intervalID = setInterval(function () {
-                    ServiceManager.checkProgress().then((responseNext) => {
+                    ServiceManager.checkProgress(this.state.packName).then((responseNext) => {
                         if (responseNext.data.responseStatus === 'complete' && responseNext.data.responseType === 'done') {
-                            ServiceManager.getFaultyNamedJars().then((responseForFaultyJars) => {
+                            ServiceManager.getFaultyNamedJars(this.state.packName).then((responseForFaultyJars) => {
                                 if (responseForFaultyJars.data.responseType === 'done') {
                                     if (responseForFaultyJars.data.responseData.length === 0) {
                                         this.redirectToNext();
@@ -100,6 +100,9 @@ class ManageJars extends Component {
                             });
                             clearTimeout(intervalID);
                         } else if (responseNext.data.responseStatus === 'running' && responseNext.data.responseType === 'done') {
+                            if (responseNext.data.taskStatus === 'failed' && responseNext.data.responseType === 'done') {
+                                this.handleError(responseNext.data.responseMessage)
+                            }
                             this.setState(() => {
                                 return {
                                     statusMessage: responseNext.data.responseMessage,
@@ -287,7 +290,7 @@ class ManageJars extends Component {
                     step={this.state.stepIndex}
                 />
 
-                {/*The table to enter the name and the version of name missing jars.*/}
+                { /*The table to enter the name and the version of name missing jars. */}
                 <form onSubmit={this.handleOpenSaveData} style={{display: this.state.displayForm}}>
                     <Table style={{overflow: 'auto'}}>
                         <TableHeader displaySelectAll={false} adjustForCheckbox={false}>

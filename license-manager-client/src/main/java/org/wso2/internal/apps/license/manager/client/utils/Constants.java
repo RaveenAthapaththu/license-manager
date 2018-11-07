@@ -22,7 +22,7 @@ package org.wso2.internal.apps.license.manager.client.utils;
  */
 public class Constants {
 
-    public static final String DOWNLOAD_ENDPOINT = "/license/textToDownload";
+    public static final String DOWNLOAD_ENDPOINT = "license/download";
     // Constants for accessing configuration details.
     static final String CONFIG_FILE_NAME = "config.properties";
     static final String MICRO_SERVICE_URL = "micro_service_url";

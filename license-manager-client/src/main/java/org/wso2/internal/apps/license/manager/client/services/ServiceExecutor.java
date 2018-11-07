@@ -35,6 +35,7 @@ import org.wso2.internal.apps.license.manager.client.exception.LicenseManagerExc
 import org.wso2.internal.apps.license.manager.client.utils.PropertyReader;
 import org.wso2.internal.apps.license.manager.client.utils.ServiceUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -46,6 +47,9 @@ import javax.ws.rs.core.MediaType;
 public class ServiceExecutor {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceExecutor.class);
+    private static final String RESPONSE_TYPE = "responseType";
+    private static final String ERROR = "Error";
+    private static final String RESPONSE_MESSAGE = "responseMessage";
 
     /**
      * Call the backend service for the GET requests.
@@ -68,24 +72,25 @@ public class ServiceExecutor {
             HttpGet request = new HttpGet(builder.build());
 
             // Calling the micro service.
-            CloseableHttpClient httpClient = ServiceUtils.createTrustedHttpClient();
-            HttpResponse response = httpClient.execute(request);
-
-            // Build json response
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                // parsing JSON
-                result = new JSONObject(EntityUtils.toString(entity));
+            try (CloseableHttpClient httpClient = ServiceUtils.createTrustedHttpClient()) {
+                HttpResponse response = httpClient.execute(request);
+                // Build json response
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    // parsing JSON
+                    result = new JSONObject(EntityUtils.toString(entity));
+                }
             }
+
         } catch (URISyntaxException | IOException | JSONException e) {
             result = new JSONObject();
-            result.put("responseType", "Error");
-            result.put("responseMessage", "Failed to get response from server");
+            result.put(RESPONSE_TYPE, ERROR);
+            result.put(RESPONSE_MESSAGE, e.getMessage());
             log.error("Failed to get response from server. " + e.getMessage(), e);
         } catch (LicenseManagerException e) {
             result = new JSONObject();
-            result.put("responseType", "Error");
-            result.put("responseMessage", e.getMessage());
+            result.put(RESPONSE_TYPE, ERROR);
+            result.put(RESPONSE_MESSAGE, e.getMessage());
             log.error(e.getMessage(), e);
         }
         return result;
@@ -119,24 +124,26 @@ public class ServiceExecutor {
             request.setEntity(requestBody);
 
             // Calling the micro service
-            CloseableHttpClient httpClient = ServiceUtils.createTrustedHttpClient();
-            HttpResponse response = httpClient.execute(request);
+            try (CloseableHttpClient httpClient = ServiceUtils.createTrustedHttpClient()) {
+                HttpResponse response = httpClient.execute(request);
 
-            // Build json response
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                // parsing JSON
-                result = new JSONObject(EntityUtils.toString(entity));
+                // Build json response
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    // parsing JSON
+                    result = new JSONObject(EntityUtils.toString(entity));
+                }
             }
+
         } catch (URISyntaxException | IOException | JSONException e) {
             result = new JSONObject();
-            result.put("responseType", "Error");
-            result.put("responseMessage", "Failed to get response from server");
+            result.put(RESPONSE_TYPE, ERROR);
+            result.put(RESPONSE_MESSAGE, e.getMessage());
             log.error("Failed to get response from server. " + e.getMessage(), e);
         } catch (LicenseManagerException e) {
             result = new JSONObject();
-            result.put("responseType", "Error");
-            result.put("responseMessage", e.getMessage());
+            result.put(RESPONSE_TYPE, ERROR);
+            result.put(RESPONSE_MESSAGE, e.getMessage());
             log.error(e.getMessage(), e);
         }
         return result;
@@ -162,18 +169,24 @@ public class ServiceExecutor {
             HttpGet request = new HttpGet(builder.build());
 
             // Calling the micro service
-            CloseableHttpClient client = ServiceUtils.createTrustedHttpClient();
-            HttpResponse response = client.execute(request);
+            try (CloseableHttpClient client = ServiceUtils.createTrustedHttpClient()) {
+                HttpResponse response = client.execute(request);
 
-            // Get the file from the response entity.
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                return entity.getContent();
-            } else {
-                return null;
+                // Get the file from the response entity.
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    return new ByteArrayInputStream(EntityUtils.toString(entity,"UTF-8").getBytes());
+                } else {
+                    return new ByteArrayInputStream(("").getBytes());
+                }
+            } catch (IOException e) {
+                log.info("IO error", e);
+                throw new LicenseManagerException("Failed to download the license text file IO exception", e);
             }
-        } catch (URISyntaxException | IOException e) {
-            throw new LicenseManagerException("Failed to download the license text file");
+
+        } catch (URISyntaxException e) {
+            log.info("URIsyntax error", e);
+            throw new LicenseManagerException("Failed to download the license text file URIsyntax error", e);
         }
     }
 }
